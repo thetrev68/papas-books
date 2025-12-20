@@ -587,17 +587,21 @@ service cloud.firestore {
 - On auth state change, fetch user document from Firestore
 - Load all booksets user has access to (own + access grants)
 - Set `activeBooksetId` to user's own bookset by default
-- Automatically creates user document and bookset on first sign-up
+- **Crucial:** User document and initial bookset creation handled by **Firebase Cloud Function** (`auth.user.onCreate`)
 - Password reset sends Firebase reset email
 
 **Implementation concept:**
 
 ```typescript
-// On user creation (sign-up):
+// Client-side:
 // 1. Create Firebase Auth user
+// 2. Wait for auth state change (Cloud Function creates Firestore data)
+// 3. If Firestore data missing after timeout, show error (or retry)
+
+// Server-side (Cloud Function):
+// 1. Trigger on auth.user.onCreate
 // 2. Create user document with isAdmin=false, ownBooksetId=userId
 // 3. Create bookset document with ownerId=userId, name="[DisplayName]'s Books"
-// 4. Set activeBooksetId = ownBooksetId
 
 // On bookset switch:
 // 1. Update user.activeBooksetId in Firestore
@@ -643,8 +647,7 @@ const user = requireAdmin();  // Redirects to /app/dashboard if not admin
 ├── /app/import             → Import page (CSV upload)
 ├── /app/workbench          → Workbench page (transaction grid)
 ├── /app/reconcile          → Reconciliation page
-├── /app/reports            → Reports page
-└── /app/admin              → NEW: Admin page (requires isAdmin)
+└── /app/reports            → Reports page
 ```
 
 ### Router Configuration
@@ -686,7 +689,6 @@ const user = requireAdmin();  // Redirects to /app/dashboard if not admin
   - Shows current active bookset name
   - Clicking switches bookset (updates `activeBooksetId`)
 - Display current user displayName or email
-- "Admin" link (only if `user.isAdmin`)
 - "Sign Out" button
 
 **Bookset Switcher Implementation:**
@@ -795,25 +797,7 @@ const [activeTab, setActiveTab] = useState<'accounts' | 'categories' | 'rules' |
 - Header: "Reports"
 - Placeholder: "Report generation will appear here in Phase 6"
 
-### Page: `AdminPage` (NEW)
 
-**Route:** `/app/admin`
-
-**Protected:** Requires `isAdmin === true`
-
-**Content (Phase 1):**
-
-- Header: "System Administration"
-- Section: "User Management"
-  - Placeholder: "List all users here"
-  - Placeholder: "Toggle admin status for users"
-- Section: "System Stats"
-  - Placeholder: "Total users, total booksets, etc."
-
-**Why this page:**
-
-- Admins need to be able to promote other users to admin
-- Future: system-wide settings, user support tools
 
 ### Page: `ForgotPasswordPage` (NEW)
 
@@ -924,6 +908,38 @@ export const db = getFirestore(app);
 
 ---
 
+## DevOps & Quality Assurance
+
+### Automated Checks (CI)
+
+**Tools:** GitHub Actions, Husky, lint-staged
+
+#### 1. Pre-commit Hooks (Husky)
+- Run `eslint` on staged files
+- Run `prettier` check on staged files
+- Prevent commit if linting fails
+
+#### 2. Continuous Integration (GitHub Actions)
+- Trigger on push to `main` and all PRs
+- Steps:
+  1. `npm install`
+  2. `npm run build` (Ensures no TS errors)
+  3. `npm run test` (Runs Vitest suite)
+
+### Global Error Handling (UX)
+
+**Component:** `<GlobalToastProvider>`
+
+**Purpose:** Display success/error messages to the user without `alert()`.
+
+**Implementation (Phase 1):**
+- Simple React Context API
+- Renders a fixed `<div>` at top/bottom of screen
+- Methods: `showError(message)`, `showSuccess(message)`
+- No styling library needed: use inline styles for basic visibility (red/green background)
+
+---
+
 ## Testing Requirements
 
 ### Unit Tests
@@ -947,8 +963,6 @@ export const db = getFirestore(app);
 - User can sign up and user document + bookset created
 - User can sign in
 - User can reset password (email sent)
-- Admin user can access admin page
-- Non-admin user redirected from admin page
 
 #### Test: Bookset switching
 
@@ -1019,8 +1033,6 @@ export const db = getFirestore(app);
 - [ ] Create second account and grant access to first account
 - [ ] Switch between booksets using dropdown
 - [ ] Verify viewer cannot edit transactions
-- [ ] Create admin user and access admin page
-- [ ] Verify non-admin cannot access admin page
 - [ ] Attempt to access `/app/dashboard` while logged out (should redirect)
 - [ ] Navigate to all page routes using nav links
 - [ ] Refresh page while authenticated (should stay logged in)
@@ -1036,8 +1048,7 @@ export const db = getFirestore(app);
 1. ✅ User can register, sign in, sign out, and reset password
 2. ✅ Firebase Security Rules enforce bookset-based access control
 3. ✅ Users can switch between their own and shared booksets
-4. ✅ Admin users can access admin page
-5. ✅ All page routes accessible via navigation (placeholder content)
+4. ✅ All page routes accessible via navigation (placeholder content)
 6. ✅ Auth state persists across page refreshes
 7. ✅ User document and bookset created automatically on sign-up
 8. ✅ Bookset switcher dropdown functional
@@ -1101,8 +1112,7 @@ export const db = getFirestore(app);
 1. **Added `booksets` collection** - Separates users from financial data
 2. **Added `accessGrants` subcollection** - Multi-user access control
 3. **Added bookset switcher** - CPA can switch between clients
-4. **Added admin page** - System admin functionality
-5. **Added password reset** - Forgot password flow
+4. **Added password reset** - Forgot password flow
 6. **Changed Account.csvMapping** - Per-account (not per-bank) CSV format definitions
 7. **Updated all subcollections** - Now under `booksets/{booksetId}/` instead of `users/{userId}/`
 8. **Added `displayName` to User** - Better multi-user UX
