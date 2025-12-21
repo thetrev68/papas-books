@@ -1,6 +1,9 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import AppNav from '../components/AppNav';
+import AccountsTab from '../components/settings/AccountsTab';
+import CategoriesTab from '../components/settings/CategoriesTab';
+import AccessTab from '../components/settings/AccessTab';
 
 export default function SettingsPage() {
   const { activeBookset } = useAuth();
@@ -36,15 +39,10 @@ export default function SettingsPage() {
             borderRadius: '4px',
           }}
         >
-          {activeTab === 'accounts' && <div>Accounts content (Phase 2)</div>}
-          {activeTab === 'categories' && <div>Categories content (Phase 2)</div>}
+          {activeTab === 'accounts' && <AccountsTab />}
+          {activeTab === 'categories' && <CategoriesTab />}
           {activeTab === 'rules' && <div>Rules content (Phase 4)</div>}
-          {activeTab === 'access' && (
-            <div>
-              <h3>Access Grants</h3>
-              <p>Grant access functionality coming in Phase 2</p>
-            </div>
-          )}
+          {activeTab === 'access' && <AccessTab />}
         </div>
       </div>
     </div>
