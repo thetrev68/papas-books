@@ -12,7 +12,7 @@ Papa's Books uses a comprehensive CI/CD pipeline to ensure code quality and prev
 
 ## Pre-commit Hooks (Husky + lint-staged)
 
-### What runs before each commit:
+### What runs before each commit
 
 - **ESLint** - Fixes linting issues automatically on staged TypeScript/React files
 - **Prettier** - Formats staged files automatically
@@ -37,7 +37,7 @@ Executes `lint-staged` before allowing the commit.
 }
 ```
 
-### How it works:
+### How it works
 
 1. You run `git commit`
 2. Husky intercepts the commit
@@ -46,7 +46,7 @@ Executes `lint-staged` before allowing the commit.
 5. If all checks pass, commit proceeds
 6. If checks fail, commit is blocked and you must fix errors
 
-### Bypassing pre-commit hooks (NOT recommended):
+### Bypassing pre-commit hooks (NOT recommended)
 
 ```bash
 git commit --no-verify
@@ -58,12 +58,12 @@ git commit --no-verify
 
 ## GitHub Actions CI Pipeline
 
-### Triggers:
+### Triggers
 
 - **Push to main branch** - Runs full CI on every push
 - **Pull requests to main** - Runs full CI on every PR
 
-### What runs in CI:
+### What runs in CI
 
 1. **Install dependencies** - `npm ci` (clean install from package-lock.json)
 2. **Lint** - `npm run lint` (ESLint checks all files)
@@ -71,7 +71,7 @@ git commit --no-verify
 4. **Tests** - `npm run test -- --run` (Vitest runs all tests)
 5. **Build** - `npm run build` (TypeScript compilation + Vite build)
 
-### Configuration
+### Configuration1
 
 #### File: `.github/workflows/ci.yml`
 
@@ -106,7 +106,7 @@ jobs:
 
 The GitHub Actions workflow requires Supabase credentials to build the project. These are stored as **GitHub Secrets**.
 
-#### Setting up secrets:
+#### Setting up secrets
 
 1. Go to your GitHub repository
 2. Navigate to **Settings** → **Secrets and variables** → **Actions**
@@ -130,7 +130,7 @@ After pushing code or creating a PR:
 
 ## NPM Scripts
 
-### Available commands:
+### Available commands
 
 | Command                 | Description                                          |
 | ----------------------- | ---------------------------------------------------- |
@@ -146,7 +146,7 @@ After pushing code or creating a PR:
 | `npm run test:coverage` | Generate test coverage report                        |
 | `npm run preview`       | Preview production build locally                     |
 
-### Before committing:
+### Before committing
 
 It's good practice to run these commands locally before committing:
 
@@ -185,7 +185,7 @@ npm run build
 }
 ```
 
-### Why these settings:
+### Why these settings
 
 - **semi: true** - Always use semicolons (prevents ASI bugs)
 - **singleQuote: true** - Use single quotes for strings (except JSX)
@@ -195,7 +195,7 @@ npm run build
 - **arrowParens: 'always'** - Always wrap arrow function params in parens
 - **endOfLine: 'lf'** - Unix-style line endings (consistent across platforms)
 
-### Ignored files:
+### Ignored files
 
 See `.prettierignore` for files excluded from formatting (node_modules, dist, etc.)
 
@@ -211,7 +211,7 @@ ESLint is configured with:
 - **React support** - `eslint-plugin-react` and `eslint-plugin-react-hooks`
 - **Prettier integration** - `eslint-config-prettier` (disables conflicting rules)
 
-### Key rules:
+### Key rules
 
 - No unused variables (errors)
 - React Hooks rules enforced (prevents hooks bugs)
@@ -222,14 +222,14 @@ ESLint is configured with:
 
 ## Troubleshooting
 
-### Pre-commit hook not running:
+### Pre-commit hook not running
 
 ```bash
 # Re-install Husky hooks
 npm run prepare
 ```
 
-### Lint errors blocking commit:
+### Lint errors blocking commit
 
 Option 1 (recommended): Fix the errors
 
@@ -243,10 +243,11 @@ Option 2 (temporary): Bypass the hook (NOT recommended)
 git commit --no-verify
 ```
 
-### CI failing on GitHub:
+### CI failing on GitHub
 
 1. Check the **Actions** tab for detailed error logs
 2. Run the same commands locally to reproduce:
+
    ```bash
    npm ci
    npm run lint
@@ -254,9 +255,10 @@ git commit --no-verify
    npm run test -- --run
    npm run build
    ```
+
 3. Fix errors and push again
 
-### Prettier and ESLint conflicting:
+### Prettier and ESLint conflicting
 
 This should not happen if `eslint-config-prettier` is properly configured. If it does:
 
@@ -268,7 +270,7 @@ npm run format
 npm run lint:fix
 ```
 
-### GitHub Secrets not working:
+### GitHub Secrets not working
 
 1. Verify secrets are set in **Settings** → **Secrets and variables** → **Actions**
 2. Check that secret names match exactly: `VITE_SUPABASE_URL`, `VITE_SUPABASE_ANON_KEY`
@@ -278,21 +280,21 @@ npm run lint:fix
 
 ## Best Practices
 
-### Before committing:
+### Before committing1
 
 1. ✅ Write meaningful commit messages
 2. ✅ Run tests locally (`npm run test -- --run`)
 3. ✅ Let pre-commit hooks run (don't use `--no-verify`)
 4. ✅ Review staged changes before committing
 
-### Before merging a PR:
+### Before merging a PR
 
 1. ✅ Ensure CI passes (green checkmark on GitHub)
 2. ✅ Review code changes
 3. ✅ Test manually if UI changes are involved
 4. ✅ Squash commits if necessary (keep main branch clean)
 
-### Code quality guidelines:
+### Code quality guidelines
 
 - Write tests for new features and bug fixes
 - Keep functions small and focused

@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useRef, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
 import { User, Bookset } from '../types/database';
@@ -28,6 +28,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [myBooksets, setMyBooksets] = useState<Bookset[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
+  const didInitRef = useRef(false);
+  const inFlightRef = useRef<Promise<void> | null>(null);
+  const initialSessionHandledRef = useRef(false);
 
   // Helper to fetch user profile and booksets with retry logic
   const fetchUserData = async (userId: string, retries = 3, delay = 1000) => {
@@ -41,9 +44,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (userError || !userData) {
         if (retries > 0) {
-          console.log(
-            `User profile not found, retrying in ${delay}ms... (${retries} attempts left)`
-          );
           await new Promise((resolve) => setTimeout(resolve, delay));
           return fetchUserData(userId, retries - 1, delay);
         }
@@ -57,7 +57,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .from('booksets')
         .select('*');
 
-      if (booksetsError) throw booksetsError;
+      if (booksetsError) {
+        throw booksetsError;
+      }
 
       const booksets = booksetsData || [];
       setMyBooksets(booksets);
@@ -68,21 +70,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setActiveBookset(active);
     } catch (err) {
       console.error('Error fetching user data:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error'));
+      // If aborted, it's a timeout
+      if (err instanceof Error && err.name === 'AbortError') {
+         setError(new Error('Database connection timed out. Please check your internet or API keys.'));
+      } else {
+         setError(err instanceof Error ? err : new Error('Unknown error'));
+      }
       // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
       setUser(null);
     }
   };
 
+  const runFetchUserData = (userId: string) => {
+    if (inFlightRef.current) {
+      return inFlightRef.current;
+    }
+    const promise = fetchUserData(userId).finally(() => {
+      inFlightRef.current = null;
+    });
+    inFlightRef.current = promise;
+    return promise;
+  };
+
   useEffect(() => {
+    if (didInitRef.current) return;
+    didInitRef.current = true;
+
     // Check active session
     supabase.auth.getSession().then(({ data: { session } }) => {
       setSupabaseUser(session?.user ?? null);
-      if (session?.user) {
-        fetchUserData(session.user.id).finally(() => setLoading(false));
-      } else {
-        setLoading(false);
+      if (session?.user && !initialSessionHandledRef.current) {
+        initialSessionHandledRef.current = true;
+        runFetchUserData(session.user.id).finally(() => setLoading(false));
+        return;
       }
+      if (!session?.user) setLoading(false);
+    }).catch(err => {
+      console.error('getSession error', err);
+      setLoading(false);
     });
 
     // Listen for auth changes
@@ -97,9 +122,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
           // Small initial delay to allow trigger to complete
           await new Promise((resolve) => setTimeout(resolve, 500));
-          await fetchUserData(session.user.id);
+          await runFetchUserData(session.user.id);
         } else {
-          await fetchUserData(session.user.id);
+          if (_event === 'INITIAL_SESSION' && initialSessionHandledRef.current) {
+            setLoading(false);
+            return;
+          }
+          initialSessionHandledRef.current = true;
+          await runFetchUserData(session.user.id);
         }
         setLoading(false);
       } else {

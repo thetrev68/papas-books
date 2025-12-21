@@ -39,4 +39,34 @@ export interface AccessGrant {
   can_reconcile: boolean;
 }
 
-// Additional interfaces for other tables (Accounts, Categories, etc.) will be added in Phase 2
+export interface Account {
+  id: string;
+  bookset_id: string;
+  name: string;
+  type: 'Asset' | 'Liability';
+  opening_balance: number;
+  opening_balance_date: string;
+  csv_mapping?: Record<string, unknown>;
+  last_reconciled_date: string | null;
+  last_reconciled_balance: number;
+  created_at: string;
+  updated_at: string;
+  is_archived: boolean;
+  created_by: string;
+  last_modified_by: string;
+}
+
+export interface Category {
+  id: string;
+  bookset_id: string;
+  name: string;
+  tax_line_item: string | null;
+  is_tax_deductible: boolean;
+  parent_category_id: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  is_archived: boolean;
+  created_by: string;
+  last_modified_by: string;
+}

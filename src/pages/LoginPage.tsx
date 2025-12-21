@@ -7,7 +7,7 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn } = useAuth();
+  const { signIn, error: authError } = useAuth();
   const { showError } = useToast();
   const navigate = useNavigate();
 
@@ -36,6 +36,13 @@ export default function LoginPage() {
       }}
     >
       <h1>Sign In</h1>
+      {authError && (
+        <div
+          style={{ color: 'red', marginBottom: '1rem', padding: '0.5rem', backgroundColor: '#fee' }}
+        >
+          {authError.message}
+        </div>
+      )}
       <form
         onSubmit={handleSubmit}
         style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}

@@ -1,6 +1,6 @@
 # Phase 2: Account & Category Management
 
-**Status:** Not Started
+**Status:** Complete
 **Dependencies:** Phase 1 (Foundation & Authentication)
 **Estimated Complexity:** Medium
 **Reference:** [Implementation-Plan.md](Implementation-Plan.md), [Phase-1-Foundation.md](Phase-1-Foundation.md)
@@ -693,7 +693,7 @@ function SettingsPage() {
 
 **Structure:**
 
-```
+```text
 <AccountsTab>
   ├── <button>Create Account</button>
   ├── <table> (native HTML)
@@ -797,7 +797,7 @@ interface AccountFormModalProps {
 
 **Structure:**
 
-```
+```text
 <AccountFormModal>
   ├── <form>
   │   ├── <input name="name">
@@ -977,6 +977,7 @@ interface CategoryFormModalProps {
 
 - Use `insertCategorySchema` from Zod
 - Prevent setting category as its own parent:
+
   ```typescript
   if (category && formData.parentCategoryId === category.id) {
     setErrors({ parentCategoryId: 'Category cannot be its own parent' });
@@ -1023,7 +1024,7 @@ function AccessTab() {
 
 ## Supabase Real-Time Subscriptions (Optional Enhancement)
 
-### Purpose
+### Purpose1
 
 Enable real-time updates when data changes (e.g., another user edits an account).
 
