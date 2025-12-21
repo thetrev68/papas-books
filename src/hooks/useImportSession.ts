@@ -1,0 +1,286 @@
+import { useState } from 'react';
+import { useAuth } from '../context/AuthContext';
+import { previewCsv, parseFullCsv, type ParseResult } from '../lib/import/parser';
+import { mapRowsToTransactions, type StagedTransaction } from '../lib/import/mapper';
+import { addFingerprints } from '../lib/import/fingerprint';
+import { detectExactDuplicates, type ProcessedTransaction } from '../lib/import/reconciler';
+import { detectFuzzyDuplicates } from '../lib/import/fuzzy-matcher';
+import {
+  fetchExistingFingerprints,
+  fetchExistingTransactions,
+  commitImportBatch,
+} from '../lib/supabase/import';
+import { updateAccountMapping } from '../lib/supabase/accounts';
+import type { CsvMapping } from '../types/import';
+
+type ImportStep = 'upload' | 'mapping' | 'review' | 'importing' | 'complete' | 'error';
+
+interface ImportSessionState {
+  // Wizard step
+  step: ImportStep;
+
+  // File upload
+  file: File | null;
+  selectedAccountId: string | null;
+
+  // Parsing
+  rawPreview: ParseResult | null;
+  rawData: ParseResult | null;
+
+  // Mapping
+  mapping: CsvMapping | null;
+  stagedTransactions: StagedTransaction[];
+
+  // Duplicate detection
+  processedTransactions: ProcessedTransaction[];
+  stats: {
+    total: number;
+    new: number;
+    exact_duplicates: number;
+    fuzzy_duplicates: number;
+    errors: number;
+  };
+
+  // Import result
+  importResult: {
+    batchId: string;
+    transactionIds: string[];
+  } | null;
+
+  // Error state
+  error: string | null;
+}
+
+export interface UseImportSessionResult {
+  // State
+  state: ImportSessionState;
+
+  // Actions
+  selectAccount: (accountId: string) => void;
+  uploadFile: (file: File) => Promise<void>;
+  updateMapping: (mapping: CsvMapping) => void;
+  applyMapping: () => Promise<void>;
+  checkDuplicates: () => Promise<void>;
+  commit: () => Promise<void>;
+  reset: () => void;
+
+  // Loading flags
+  isProcessing: boolean;
+}
+
+const initialState: ImportSessionState = {
+  step: 'upload',
+  file: null,
+  selectedAccountId: null,
+  rawPreview: null,
+  rawData: null,
+  mapping: null,
+  stagedTransactions: [],
+  processedTransactions: [],
+  stats: { total: 0, new: 0, exact_duplicates: 0, fuzzy_duplicates: 0, errors: 0 },
+  importResult: null,
+  error: null,
+};
+
+export function useImportSession(): UseImportSessionResult {
+  const { activeBookset } = useAuth();
+  const [state, setState] = useState<ImportSessionState>(initialState);
+  const [isProcessing, setIsProcessing] = useState(false);
+
+  // Action: Select account
+  const selectAccount = (accountId: string) => {
+    setState((prev) => ({ ...prev, selectedAccountId: accountId }));
+  };
+
+  // Action: Upload file and preview
+  const uploadFile = async (file: File) => {
+    setIsProcessing(true);
+    try {
+      const preview = await previewCsv(file, { hasHeaderRow: true });
+      setState((prev) => ({
+        ...prev,
+        file,
+        rawPreview: preview,
+        step: 'mapping',
+        error: null,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to parse CSV',
+        step: 'error',
+      }));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Action: Update mapping configuration
+  const updateMapping = (mapping: CsvMapping) => {
+    setState((prev) => ({ ...prev, mapping }));
+  };
+
+  // Action: Apply mapping and parse full file
+  const applyMapping = async () => {
+    if (!state.file || !state.mapping) return;
+
+    setIsProcessing(true);
+    try {
+      const parsed = await parseFullCsv(state.file, {
+        hasHeaderRow: state.mapping.hasHeaderRow,
+      });
+
+      const staged = mapRowsToTransactions(parsed.data, state.mapping);
+
+      const errorCount = staged.filter((t) => !t.isValid).length;
+
+      setState((prev) => ({
+        ...prev,
+        rawData: parsed,
+        stagedTransactions: staged,
+        stats: { ...prev.stats, total: staged.length, errors: errorCount },
+        step: 'review',
+        error: null,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to apply mapping',
+        step: 'error',
+      }));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Action: Check for duplicates
+  const checkDuplicates = async () => {
+    if (!state.selectedAccountId || state.stagedTransactions.length === 0) return;
+
+    setIsProcessing(true);
+    try {
+      // Add fingerprints
+      const withFingerprints = await addFingerprints(state.stagedTransactions);
+
+      // Fetch existing fingerprints
+      const existingFingerprints = await fetchExistingFingerprints(state.selectedAccountId);
+
+      // Detect exact duplicates
+      let processed = detectExactDuplicates(withFingerprints, existingFingerprints);
+
+      // Fetch existing transactions for fuzzy matching
+      const existingTransactions = await fetchExistingTransactions(state.selectedAccountId);
+
+      // Detect fuzzy duplicates
+      processed = detectFuzzyDuplicates(processed, existingTransactions);
+
+      // Calculate stats
+      const stats = {
+        total: processed.length,
+        new: processed.filter((t) => t.status === 'new').length,
+        exact_duplicates: processed.filter((t) => t.status === 'duplicate').length,
+        fuzzy_duplicates: processed.filter((t) => t.status === 'fuzzy_duplicate').length,
+        errors: processed.filter((t) => !t.isValid).length,
+      };
+
+      setState((prev) => ({
+        ...prev,
+        processedTransactions: processed,
+        stats,
+        error: null,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to check duplicates',
+        step: 'error',
+      }));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Action: Commit import
+  const commit = async () => {
+    if (!state.selectedAccountId || !activeBookset || !state.file || !state.mapping) return;
+
+    setIsProcessing(true);
+    setState((prev) => ({ ...prev, step: 'importing' }));
+
+    try {
+      // Filter only "new" transactions
+      const toImport = state.processedTransactions.filter((t) => t.status === 'new' && t.isValid);
+
+      // Build transaction objects
+      const transactions = toImport.map((t) => ({
+        bookset_id: activeBookset.id,
+        account_id: state.selectedAccountId!,
+        date: t.date!,
+        amount: t.amount!,
+        payee: t.description!,
+        original_description: t.description!,
+        fingerprint: t.fingerprint,
+        source_batch_id: null, // Will be set by commitImportBatch
+        import_date: '', // Will be set by commitImportBatch
+        is_reviewed: false,
+        is_split: false,
+        reconciled: false,
+        lines: null, // Will be set by commitImportBatch
+      }));
+
+      // Build batch object
+      const batch = {
+        bookset_id: activeBookset.id,
+        account_id: state.selectedAccountId,
+        file_name: state.file.name,
+        imported_at: new Date().toISOString(),
+        total_rows: state.stats.total,
+        imported_count: toImport.length,
+        duplicate_count: state.stats.exact_duplicates + state.stats.fuzzy_duplicates,
+        error_count: state.stats.errors,
+        csv_mapping_snapshot: state.mapping,
+        is_undone: false,
+        undone_at: null,
+        undone_by: null,
+      };
+
+      // Commit to database
+      const result = await commitImportBatch(batch, transactions);
+
+      // Save mapping to account (for next import)
+      await updateAccountMapping(state.selectedAccountId, state.mapping);
+
+      setState((prev) => ({
+        ...prev,
+        importResult: result,
+        step: 'complete',
+        error: null,
+      }));
+    } catch (error) {
+      setState((prev) => ({
+        ...prev,
+        error: error instanceof Error ? error.message : 'Failed to commit import',
+        step: 'error',
+      }));
+    } finally {
+      setIsProcessing(false);
+    }
+  };
+
+  // Action: Reset wizard
+  const reset = () => {
+    setState(initialState);
+  };
+
+  return {
+    state,
+    selectAccount,
+    uploadFile,
+    updateMapping,
+    applyMapping,
+    checkDuplicates,
+    commit,
+    reset,
+    isProcessing,
+  };
+}

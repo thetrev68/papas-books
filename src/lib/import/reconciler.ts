@@ -1,4 +1,5 @@
 import { StagedTransaction } from './mapper';
+import type { Transaction } from '../../types/database';
 
 export type ImportStatus = 'new' | 'duplicate' | 'fuzzy_duplicate' | 'error';
 
@@ -6,7 +7,7 @@ export interface ProcessedTransaction extends StagedTransaction {
   fingerprint: string; // SHA-256 hash
   status: ImportStatus; // Duplicate detection result
   duplicateOfId?: string; // If duplicate, points to existing transaction ID
-  fuzzyMatches?: unknown[]; // If fuzzy_duplicate, list of potential matches
+  fuzzyMatches?: Transaction[]; // If fuzzy_duplicate, list of potential matches
 }
 
 /**
