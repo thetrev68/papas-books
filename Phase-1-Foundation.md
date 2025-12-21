@@ -9,6 +9,7 @@
 ---
 
 ## Completion Summary
+
 - ✅ **Supabase Integration**: Database schema applied with PostgreSQL tables, RLS policies, and triggers.
 - ✅ **Authentication**: Email/password auth implemented via Supabase Auth.
 - ✅ **Auto-Scaffolding**: Database triggers automatically create user profiles and initial booksets upon signup.
@@ -45,28 +46,28 @@ Top-level user table for profile and authentication state.
 
 ```typescript
 interface User {
-  id: string;                    // Supabase Auth UID (uuid, primary key)
+  id: string; // Supabase Auth UID (uuid, primary key)
   email: string;
-  displayName?: string;          // Friendly name (e.g., "John Smith, CPA")
+  displayName?: string; // Friendly name (e.g., "John Smith, CPA")
   createdAt: timestamp;
 
   // System permissions
-  isAdmin: boolean;              // Can access admin page, manage users
+  isAdmin: boolean; // Can access admin page, manage users
 
   // Bookset navigation
-  activeBooksetId: string;       // Currently viewing this bookset's data
-  ownBooksetId: string;          // User's personal bookset (always equals userId)
+  activeBooksetId: string; // Currently viewing this bookset's data
+  ownBooksetId: string; // User's personal bookset (always equals userId)
 
   // User preferences (applies across all booksets they access)
   preferences: {
-    defaultView?: 'dashboard' | 'workbench' | 'import';  // Where to land after login
-    autoRunRules: boolean;        // Run rules automatically on import (default: true)
-    autoMarkReviewed: boolean;    // Mark as reviewed when rule matches (default: true)
+    defaultView?: 'dashboard' | 'workbench' | 'import'; // Where to land after login
+    autoRunRules: boolean; // Run rules automatically on import (default: true)
+    autoMarkReviewed: boolean; // Mark as reviewed when rule matches (default: true)
   };
 
   // Audit metadata
   lastActive: timestamp;
-  lastModifiedBy?: string;       // For multi-user audit trail (uuid, foreign key to users.id)
+  lastModifiedBy?: string; // For multi-user audit trail (uuid, foreign key to users.id)
 }
 ```
 
@@ -83,16 +84,16 @@ A bookset represents one set of financial books. By default, each user has one b
 
 ```typescript
 interface Bookset {
-  id: string;                    // uuid, primary key (typically equals the owner's userId)
-  ownerId: string;               // uuid, foreign key to users.id - User who owns this bookset
-  name: string;                  // "Smith Family Finances", "ABC Corp Books"
+  id: string; // uuid, primary key (typically equals the owner's userId)
+  ownerId: string; // uuid, foreign key to users.id - User who owns this bookset
+  name: string; // "Smith Family Finances", "ABC Corp Books"
 
   createdAt: timestamp;
   updatedAt: timestamp;
 
   // Future: organizational metadata
   businessType?: 'personal' | 'sole_proprietor' | 'llc' | 'corporation';
-  taxYear?: number;              // Primary tax year being tracked
+  taxYear?: number; // Primary tax year being tracked
 }
 ```
 
@@ -108,10 +109,10 @@ Tracks who has access to a bookset and what they can do.
 
 ```typescript
 interface AccessGrant {
-  id: string;                    // uuid, primary key
-  booksetId: string;             // uuid, foreign key to booksets.id
-  userId: string;                // uuid, foreign key to users.id - Who is being granted access
-  grantedBy: string;             // uuid, foreign key to users.id - Who created this grant
+  id: string; // uuid, primary key
+  booksetId: string; // uuid, foreign key to booksets.id
+  userId: string; // uuid, foreign key to users.id - Who is being granted access
+  grantedBy: string; // uuid, foreign key to users.id - Who created this grant
 
   // Permissions
   role: 'owner' | 'editor' | 'viewer';
@@ -121,13 +122,13 @@ interface AccessGrant {
 
   // Metadata
   createdAt: timestamp;
-  expiresAt?: timestamp;         // Optional: time-limited access
-  revokedAt?: timestamp;         // Soft delete: track when access was removed
-  revokedBy?: string;            // uuid, foreign key to users.id
+  expiresAt?: timestamp; // Optional: time-limited access
+  revokedAt?: timestamp; // Soft delete: track when access was removed
+  revokedBy?: string; // uuid, foreign key to users.id
 
   // Future: granular permissions
-  canImport?: boolean;           // Override: viewer who can import
-  canReconcile?: boolean;        // Override: editor who cannot reconcile
+  canImport?: boolean; // Override: viewer who can import
+  canReconcile?: boolean; // Override: editor who cannot reconcile
 }
 ```
 
@@ -142,47 +143,47 @@ interface AccessGrant {
 
 ```typescript
 interface Account {
-  id: string;                    // uuid, primary key
-  booksetId: string;             // uuid, foreign key to booksets.id
-  name: string;                  // "Chase Checking", "Amex Blue"
-  type: 'Asset' | 'Liability';   // Affects how balances are calculated
-  openingBalance: number;        // Balance before first transaction (in cents)
+  id: string; // uuid, primary key
+  booksetId: string; // uuid, foreign key to booksets.id
+  name: string; // "Chase Checking", "Amex Blue"
+  type: 'Asset' | 'Liability'; // Affects how balances are calculated
+  openingBalance: number; // Balance before first transaction (in cents)
   openingBalanceDate: timestamp; // The "day zero" for this account
 
   // CSV Import Configuration (Phase 3 - per account, not per bank!)
   csvMapping?: {
-    dateColumn: string;          // "Date", "Transaction Date", "Posted Date"
-    descriptionColumn: string;   // "Description", "Memo"
-    amountColumn: string;        // "Amount"
+    dateColumn: string; // "Date", "Transaction Date", "Posted Date"
+    descriptionColumn: string; // "Description", "Memo"
+    amountColumn: string; // "Amount"
     // OR for split debit/credit columns:
     debitColumn?: string;
     creditColumn?: string;
 
-    dateFormat: string;          // "MM/DD/YYYY", "YYYY-MM-DD"
+    dateFormat: string; // "MM/DD/YYYY", "YYYY-MM-DD"
     hasHeaderRow: boolean;
-    skipRows: number;            // How many rows to skip at top
-    amountIsNegativeForExpenses: boolean;  // Sign convention
+    skipRows: number; // How many rows to skip at top
+    amountIsNegativeForExpenses: boolean; // Sign convention
   };
 
   // Reconciliation tracking
   lastReconciledDate: timestamp | null;
-  lastReconciledBalance: number;           // In cents
+  lastReconciledBalance: number; // In cents
 
   // Metadata
   createdAt: timestamp;
   updatedAt: timestamp;
-  isArchived: boolean;           // Soft delete (hide from UI, keep data)
+  isArchived: boolean; // Soft delete (hide from UI, keep data)
 
   // Future features
-  bankConnectionId?: string;     // Future: link to Plaid/Teller integration
-  notes?: string;                // User notes about this account
-  color?: string;                // UI color coding
-  institutionName?: string;      // "Chase", "American Express"
+  bankConnectionId?: string; // Future: link to Plaid/Teller integration
+  notes?: string; // User notes about this account
+  color?: string; // UI color coding
+  institutionName?: string; // "Chase", "American Express"
 
   // Audit trail
-  createdBy: string;             // uuid, foreign key to users.id - userId who created this
-  lastModifiedBy: string;        // uuid, foreign key to users.id - userId who last edited
-  changeHistory?: jsonb;         // Future: track all changes as JSON array
+  createdBy: string; // uuid, foreign key to users.id - userId who created this
+  lastModifiedBy: string; // uuid, foreign key to users.id - userId who last edited
+  changeHistory?: jsonb; // Future: track all changes as JSON array
 }
 ```
 
@@ -196,32 +197,32 @@ interface Account {
 
 ```typescript
 interface Category {
-  id: string;                    // uuid, primary key
-  booksetId: string;             // uuid, foreign key to booksets.id
-  name: string;                  // "Medical", "Groceries", "Office Supplies"
+  id: string; // uuid, primary key
+  booksetId: string; // uuid, foreign key to booksets.id
+  name: string; // "Medical", "Groceries", "Office Supplies"
 
   // Tax reporting
-  taxLineItem?: string;          // "Schedule C - Line 7", "Form 1040 - Medical"
-  isTaxDeductible: boolean;      // Quick filter for tax prep
+  taxLineItem?: string; // "Schedule C - Line 7", "Form 1040 - Medical"
+  isTaxDeductible: boolean; // Quick filter for tax prep
 
   // Organization
-  parentCategoryId?: string;     // uuid, foreign key to categories.id - Hierarchical categories
-  sortOrder: number;             // User-defined display order
+  parentCategoryId?: string; // uuid, foreign key to categories.id - Hierarchical categories
+  sortOrder: number; // User-defined display order
 
   // Metadata
   createdAt: timestamp;
   updatedAt: timestamp;
-  isArchived: boolean;           // Soft delete
+  isArchived: boolean; // Soft delete
 
   // Future features
-  color?: string;                // UI color coding
-  icon?: string;                 // Icon identifier
-  budgetAmount?: number;         // Monthly budget tracking (in cents)
+  color?: string; // UI color coding
+  icon?: string; // Icon identifier
+  budgetAmount?: number; // Monthly budget tracking (in cents)
   budgetPeriod?: 'monthly' | 'quarterly' | 'annual';
 
   // Audit trail
-  createdBy: string;             // uuid, foreign key to users.id
-  lastModifiedBy: string;        // uuid, foreign key to users.id
+  createdBy: string; // uuid, foreign key to users.id
+  lastModifiedBy: string; // uuid, foreign key to users.id
 }
 ```
 
@@ -229,19 +230,19 @@ interface Category {
 
 ```typescript
 interface Transaction {
-  id: string;                    // uuid, primary key
-  booksetId: string;             // uuid, foreign key to booksets.id
-  accountId: string;             // uuid, foreign key to accounts.id
+  id: string; // uuid, primary key
+  booksetId: string; // uuid, foreign key to booksets.id
+  accountId: string; // uuid, foreign key to accounts.id
 
   // Core transaction data
-  date: timestamp;               // Transaction date (not import date)
-  payee: string;                 // Normalized vendor name (user editable)
-  originalDescription: string;   // Raw bank description (immutable, for rules)
-  amount: number;                // In cents. Negative = expense, Positive = income
+  date: timestamp; // Transaction date (not import date)
+  payee: string; // Normalized vendor name (user editable)
+  originalDescription: string; // Raw bank description (immutable, for rules)
+  amount: number; // In cents. Negative = expense, Positive = income
 
   // Split transaction support
   isSplit: boolean;
-  lines: jsonb;                  // Array of split lines stored as JSON
+  lines: jsonb; // Array of split lines stored as JSON
   // Structure: Array<{
   //   categoryId: string;        // uuid, reference to categories.id
   //   amount: number;            // In cents. Must sum to parent amount
@@ -250,21 +251,21 @@ interface Transaction {
   // Note: If isSplit=false, lines array has exactly 1 entry
 
   // Workflow state
-  isReviewed: boolean;           // User has verified this transaction
-  reconciled: boolean;           // Locked by reconciliation process
-  reconciledDate?: timestamp;    // When it was reconciled
+  isReviewed: boolean; // User has verified this transaction
+  reconciled: boolean; // Locked by reconciliation process
+  reconciledDate?: timestamp; // When it was reconciled
 
   // Import tracking
-  sourceBatchId: string;         // UUID of the import batch (for undo)
-  importDate: timestamp;         // When this was imported
-  fingerprint: string;           // Deduplication hash (date + amount + description hash)
+  sourceBatchId: string; // UUID of the import batch (for undo)
+  importDate: timestamp; // When this was imported
+  fingerprint: string; // Deduplication hash (date + amount + description hash)
 
   // Metadata
   createdAt: timestamp;
   updatedAt: timestamp;
 
   // Future features
-  attachments?: jsonb;           // Receipt images stored as JSON array
+  attachments?: jsonb; // Receipt images stored as JSON array
   // Structure: Array<{
   //   id: string;
   //   fileName: string;
@@ -273,14 +274,14 @@ interface Transaction {
   //   uploadedBy: string;        // uuid, reference to users.id
   // }>
 
-  tags?: text[];                 // Flexible tagging ("reimbursable", "personal") - PostgreSQL array
-  isRecurring?: boolean;         // Recurring transaction detection
-  recurringGroupId?: string;     // Link related recurring transactions
+  tags?: text[]; // Flexible tagging ("reimbursable", "personal") - PostgreSQL array
+  isRecurring?: boolean; // Recurring transaction detection
+  recurringGroupId?: string; // Link related recurring transactions
 
   // Audit trail
-  createdBy: string;             // uuid, foreign key to users.id
-  lastModifiedBy: string;        // uuid, foreign key to users.id
-  changeHistory?: jsonb;         // Track all changes as JSON array
+  createdBy: string; // uuid, foreign key to users.id
+  lastModifiedBy: string; // uuid, foreign key to users.id
+  changeHistory?: jsonb; // Track all changes as JSON array
 }
 ```
 
@@ -288,30 +289,30 @@ interface Transaction {
 
 ```typescript
 interface Rule {
-  id: string;                    // uuid, primary key
-  booksetId: string;             // uuid, foreign key to booksets.id
+  id: string; // uuid, primary key
+  booksetId: string; // uuid, foreign key to booksets.id
 
   // Matching criteria
-  keyword: string;               // Lowercase search string
+  keyword: string; // Lowercase search string
   matchType: 'contains' | 'exact' | 'startsWith' | 'regex';
-  caseSensitive: boolean;        // Usually false
+  caseSensitive: boolean; // Usually false
 
   // Action to take
-  targetCategoryId: string;      // uuid, foreign key to categories.id - Auto-assign this category
-  suggestedPayee?: string;       // Also normalize payee name
+  targetCategoryId: string; // uuid, foreign key to categories.id - Auto-assign this category
+  suggestedPayee?: string; // Also normalize payee name
 
   // Priority and control
-  priority: number;              // Higher priority wins if multiple rules match
-  isEnabled: boolean;            // Allow disabling without deleting
+  priority: number; // Higher priority wins if multiple rules match
+  isEnabled: boolean; // Allow disabling without deleting
 
   // Metadata
   createdAt: timestamp;
   updatedAt: timestamp;
-  lastUsedAt?: timestamp;        // Track which rules are actually useful
-  useCount: number;              // How many times this rule has matched
+  lastUsedAt?: timestamp; // Track which rules are actually useful
+  useCount: number; // How many times this rule has matched
 
   // Future: Advanced conditions
-  conditions?: jsonb;            // Store advanced conditions as JSON
+  conditions?: jsonb; // Store advanced conditions as JSON
   // Structure: {
   //   amountMin?: number;
   //   amountMax?: number;
@@ -323,8 +324,8 @@ interface Rule {
   // }
 
   // Audit trail
-  createdBy: string;             // uuid, foreign key to users.id
-  lastModifiedBy: string;        // uuid, foreign key to users.id
+  createdBy: string; // uuid, foreign key to users.id
+  lastModifiedBy: string; // uuid, foreign key to users.id
 }
 ```
 
@@ -332,30 +333,30 @@ interface Rule {
 
 ```typescript
 interface Reconciliation {
-  id: string;                    // uuid, primary key
-  booksetId: string;             // uuid, foreign key to booksets.id
-  accountId: string;             // uuid, foreign key to accounts.id
+  id: string; // uuid, primary key
+  booksetId: string; // uuid, foreign key to booksets.id
+  accountId: string; // uuid, foreign key to accounts.id
 
   // Reconciliation details
-  statementDate: timestamp;      // Ending date on bank statement
-  statementBalance: number;      // Bank's reported balance (in cents)
-  calculatedBalance: number;     // Our computed balance (in cents)
-  difference: number;            // statementBalance - calculatedBalance
+  statementDate: timestamp; // Ending date on bank statement
+  statementBalance: number; // Bank's reported balance (in cents)
+  calculatedBalance: number; // Our computed balance (in cents)
+  difference: number; // statementBalance - calculatedBalance
 
   // Status
   status: 'in_progress' | 'balanced' | 'unbalanced';
-  finalizedAt?: timestamp;       // When user clicked "Finalize"
+  finalizedAt?: timestamp; // When user clicked "Finalize"
 
   // Tracking
-  transactionCount: number;      // How many transactions were included
-  transactionIds: text[];        // All transactions locked by this reconciliation - PostgreSQL array
+  transactionCount: number; // How many transactions were included
+  transactionIds: text[]; // All transactions locked by this reconciliation - PostgreSQL array
 
   // Metadata
   createdAt: timestamp;
-  createdBy: string;             // uuid, foreign key to users.id
+  createdBy: string; // uuid, foreign key to users.id
 
   // Notes and audit
-  notes?: string;                // User explanation for discrepancies
+  notes?: string; // User explanation for discrepancies
   discrepancyResolution?: string; // How was the difference resolved
 }
 ```
@@ -364,28 +365,28 @@ interface Reconciliation {
 
 ```typescript
 interface ImportBatch {
-  id: string;                    // uuid, primary key - Used as sourceBatchId in transactions
-  booksetId: string;             // uuid, foreign key to booksets.id
+  id: string; // uuid, primary key - Used as sourceBatchId in transactions
+  booksetId: string; // uuid, foreign key to booksets.id
 
   // Import details
-  accountId: string;             // uuid, foreign key to accounts.id
+  accountId: string; // uuid, foreign key to accounts.id
   fileName: string;
   importedAt: timestamp;
-  importedBy: string;            // uuid, foreign key to users.id
+  importedBy: string; // uuid, foreign key to users.id
 
   // Results
   totalRows: number;
-  importedCount: number;         // Successfully imported
-  duplicateCount: number;        // Skipped as duplicates
-  errorCount: number;            // Failed to parse
+  importedCount: number; // Successfully imported
+  duplicateCount: number; // Skipped as duplicates
+  errorCount: number; // Failed to parse
 
   // Undo support
-  isUndone: boolean;             // If true, transactions from this batch should be hidden
+  isUndone: boolean; // If true, transactions from this batch should be hidden
   undoneAt?: timestamp;
-  undoneBy?: string;             // uuid, foreign key to users.id
+  undoneBy?: string; // uuid, foreign key to users.id
 
   // Metadata
-  csvMappingSnapshot: jsonb;     // Copy of account.csvMapping at time of import
+  csvMappingSnapshot: jsonb; // Copy of account.csvMapping at time of import
 }
 ```
 
@@ -770,7 +771,7 @@ CREATE TRIGGER accounts_prevent_audit_changes
 **Usage:**
 
 ```typescript
-const user = requireAuth();  // Redirects to /login if not authenticated
+const user = requireAuth(); // Redirects to /login if not authenticated
 ```
 
 #### Function: `requireAdmin()`
@@ -780,7 +781,7 @@ const user = requireAuth();  // Redirects to /login if not authenticated
 **Usage:**
 
 ```typescript
-const user = requireAdmin();  // Redirects to /app/dashboard if not admin
+const user = requireAdmin(); // Redirects to /app/dashboard if not admin
 ```
 
 ---
