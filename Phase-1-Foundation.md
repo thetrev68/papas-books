@@ -1047,6 +1047,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 **Platform:** Vercel (free tier)
 
 **Why Vercel:**
+
 - Zero-config deployment for Vite/React apps
 - Automatic deployments from Git
 - Free SSL certificates
@@ -1078,7 +1079,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 
 ### Architecture Overview
 
-```
+```text
 ┌─────────────────────────────┐
 │   Vercel (Frontend Host)    │
 │   - React/Vite SPA          │
@@ -1098,6 +1099,7 @@ export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 ```
 
 **URL Structure:**
+
 - Production: `https://papas-books.vercel.app` (or your custom domain)
 - Supabase API: `https://hdoshdscvlhoqnqaftaq.supabase.co`
 
