@@ -9,9 +9,10 @@
 
 ## Overview
 
-Phase 1 establishes the foundational infrastructure for Papa's Books as a **multi-user bookkeeping system**. This includes Firebase configuration, user authentication with password reset, bookset-based access control, and basic admin functionality.
+Phase 1 establishes the foundational infrastructure for Papa's Books as a **multi-user bookkeeping system**. This includes Supabase configuration, user authentication with password reset, bookset-based access control, and basic admin functionality.
 
 **Key Principles:**
+
 - Multi-user from day one: users can grant access to their books
 - Bookset switching: CPAs can view multiple clients' books with single login
 - Admin capabilities: designated users can manage system-level settings
@@ -19,22 +20,24 @@ Phase 1 establishes the foundational infrastructure for Papa's Books as a **mult
 
 ---
 
-## Firebase Project Setup
+## Supabase Project Setup
 
-### Firestore Database Structure
+**Project URL:** `https://hdoshdscvlhoqnqaftaq.supabase.co`
 
-Design the database schema with multi-user access and future features in mind.
+### PostgreSQL Database Structure
 
-#### Collection: `users/{userId}`
+Design the database schema with multi-user access and future features in mind using PostgreSQL tables with foreign key relationships.
 
-Top-level user document for profile and authentication state.
+#### Table: `users`
+
+Top-level user table for profile and authentication state.
 
 ```typescript
 interface User {
-  id: string;                    // Firebase Auth UID
+  id: string;                    // Supabase Auth UID (uuid, primary key)
   email: string;
   displayName?: string;          // Friendly name (e.g., "John Smith, CPA")
-  createdAt: Timestamp;
+  createdAt: timestamp;
 
   // System permissions
   isAdmin: boolean;              // Can access admin page, manage users
@@ -51,29 +54,30 @@ interface User {
   };
 
   // Audit metadata
-  lastActive: Timestamp;
-  lastModifiedBy?: string;       // For multi-user audit trail
+  lastActive: timestamp;
+  lastModifiedBy?: string;       // For multi-user audit trail (uuid, foreign key to users.id)
 }
 ```
 
 **Why these fields:**
+
 - `activeBooksetId`: Tracks which client's books the user is currently viewing
 - `ownBooksetId`: Every user has their own bookset, always equals their userId
 - `isAdmin`: Enables admin page access without complex role hierarchy
-- `displayName`: Better UX for multi-user scenarios (shows "John Smith" not "john@example.com")
+- `displayName`: Better UX for multi-user scenarios (shows "John Smith" not "<john@example.com>")
 
-#### Collection: `booksets/{booksetId}`
+#### Table: `booksets`
 
 A bookset represents one set of financial books. By default, each user has one bookset (their own).
 
 ```typescript
 interface Bookset {
-  id: string;                    // Typically equals the owner's userId
-  ownerId: string;               // User who owns this bookset
+  id: string;                    // uuid, primary key (typically equals the owner's userId)
+  ownerId: string;               // uuid, foreign key to users.id - User who owns this bookset
   name: string;                  // "Smith Family Finances", "ABC Corp Books"
 
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: timestamp;
+  updatedAt: timestamp;
 
   // Future: organizational metadata
   businessType?: 'personal' | 'sole_proprietor' | 'llc' | 'corporation';
@@ -82,20 +86,21 @@ interface Bookset {
 ```
 
 **Why this collection:**
+
 - Separates "who can log in" (users) from "whose books" (booksets)
 - Enables future: one person managing multiple business entities
 - Clean permission model: grant access to bookset, not individual accounts
 
-#### Subcollection: `booksets/{booksetId}/accessGrants/{grantId}`
+#### Table: `access_grants`
 
 Tracks who has access to a bookset and what they can do.
 
 ```typescript
 interface AccessGrant {
-  id: string;                    // Auto-generated
-  booksetId: string;             // Which bookset this grant is for
-  userId: string;                // Who is being granted access
-  grantedBy: string;             // Who created this grant
+  id: string;                    // uuid, primary key
+  booksetId: string;             // uuid, foreign key to booksets.id
+  userId: string;                // uuid, foreign key to users.id - Who is being granted access
+  grantedBy: string;             // uuid, foreign key to users.id - Who created this grant
 
   // Permissions
   role: 'owner' | 'editor' | 'viewer';
@@ -104,10 +109,10 @@ interface AccessGrant {
   // viewer: read-only (CPA doing tax prep)
 
   // Metadata
-  createdAt: Timestamp;
-  expiresAt?: Timestamp;         // Optional: time-limited access
-  revokedAt?: Timestamp;         // Soft delete: track when access was removed
-  revokedBy?: string;
+  createdAt: timestamp;
+  expiresAt?: timestamp;         // Optional: time-limited access
+  revokedAt?: timestamp;         // Soft delete: track when access was removed
+  revokedBy?: string;            // uuid, foreign key to users.id
 
   // Future: granular permissions
   canImport?: boolean;           // Override: viewer who can import
@@ -116,20 +121,22 @@ interface AccessGrant {
 ```
 
 **Why this structure:**
+
 - Owner automatically has implicit access (no grant needed for their own bookset)
 - Multiple grants per bookset (owner can share with multiple CPAs/bookkeepers)
 - Soft delete via `revokedAt` maintains audit trail
 - `expiresAt`: Enables temporary access (e.g., "CPA access during tax season")
 
-#### Subcollection: `booksets/{booksetId}/accounts/{accountId}`
+#### Table: `accounts`
 
 ```typescript
 interface Account {
-  id: string;
+  id: string;                    // uuid, primary key
+  booksetId: string;             // uuid, foreign key to booksets.id
   name: string;                  // "Chase Checking", "Amex Blue"
   type: 'Asset' | 'Liability';   // Affects how balances are calculated
   openingBalance: number;        // Balance before first transaction (in cents)
-  openingBalanceDate: Timestamp; // The "day zero" for this account
+  openingBalanceDate: timestamp; // The "day zero" for this account
 
   // CSV Import Configuration (Phase 3 - per account, not per bank!)
   csvMapping?: {
@@ -147,12 +154,12 @@ interface Account {
   };
 
   // Reconciliation tracking
-  lastReconciledDate: Timestamp | null;
+  lastReconciledDate: timestamp | null;
   lastReconciledBalance: number;           // In cents
 
   // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: timestamp;
+  updatedAt: timestamp;
   isArchived: boolean;           // Soft delete (hide from UI, keep data)
 
   // Future features
@@ -162,28 +169,24 @@ interface Account {
   institutionName?: string;      // "Chase", "American Express"
 
   // Audit trail
-  createdBy: string;             // userId who created this
-  lastModifiedBy: string;        // userId who last edited
-  changeHistory?: Array<{        // Future: track all changes
-    timestamp: Timestamp;
-    userId: string;
-    field: string;
-    oldValue: any;
-    newValue: any;
-  }>;
+  createdBy: string;             // uuid, foreign key to users.id - userId who created this
+  lastModifiedBy: string;        // uuid, foreign key to users.id - userId who last edited
+  changeHistory?: jsonb;         // Future: track all changes as JSON array
 }
 ```
 
 **Why these changes:**
+
 - `csvMapping`: **Per-account** CSV configuration (same bank, different formats!)
 - Flexible mapping supports various CSV layouts from different institutions
 - Sign convention flag handles banks that use negative for expenses vs. positive
 
-#### Subcollection: `booksets/{booksetId}/categories/{categoryId}`
+#### Table: `categories`
 
 ```typescript
 interface Category {
-  id: string;
+  id: string;                    // uuid, primary key
+  booksetId: string;             // uuid, foreign key to booksets.id
   name: string;                  // "Medical", "Groceries", "Office Supplies"
 
   // Tax reporting
@@ -191,12 +194,12 @@ interface Category {
   isTaxDeductible: boolean;      // Quick filter for tax prep
 
   // Organization
-  parentCategoryId?: string;     // Hierarchical categories
+  parentCategoryId?: string;     // uuid, foreign key to categories.id - Hierarchical categories
   sortOrder: number;             // User-defined display order
 
   // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: timestamp;
+  updatedAt: timestamp;
   isArchived: boolean;           // Soft delete
 
   // Future features
@@ -206,79 +209,76 @@ interface Category {
   budgetPeriod?: 'monthly' | 'quarterly' | 'annual';
 
   // Audit trail
-  createdBy: string;
-  lastModifiedBy: string;
+  createdBy: string;             // uuid, foreign key to users.id
+  lastModifiedBy: string;        // uuid, foreign key to users.id
 }
 ```
 
-#### Subcollection: `booksets/{booksetId}/transactions/{transactionId}`
+#### Table: `transactions`
 
 ```typescript
 interface Transaction {
-  id: string;
-  accountId: string;             // Reference to accounts collection
+  id: string;                    // uuid, primary key
+  booksetId: string;             // uuid, foreign key to booksets.id
+  accountId: string;             // uuid, foreign key to accounts.id
 
   // Core transaction data
-  date: Timestamp;               // Transaction date (not import date)
+  date: timestamp;               // Transaction date (not import date)
   payee: string;                 // Normalized vendor name (user editable)
   originalDescription: string;   // Raw bank description (immutable, for rules)
   amount: number;                // In cents. Negative = expense, Positive = income
 
   // Split transaction support
   isSplit: boolean;
-  lines: Array<{
-    categoryId: string;          // Reference to categories collection
-    amount: number;              // In cents. Must sum to parent amount
-    memo?: string;               // Optional note for this specific line
-  }>;
+  lines: jsonb;                  // Array of split lines stored as JSON
+  // Structure: Array<{
+  //   categoryId: string;        // uuid, reference to categories.id
+  //   amount: number;            // In cents. Must sum to parent amount
+  //   memo?: string;             // Optional note for this specific line
+  // }>
   // Note: If isSplit=false, lines array has exactly 1 entry
 
   // Workflow state
   isReviewed: boolean;           // User has verified this transaction
   reconciled: boolean;           // Locked by reconciliation process
-  reconciledDate?: Timestamp;    // When it was reconciled
+  reconciledDate?: timestamp;    // When it was reconciled
 
   // Import tracking
   sourceBatchId: string;         // UUID of the import batch (for undo)
-  importDate: Timestamp;         // When this was imported
+  importDate: timestamp;         // When this was imported
   fingerprint: string;           // Deduplication hash (date + amount + description hash)
 
   // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
+  createdAt: timestamp;
+  updatedAt: timestamp;
 
   // Future features
-  attachments?: Array<{          // Receipt images
-    id: string;
-    fileName: string;
-    storagePath: string;         // Firebase Storage path
-    uploadedAt: Timestamp;
-    uploadedBy: string;
-  }>;
+  attachments?: jsonb;           // Receipt images stored as JSON array
+  // Structure: Array<{
+  //   id: string;
+  //   fileName: string;
+  //   storagePath: string;       // Supabase Storage path
+  //   uploadedAt: timestamp;
+  //   uploadedBy: string;        // uuid, reference to users.id
+  // }>
 
-  tags?: string[];               // Flexible tagging ("reimbursable", "personal")
+  tags?: text[];                 // Flexible tagging ("reimbursable", "personal") - PostgreSQL array
   isRecurring?: boolean;         // Recurring transaction detection
   recurringGroupId?: string;     // Link related recurring transactions
 
   // Audit trail
-  createdBy: string;
-  lastModifiedBy: string;
-  changeHistory?: Array<{
-    timestamp: Timestamp;
-    userId: string;
-    field: string;
-    oldValue: any;
-    newValue: any;
-    reason?: string;             // User can explain why they changed it
-  }>;
+  createdBy: string;             // uuid, foreign key to users.id
+  lastModifiedBy: string;        // uuid, foreign key to users.id
+  changeHistory?: jsonb;         // Track all changes as JSON array
 }
 ```
 
-#### Subcollection: `booksets/{booksetId}/rules/{ruleId}`
+#### Table: `rules`
 
 ```typescript
 interface Rule {
-  id: string;
+  id: string;                    // uuid, primary key
+  booksetId: string;             // uuid, foreign key to booksets.id
 
   // Matching criteria
   keyword: string;               // Lowercase search string
@@ -286,7 +286,7 @@ interface Rule {
   caseSensitive: boolean;        // Usually false
 
   // Action to take
-  targetCategoryId: string;      // Auto-assign this category
+  targetCategoryId: string;      // uuid, foreign key to categories.id - Auto-assign this category
   suggestedPayee?: string;       // Also normalize payee name
 
   // Priority and control
@@ -294,52 +294,54 @@ interface Rule {
   isEnabled: boolean;            // Allow disabling without deleting
 
   // Metadata
-  createdAt: Timestamp;
-  updatedAt: Timestamp;
-  lastUsedAt?: Timestamp;        // Track which rules are actually useful
+  createdAt: timestamp;
+  updatedAt: timestamp;
+  lastUsedAt?: timestamp;        // Track which rules are actually useful
   useCount: number;              // How many times this rule has matched
 
   // Future: Advanced conditions
-  conditions?: {
-    amountMin?: number;
-    amountMax?: number;
-    accountIds?: string[];       // Only apply to specific accounts
-    dateRange?: {
-      start: Timestamp;
-      end: Timestamp;
-    };
-  };
+  conditions?: jsonb;            // Store advanced conditions as JSON
+  // Structure: {
+  //   amountMin?: number;
+  //   amountMax?: number;
+  //   accountIds?: string[];     // Only apply to specific accounts
+  //   dateRange?: {
+  //     start: timestamp;
+  //     end: timestamp;
+  //   };
+  // }
 
   // Audit trail
-  createdBy: string;
-  lastModifiedBy: string;
+  createdBy: string;             // uuid, foreign key to users.id
+  lastModifiedBy: string;        // uuid, foreign key to users.id
 }
 ```
 
-#### Subcollection: `booksets/{booksetId}/reconciliations/{reconciliationId}`
+#### Table: `reconciliations`
 
 ```typescript
 interface Reconciliation {
-  id: string;
-  accountId: string;
+  id: string;                    // uuid, primary key
+  booksetId: string;             // uuid, foreign key to booksets.id
+  accountId: string;             // uuid, foreign key to accounts.id
 
   // Reconciliation details
-  statementDate: Timestamp;      // Ending date on bank statement
+  statementDate: timestamp;      // Ending date on bank statement
   statementBalance: number;      // Bank's reported balance (in cents)
   calculatedBalance: number;     // Our computed balance (in cents)
   difference: number;            // statementBalance - calculatedBalance
 
   // Status
   status: 'in_progress' | 'balanced' | 'unbalanced';
-  finalizedAt?: Timestamp;       // When user clicked "Finalize"
+  finalizedAt?: timestamp;       // When user clicked "Finalize"
 
   // Tracking
   transactionCount: number;      // How many transactions were included
-  transactionIds: string[];      // All transactions locked by this reconciliation
+  transactionIds: text[];        // All transactions locked by this reconciliation - PostgreSQL array
 
   // Metadata
-  createdAt: Timestamp;
-  createdBy: string;
+  createdAt: timestamp;
+  createdBy: string;             // uuid, foreign key to users.id
 
   // Notes and audit
   notes?: string;                // User explanation for discrepancies
@@ -347,17 +349,18 @@ interface Reconciliation {
 }
 ```
 
-#### Subcollection: `booksets/{booksetId}/importBatches/{batchId}`
+#### Table: `import_batches`
 
 ```typescript
 interface ImportBatch {
-  id: string;                    // Used as sourceBatchId in transactions
+  id: string;                    // uuid, primary key - Used as sourceBatchId in transactions
+  booksetId: string;             // uuid, foreign key to booksets.id
 
   // Import details
-  accountId: string;
+  accountId: string;             // uuid, foreign key to accounts.id
   fileName: string;
-  importedAt: Timestamp;
-  importedBy: string;
+  importedAt: timestamp;
+  importedBy: string;            // uuid, foreign key to users.id
 
   // Results
   totalRows: number;
@@ -367,11 +370,11 @@ interface ImportBatch {
 
   // Undo support
   isUndone: boolean;             // If true, transactions from this batch should be hidden
-  undoneAt?: Timestamp;
-  undoneBy?: string;
+  undoneAt?: timestamp;
+  undoneBy?: string;             // uuid, foreign key to users.id
 
   // Metadata
-  csvMappingSnapshot: object;    // Copy of account.csvMapping at time of import
+  csvMappingSnapshot: jsonb;     // Copy of account.csvMapping at time of import
 }
 ```
 
@@ -381,167 +384,308 @@ interface ImportBatch {
 
 ---
 
-## Firebase Security Rules
-
-**File:** `firestore.rules`
+## Supabase Row Level Security (RLS) Policies
 
 ### Core Security Principles
 
 1. **User Isolation:** Users can only access booksets they own or have grants for
 2. **Authentication Required:** No unauthenticated reads or writes
-3. **Immutable Audit Fields:** `createdBy`, `createdAt` cannot be changed after creation
-4. **Reconciliation Locks:** Reconciled transactions cannot be modified
+3. **Immutable Audit Fields:** `createdBy`, `createdAt` cannot be changed after creation (enforced via triggers)
+4. **Reconciliation Locks:** Reconciled transactions cannot be modified (enforced via check constraints)
 5. **Permission Enforcement:** Viewers cannot write, editors can write (non-admin operations)
 
-### Rule Helper Functions
+### RLS Helper Functions
 
-```javascript
-// Check if request is authenticated
-function isSignedIn() {
-  return request.auth != null;
-}
+Create these PostgreSQL functions to be used in RLS policies:
 
-// Check if user is system admin
-function isAdmin() {
-  return isSignedIn()
-      && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.isAdmin == true;
-}
+```sql
+-- Check if user owns this bookset
+CREATE OR REPLACE FUNCTION user_owns_bookset(bookset_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM booksets
+    WHERE id = bookset_id
+    AND ownerId = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-// Check if user owns this bookset
-function isBooksetOwner(booksetId) {
-  return isSignedIn()
-      && get(/databases/$(database)/documents/booksets/$(booksetId)).data.ownerId == request.auth.uid;
-}
+-- Check if user has access grant to this bookset (not revoked, not expired)
+CREATE OR REPLACE FUNCTION user_has_access_grant(bookset_id uuid, min_role text DEFAULT 'viewer')
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM access_grants
+    WHERE booksetId = bookset_id
+    AND userId = auth.uid()
+    AND revokedAt IS NULL
+    AND (expiresAt IS NULL OR expiresAt > now())
+    AND (
+      min_role = 'viewer' OR
+      (min_role = 'editor' AND role IN ('editor', 'owner')) OR
+      (min_role = 'owner' AND role = 'owner')
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-// Check if user has any access grant to this bookset (not revoked, not expired)
-function hasAccessGrant(booksetId, minRole) {
-  return exists(/databases/$(database)/documents/booksets/$(booksetId)/accessGrants/$(request.auth.uid))
-      && get(/databases/$(database)/documents/booksets/$(booksetId)/accessGrants/$(request.auth.uid)).data.revokedAt == null;
-}
+-- Check if user can read this bookset (owner OR has grant)
+CREATE OR REPLACE FUNCTION user_can_read_bookset(bookset_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN user_owns_bookset(bookset_id) OR user_has_access_grant(bookset_id, 'viewer');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-// Check if user can read this bookset (owner OR has grant)
-function canReadBookset(booksetId) {
-  return isBooksetOwner(booksetId) || hasAccessGrant(booksetId, 'viewer');
-}
+-- Check if user can write to this bookset (owner OR editor+ grant)
+CREATE OR REPLACE FUNCTION user_can_write_bookset(bookset_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN user_owns_bookset(bookset_id) OR user_has_access_grant(bookset_id, 'editor');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 
-// Check if user can write to this bookset (owner OR editor/owner grant)
-function canWriteBookset(booksetId) {
-  let grant = get(/databases/$(database)/documents/booksets/$(booksetId)/accessGrants/$(request.auth.uid)).data;
-  return isBooksetOwner(booksetId)
-      || (hasAccessGrant(booksetId, 'editor') && grant.role in ['editor', 'owner']);
-}
-
-// Audit field validation
-function hasValidAuditFieldsOnCreate() {
-  return request.resource.data.createdBy == request.auth.uid
-      && request.resource.data.createdAt == request.time;
-}
-
-function auditFieldsUnchanged() {
-  return request.resource.data.createdBy == resource.data.createdBy
-      && request.resource.data.createdAt == resource.data.createdAt;
-}
-
-function hasValidModifiedBy() {
-  return request.resource.data.lastModifiedBy == request.auth.uid;
-}
-
-// Check if transaction is locked
-function isReconciled() {
-  return resource.data.reconciled == true;
-}
+-- Check if user is admin
+CREATE OR REPLACE FUNCTION user_is_admin()
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM users
+    WHERE id = auth.uid()
+    AND isAdmin = true
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
-### Security Rules Structure
+### RLS Policies by Table
 
-```javascript
-rules_version = '2';
-service cloud.firestore {
-  match /databases/{database}/documents {
+#### Table: `users`
 
-    // User documents - users can read/update their own
-    match /users/{userId} {
-      allow read: if isSignedIn() && request.auth.uid == userId;
-      allow create: if isSignedIn() && request.auth.uid == userId;
-      allow update: if isSignedIn() && request.auth.uid == userId;
-      // Only admins can set isAdmin flag
-      allow update: if isAdmin() && request.auth.uid != userId;
-    }
+```sql
+-- Enable RLS
+ALTER TABLE users ENABLE ROW LEVEL SECURITY;
 
-    // Bookset documents
-    match /booksets/{booksetId} {
-      allow read: if canReadBookset(booksetId);
-      allow create: if isSignedIn() && request.resource.data.ownerId == request.auth.uid;
-      allow update: if isBooksetOwner(booksetId);
-    }
+-- Users can read their own profile
+CREATE POLICY "Users can read own profile"
+  ON users FOR SELECT
+  USING (auth.uid() = id);
 
-    // Access grants subcollection
-    match /booksets/{booksetId}/accessGrants/{grantId} {
-      allow read: if canReadBookset(booksetId);
-      allow create: if isBooksetOwner(booksetId);
-      allow update: if isBooksetOwner(booksetId);
-      allow delete: if false;  // Use revokedAt instead
-    }
+-- Users can insert their own profile (during signup)
+CREATE POLICY "Users can create own profile"
+  ON users FOR INSERT
+  WITH CHECK (auth.uid() = id);
 
-    // Accounts subcollection
-    match /booksets/{booksetId}/accounts/{accountId} {
-      allow read: if canReadBookset(booksetId);
-      allow create, update: if canWriteBookset(booksetId);
-      allow delete: if false;  // Use isArchived instead
-    }
+-- Users can update their own profile (except isAdmin)
+CREATE POLICY "Users can update own profile"
+  ON users FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id AND (OLD.isAdmin = NEW.isAdmin OR user_is_admin()));
 
-    // Categories subcollection
-    match /booksets/{booksetId}/categories/{categoryId} {
-      allow read: if canReadBookset(booksetId);
-      allow create, update: if canWriteBookset(booksetId);
-      allow delete: if false;
-    }
-
-    // Transactions subcollection
-    match /booksets/{booksetId}/transactions/{transactionId} {
-      allow read: if canReadBookset(booksetId);
-      allow create: if canWriteBookset(booksetId);
-      allow update: if canWriteBookset(booksetId) && !isReconciled();
-      allow delete: if false;
-    }
-
-    // Rules subcollection
-    match /booksets/{booksetId}/rules/{ruleId} {
-      allow read: if canReadBookset(booksetId);
-      allow create, update: if canWriteBookset(booksetId);
-      allow delete: if false;
-    }
-
-    // Reconciliations subcollection
-    match /booksets/{booksetId}/reconciliations/{reconciliationId} {
-      allow read: if canReadBookset(booksetId);
-      allow create, update: if canWriteBookset(booksetId);
-      allow delete: if false;
-    }
-
-    // Import batches subcollection
-    match /booksets/{booksetId}/importBatches/{batchId} {
-      allow read: if canReadBookset(booksetId);
-      allow create, update: if canWriteBookset(booksetId);
-      allow delete: if false;
-    }
-  }
-}
+-- Admins can update other users' admin status
+CREATE POLICY "Admins can manage users"
+  ON users FOR UPDATE
+  USING (user_is_admin())
+  WITH CHECK (user_is_admin());
 ```
 
-**Why these rules:**
+#### Table: `booksets`
 
-- `allow delete: if false`: Prevent accidental data loss, use soft delete flags instead
-- `!isReconciled()`: Enforces business rule at database level
-- Audit fields validated at database level, not just in client code
-- Viewers can read but not write
-- Only bookset owner can grant/revoke access
+```sql
+-- Enable RLS
+ALTER TABLE booksets ENABLE ROW LEVEL SECURITY;
+
+-- Users can read booksets they own or have access to
+CREATE POLICY "Users can read accessible booksets"
+  ON booksets FOR SELECT
+  USING (user_can_read_bookset(id));
+
+-- Users can create booksets they own
+CREATE POLICY "Users can create own booksets"
+  ON booksets FOR INSERT
+  WITH CHECK (auth.uid() = ownerId);
+
+-- Only owners can update their booksets
+CREATE POLICY "Owners can update booksets"
+  ON booksets FOR UPDATE
+  USING (user_owns_bookset(id))
+  WITH CHECK (user_owns_bookset(id));
+
+-- No deletes allowed (use soft delete via archiving if needed)
+```
+
+#### Table: `access_grants`
+
+```sql
+-- Enable RLS
+ALTER TABLE access_grants ENABLE ROW LEVEL SECURITY;
+
+-- Users can read grants for booksets they have access to
+CREATE POLICY "Users can read grants for accessible booksets"
+  ON access_grants FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+-- Only bookset owners can create grants
+CREATE POLICY "Owners can create grants"
+  ON access_grants FOR INSERT
+  WITH CHECK (user_owns_bookset(booksetId));
+
+-- Only bookset owners can update grants (revoke, etc.)
+CREATE POLICY "Owners can update grants"
+  ON access_grants FOR UPDATE
+  USING (user_owns_bookset(booksetId))
+  WITH CHECK (user_owns_bookset(booksetId));
+
+-- No hard deletes - use revokedAt
+```
+
+#### Tables: `accounts`, `categories`, `rules`, `import_batches`
+
+```sql
+-- Enable RLS on all tables
+ALTER TABLE accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE import_batches ENABLE ROW LEVEL SECURITY;
+
+-- Read policy (same for all)
+CREATE POLICY "Users can read from accessible booksets"
+  ON accounts FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+CREATE POLICY "Users can read from accessible booksets"
+  ON categories FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+CREATE POLICY "Users can read from accessible booksets"
+  ON rules FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+CREATE POLICY "Users can read from accessible booksets"
+  ON import_batches FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+-- Write policies (same for all - requires editor role)
+CREATE POLICY "Editors can insert"
+  ON accounts FOR INSERT
+  WITH CHECK (user_can_write_bookset(booksetId));
+
+CREATE POLICY "Editors can update"
+  ON accounts FOR UPDATE
+  USING (user_can_write_bookset(booksetId))
+  WITH CHECK (user_can_write_bookset(booksetId));
+
+-- Repeat for categories, rules, import_batches...
+-- No DELETE policies - use soft delete flags
+```
+
+#### Table: `transactions`
+
+```sql
+-- Enable RLS
+ALTER TABLE transactions ENABLE ROW LEVEL SECURITY;
+
+-- Read policy
+CREATE POLICY "Users can read transactions from accessible booksets"
+  ON transactions FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+-- Insert policy
+CREATE POLICY "Editors can insert transactions"
+  ON transactions FOR INSERT
+  WITH CHECK (user_can_write_bookset(booksetId));
+
+-- Update policy - CANNOT update reconciled transactions
+CREATE POLICY "Editors can update unreconciled transactions"
+  ON transactions FOR UPDATE
+  USING (user_can_write_bookset(booksetId) AND reconciled = false)
+  WITH CHECK (user_can_write_bookset(booksetId) AND reconciled = false);
+
+-- No DELETE policy
+```
+
+#### Table: `reconciliations`
+
+```sql
+-- Enable RLS
+ALTER TABLE reconciliations ENABLE ROW LEVEL SECURITY;
+
+-- Read policy
+CREATE POLICY "Users can read reconciliations from accessible booksets"
+  ON reconciliations FOR SELECT
+  USING (user_can_read_bookset(booksetId));
+
+-- Write policies
+CREATE POLICY "Editors can insert reconciliations"
+  ON reconciliations FOR INSERT
+  WITH CHECK (user_can_write_bookset(booksetId));
+
+CREATE POLICY "Editors can update reconciliations"
+  ON reconciliations FOR UPDATE
+  USING (user_can_write_bookset(booksetId))
+  WITH CHECK (user_can_write_bookset(booksetId));
+
+-- No DELETE policy
+```
+
+### Database Triggers for Audit Fields
+
+Create triggers to enforce audit field immutability:
+
+```sql
+-- Trigger function to set createdBy and createdAt
+CREATE OR REPLACE FUNCTION set_audit_fields_on_create()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.createdBy = auth.uid();
+  NEW.createdAt = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Trigger function to prevent modification of audit fields
+CREATE OR REPLACE FUNCTION prevent_audit_field_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.createdBy != NEW.createdBy OR OLD.createdAt != NEW.createdAt THEN
+    RAISE EXCEPTION 'Cannot modify createdBy or createdAt fields';
+  END IF;
+  NEW.lastModifiedBy = auth.uid();
+  NEW.updatedAt = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Apply triggers to all tables with audit fields
+-- Example for accounts table:
+CREATE TRIGGER accounts_set_audit_on_create
+  BEFORE INSERT ON accounts
+  FOR EACH ROW
+  EXECUTE FUNCTION set_audit_fields_on_create();
+
+CREATE TRIGGER accounts_prevent_audit_changes
+  BEFORE UPDATE ON accounts
+  FOR EACH ROW
+  EXECUTE FUNCTION prevent_audit_field_changes();
+
+-- Repeat for all other tables: categories, transactions, rules, reconciliations, import_batches, booksets, access_grants
+```
+
+**Why these policies:**
+
+- RLS enforces permissions at the database level, not just client code
+- Helper functions make policies readable and maintainable
+- `SECURITY DEFINER` allows functions to check tables despite RLS
+- Soft deletes prevent accidental data loss
+- Reconciled transaction lock enforced at database level
+- Audit trail automatically maintained via triggers
 
 ---
 
 ## Authentication System
 
-### Firebase Auth Configuration
+### Supabase Auth Configuration
 
 **Providers:**
 
@@ -558,8 +702,8 @@ service cloud.firestore {
 
 ```typescript
 {
-  user: User | null;              // Current authenticated user (from Firestore)
-  firebaseUser: FirebaseUser | null;  // Raw Firebase Auth user
+  user: User | null;              // Current authenticated user (from PostgreSQL users table)
+  supabaseUser: SupabaseUser | null;  // Raw Supabase Auth user
   loading: boolean;               // Still checking auth state
   error: Error | null;
 
@@ -584,28 +728,28 @@ service cloud.firestore {
 
 **Key Behavior:**
 
-- On auth state change, fetch user document from Firestore
-- Load all booksets user has access to (own + access grants)
+- On auth state change, fetch user document from PostgreSQL `users` table
+- Load all booksets user has access to (own + access grants via SQL join)
 - Set `activeBooksetId` to user's own bookset by default
-- **Crucial:** User document and initial bookset creation handled by **Firebase Cloud Function** (`auth.user.onCreate`)
-- Password reset sends Firebase reset email
+- **Crucial:** User document and initial bookset creation handled by **Supabase Database Function** (trigger on `auth.users` insert)
+- Password reset sends Supabase reset email
 
 **Implementation concept:**
 
 ```typescript
 // Client-side:
-// 1. Create Firebase Auth user
-// 2. Wait for auth state change (Cloud Function creates Firestore data)
-// 3. If Firestore data missing after timeout, show error (or retry)
+// 1. Create Supabase Auth user via supabase.auth.signUp()
+// 2. Wait for auth state change (Database trigger creates user profile + bookset)
+// 3. If user profile missing after timeout, show error (or retry)
 
-// Server-side (Cloud Function):
-// 1. Trigger on auth.user.onCreate
-// 2. Create user document with isAdmin=false, ownBooksetId=userId
-// 3. Create bookset document with ownerId=userId, name="[DisplayName]'s Books"
+// Server-side (Supabase Database Trigger):
+// 1. Trigger on INSERT to auth.users
+// 2. Create user record in public.users with isAdmin=false, ownBooksetId=userId
+// 3. Create bookset record with ownerId=userId, name="[DisplayName]'s Books"
 
 // On bookset switch:
-// 1. Update user.activeBooksetId in Firestore
-// 2. All subsequent queries use activeBooksetId in path
+// 1. Update user.activeBooksetId in PostgreSQL
+// 2. All subsequent queries filter by activeBooksetId
 ```
 
 #### Function: `requireAuth()`
@@ -797,8 +941,6 @@ const [activeTab, setActiveTab] = useState<'accounts' | 'categories' | 'rules' |
 - Header: "Reports"
 - Placeholder: "Report generation will appear here in Phase 6"
 
-
-
 ### Page: `ForgotPasswordPage` (NEW)
 
 **Route:** `/forgot-password`
@@ -808,7 +950,7 @@ const [activeTab, setActiveTab] = useState<'accounts' | 'categories' | 'rules' |
 - Header: "Reset Password"
 - Email input field
 - "Send Reset Email" button
-- Uses Firebase `sendPasswordResetEmail()`
+- Uses Supabase `supabase.auth.resetPasswordForEmail()`
 - Success message: "Check your email for reset link"
 
 ---
@@ -835,7 +977,7 @@ npm install
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-router-dom": "^6.22.0",
-    "firebase": "^10.8.0",
+    "@supabase/supabase-js": "^2.39.0",
     "zod": "^3.22.0"
   },
   "devDependencies": {
@@ -858,53 +1000,106 @@ npm install
 **File:** `.env.local`
 
 ```bash
-VITE_FIREBASE_API_KEY=your_api_key
-VITE_FIREBASE_AUTH_DOMAIN=your_project.firebaseapp.com
-VITE_FIREBASE_PROJECT_ID=your_project_id
-VITE_FIREBASE_STORAGE_BUCKET=your_project.appspot.com
-VITE_FIREBASE_MESSAGING_SENDER_ID=your_sender_id
-VITE_FIREBASE_APP_ID=your_app_id
+VITE_SUPABASE_URL=https://hdoshdscvlhoqnqaftaq.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key_here
 ```
 
 **File:** `.env.example` (committed to git)
 
 ```bash
-VITE_FIREBASE_API_KEY=
-VITE_FIREBASE_AUTH_DOMAIN=
-VITE_FIREBASE_PROJECT_ID=
-VITE_FIREBASE_STORAGE_BUCKET=
-VITE_FIREBASE_MESSAGING_SENDER_ID=
-VITE_FIREBASE_APP_ID=
+VITE_SUPABASE_URL=
+VITE_SUPABASE_ANON_KEY=
 ```
 
-### Firebase Initialization
+**Note:** Get your `VITE_SUPABASE_ANON_KEY` from Supabase Dashboard → Project Settings → API → Project API keys → `anon` `public` key.
 
-#### File: `src/lib/firebase/config.ts`
+### Supabase Initialization
 
-**Purpose:** Initialize Firebase app instance.
+#### File: `src/lib/supabase/config.ts`
+
+**Purpose:** Initialize Supabase client instance.
 
 **Exports:**
 
-- `app`: Firebase app instance
-- `auth`: Firebase Auth instance
-- `db`: Firestore instance
+- `supabase`: Supabase client instance (handles auth, database, storage)
 
 **Implementation concept:**
 
 ```typescript
-import { initializeApp } from 'firebase/app';
-import { getAuth } from 'firebase/auth';
-import { getFirestore } from 'firebase/firestore';
+import { createClient } from '@supabase/supabase-js';
 
-const firebaseConfig = {
-  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
-  // ... other config
-};
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
 
-export const app = initializeApp(firebaseConfig);
-export const auth = getAuth(app);
-export const db = getFirestore(app);
+if (!supabaseUrl || !supabaseAnonKey) {
+  throw new Error('Missing Supabase environment variables');
+}
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey);
 ```
+
+---
+
+## Frontend Hosting with Vercel
+
+### Deployment Setup
+
+**Platform:** Vercel (free tier)
+
+**Why Vercel:**
+- Zero-config deployment for Vite/React apps
+- Automatic deployments from Git
+- Free SSL certificates
+- Preview deployments for pull requests
+- Environment variable management UI
+
+### Deployment Steps
+
+1. **Connect Repository:**
+   - Go to [vercel.com](https://vercel.com)
+   - Sign in with GitHub
+   - Import your `papas-books` repository
+
+2. **Configure Build Settings:**
+   - Framework Preset: Vite
+   - Build Command: `npm run build`
+   - Output Directory: `dist`
+   - Install Command: `npm install`
+
+3. **Set Environment Variables:**
+   - In Vercel Dashboard → Project Settings → Environment Variables
+   - Add:
+     - `VITE_SUPABASE_URL` = `https://hdoshdscvlhoqnqaftaq.supabase.co`
+     - `VITE_SUPABASE_ANON_KEY` = (your anon key from Supabase)
+
+4. **Deploy:**
+   - Vercel auto-deploys on every push to `main`
+   - Pull requests get preview URLs
+
+### Architecture Overview
+
+```
+┌─────────────────────────────┐
+│   Vercel (Frontend Host)    │
+│   - React/Vite SPA          │
+│   - Auto SSL                │
+│   - CDN Distribution        │
+└──────────┬──────────────────┘
+           │
+           │ HTTPS API Calls
+           ▼
+┌─────────────────────────────┐
+│   Supabase (Backend)        │
+│   - PostgreSQL Database     │
+│   - Row Level Security      │
+│   - Authentication          │
+│   - Storage (future)        │
+└─────────────────────────────┘
+```
+
+**URL Structure:**
+- Production: `https://papas-books.vercel.app` (or your custom domain)
+- Supabase API: `https://hdoshdscvlhoqnqaftaq.supabase.co`
 
 ---
 
@@ -915,11 +1110,13 @@ export const db = getFirestore(app);
 **Tools:** GitHub Actions, Husky, lint-staged
 
 #### 1. Pre-commit Hooks (Husky)
+
 - Run `eslint` on staged files
 - Run `prettier` check on staged files
 - Prevent commit if linting fails
 
 #### 2. Continuous Integration (GitHub Actions)
+
 - Trigger on push to `main` and all PRs
 - Steps:
   1. `npm install`
@@ -933,6 +1130,7 @@ export const db = getFirestore(app);
 **Purpose:** Display success/error messages to the user without `alert()`.
 
 **Implementation (Phase 1):**
+
 - Simple React Context API
 - Renders a fixed `<div>` at top/bottom of screen
 - Methods: `showError(message)`, `showSuccess(message)`
@@ -946,14 +1144,14 @@ export const db = getFirestore(app);
 
 **Framework:** Vitest
 
-#### Test: Firebase configuration
+#### Test: Supabase configuration
 
-**File:** `src/lib/firebase/config.test.ts`
+**File:** `src/lib/supabase/config.test.ts`
 
 **Assertions:**
 
-- Firebase app initializes without error
-- Auth and Firestore instances are defined
+- Supabase client initializes without error
+- Client instance is defined
 - Environment variables are loaded
 
 #### Test: Auth flows
@@ -972,9 +1170,9 @@ export const db = getFirestore(app);
 - activeBooksetId updates correctly
 - Cannot switch to bookset without access grant
 
-#### Test: Security rules (Firebase emulator)
+#### Test: Row Level Security policies
 
-**File:** `firestore.rules.test.ts` (use Firebase emulator)
+**File:** `rls.test.ts` (use Supabase local development or test project)
 
 **Assertions:**
 
@@ -985,7 +1183,7 @@ export const db = getFirestore(app);
 - Editor can write to bookset
 - User cannot read bookset without grant
 - Only bookset owner can create access grants
-- Audit fields are enforced on create/update
+- Audit fields are enforced on create/update via triggers
 
 ### Integration Tests
 
@@ -994,10 +1192,10 @@ export const db = getFirestore(app);
 **Assertions:**
 
 - User can create account with email/password
-- User document is created in Firestore with default preferences
-- Bookset document is created with correct ownerId
+- User document is created in PostgreSQL `users` table with default preferences
+- Bookset document is created in `booksets` table with correct ownerId
 - User is redirected to `/app/dashboard`
-- `createdBy` and `createdAt` fields are set correctly
+- `createdBy` and `createdAt` fields are set correctly by triggers
 
 #### Test: Sign-in flow
 
@@ -1036,8 +1234,9 @@ export const db = getFirestore(app);
 - [ ] Attempt to access `/app/dashboard` while logged out (should redirect)
 - [ ] Navigate to all page routes using nav links
 - [ ] Refresh page while authenticated (should stay logged in)
-- [ ] Inspect Firestore and verify bookset and user document structure matches schema
+- [ ] Inspect Supabase database and verify bookset and user table structure matches schema
 - [ ] Check browser console for errors
+- [ ] Verify app is deployed to Vercel and accessible via URL
 
 ---
 
@@ -1046,18 +1245,19 @@ export const db = getFirestore(app);
 **Phase 1 is complete when:**
 
 1. ✅ User can register, sign in, sign out, and reset password
-2. ✅ Firebase Security Rules enforce bookset-based access control
+2. ✅ Supabase Row Level Security (RLS) policies enforce bookset-based access control
 3. ✅ Users can switch between their own and shared booksets
 4. ✅ All page routes accessible via navigation (placeholder content)
-6. ✅ Auth state persists across page refreshes
-7. ✅ User document and bookset created automatically on sign-up
-8. ✅ Bookset switcher dropdown functional
-9. ✅ Security rules tested in Firebase emulator
-10. ✅ Multi-user access verified (create two users, grant access, test permissions)
-11. ✅ All environment variables properly configured
-12. ✅ Build runs without errors (`npm run build`)
-13. ✅ Tests pass (`npm run test`)
-14. ✅ Firebase emulator can run locally for development
+5. ✅ Auth state persists across page refreshes
+6. ✅ User document and bookset created automatically on sign-up via database trigger
+7. ✅ Bookset switcher dropdown functional
+8. ✅ RLS policies tested with Supabase local development or test project
+9. ✅ Multi-user access verified (create two users, grant access, test permissions)
+10. ✅ All environment variables properly configured (locally and in Vercel)
+11. ✅ Build runs without errors (`npm run build`)
+12. ✅ Tests pass (`npm run test`)
+13. ✅ App deployed to Vercel successfully
+14. ✅ Supabase database schema created with all tables, RLS policies, and triggers
 15. ✅ `.env.local` is in `.gitignore` (secrets not committed)
 
 ---
@@ -1067,8 +1267,9 @@ export const db = getFirestore(app);
 ### When implementing auth context
 
 - Fetch all booksets user has access to on auth state change
-- Query `booksets` collection where `ownerId == userId` (own bookset)
-- Query `accessGrants` subcollections across all booksets where `userId == userId` (granted booksets)
+- Use SQL JOIN to query `booksets` table:
+  - Where `ownerId = userId` (own bookset)
+  - OR where exists in `access_grants` with `userId = userId` AND `revokedAt IS NULL` (granted booksets)
 - Cache bookset list to avoid refetching on every navigation
 - Focus on clean separation: auth logic vs. UI rendering
 - Use TypeScript generics for type safety on user object
@@ -1076,19 +1277,21 @@ export const db = getFirestore(app);
 
 ### When implementing bookset switching
 
-- Update user.activeBooksetId in Firestore
-- All data queries must include activeBooksetId in path: `booksets/{activeBooksetId}/transactions`
+- Update `user.activeBooksetId` in PostgreSQL `users` table
+- All data queries must filter by `booksetId = activeBooksetId`
 - React Query should invalidate all cached data when switching booksets
+- Use Supabase real-time subscriptions to listen for bookset data changes
 
-### When writing security rules
+### When writing RLS policies
 
 - Test owner, editor, and viewer roles separately
-- Verify access grants are checked correctly
-- Test expired grants (future: check `expiresAt < now()`)
-- Test revoked grants (`revokedAt != null`)
-- Test each rule in Firebase emulator before deploying
-- Use helper functions for readability (defined at top of rules file)
-- Remember: rules are not filters, they are access control (fail closed)
+- Verify access grants are checked correctly via helper functions
+- Test expired grants (check `expiresAt < now()`)
+- Test revoked grants (`revokedAt IS NOT NULL`)
+- Test each policy using Supabase SQL Editor or local development setup
+- Use PostgreSQL functions (`SECURITY DEFINER`) for reusable permission checks
+- Remember: RLS policies are access control, not filters (fail closed)
+- Test policies by running queries as different users (use `auth.uid()` override in tests)
 
 ### When setting up routes
 
@@ -1099,25 +1302,45 @@ export const db = getFirestore(app);
 ### Database schema extensibility
 
 - Optional fields marked with `?` can be added in future phases
-- All `createdAt`, `createdBy`, `lastModifiedBy` fields are required from day one
-- Use subcollections (not embedded arrays) for collections that will grow unbounded
-- Every subcollection under `booksets/{booksetId}/` is automatically scoped
-- Users table is global (not under booksets)
-- AccessGrants is under booksets (each bookset has its own grants)
+- All `createdAt`, `createdBy`, `lastModifiedBy` fields are required from day one and managed by triggers
+- Use separate tables (not JSONB arrays) for collections that will grow unbounded
+- Every table has a `booksetId` foreign key column (except `users` and `booksets`)
+- `users` table is global (not bookset-scoped)
+- `access_grants` table references both `booksetId` and `userId`
+- Use PostgreSQL's JSONB type for flexible/nested data (e.g., `lines`, `attachments`, `conditions`)
+- Use PostgreSQL array types (e.g., `text[]`) for simple lists (e.g., `tags`, `transactionIds`)
 
 ---
 
 ## Changes from Original Phase 1
 
-1. **Added `booksets` collection** - Separates users from financial data
-2. **Added `accessGrants` subcollection** - Multi-user access control
-3. **Added bookset switcher** - CPA can switch between clients
-4. **Added password reset** - Forgot password flow
-6. **Changed Account.csvMapping** - Per-account (not per-bank) CSV format definitions
-7. **Updated all subcollections** - Now under `booksets/{booksetId}/` instead of `users/{userId}/`
-8. **Added `displayName` to User** - Better multi-user UX
-9. **Added `isAdmin` flag** - System admin permissions
-10. **Updated security rules** - Bookset-based access control
+### Migration from Firebase to Supabase
+
+1. **Backend changed from Firebase to Supabase**
+   - Firestore → PostgreSQL database
+   - Firebase Auth → Supabase Auth
+   - Security Rules → Row Level Security (RLS) policies
+   - Cloud Functions → Database triggers
+
+2. **Added Vercel for frontend hosting** - Separate from backend (Supabase only provides backend)
+
+3. **Database structure changes:**
+   - Collections → Tables with foreign keys
+   - Subcollections → Separate tables with `booksetId` column
+   - Nested objects → JSONB columns
+   - Timestamp → PostgreSQL `timestamp` type
+   - Arrays → PostgreSQL array types (`text[]`) or JSONB
+
+4. **Architecture additions:**
+   - `booksets` table - Separates users from financial data
+   - `access_grants` table - Multi-user access control
+   - Bookset switcher - CPA can switch between clients
+   - Password reset flow
+   - Per-account CSV mapping (not per-bank)
+   - `displayName` in User table - Better multi-user UX
+   - `isAdmin` flag - System admin permissions
+   - RLS policies - Bookset-based access control enforced at database level
+   - Database triggers - Automatic audit field management
 
 ---
 

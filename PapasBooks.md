@@ -34,9 +34,9 @@ Here is the complete Design Document for **Papa’s Books** (Project Name), tail
 **Pattern:** "Thick Client" / Serverless
 **Philosophy:** The browser performs all business logic (CSV parsing, rule matching, math validation, reconciliation logic). The backend is purely a data store and identity provider.
 
-* **Frontend:** React (Vite), TypeScript, Tailwind CSS, React Query.
-* **Backend / DB:** Firebase Firestore (NoSQL) & Firebase Auth.
-* **Libraries:** `papaparse` (CSV), `date-fns` (Time), `zod` (Validation), `tanstack-table` (Grid).
+* **Frontend:** React (Vite), TypeScript, Tailwind CSS, React Query - **Hosted on Vercel**
+* **Backend / DB:** Supabase (PostgreSQL with Row Level Security) & Supabase Auth
+* **Libraries:** `papaparse` (CSV), `date-fns` (Time), `zod` (Validation), `tanstack-table` (Grid), `@supabase/supabase-js`
 
 ---
 
@@ -91,9 +91,9 @@ Here is the complete Design Document for **Papa’s Books** (Project Name), tail
 
 ---
 
-## 4. Database Design (Firestore)
+## 4. Database Design (Supabase PostgreSQL)
 
-All collections are nested under `users/{userId}/` or secured via Security Rules to ensure tenant isolation.
+All tables use Row Level Security (RLS) policies to ensure tenant isolation via `booksetId` foreign keys.
 
 ### 4.1 Collection: `accounts`
 

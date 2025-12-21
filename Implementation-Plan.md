@@ -32,21 +32,23 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 
 ### Deliverables
 
-- Firebase project setup (Firestore, Auth, Security Rules)
+- Supabase project setup (PostgreSQL, Auth, Row Level Security)
 - React + TypeScript + Vite project scaffold
 - Minimal HTML/CSS only (no Tailwind in this phase)
-- Firebase Authentication (email/password)
+- Supabase Authentication (email/password)
 - React Router with protected routes
 - Basic navigation structure (multi-page with simple links)
 - Page structure: Dashboard, Settings, Import, Workbench, Reconcile, Reports
+- Vercel deployment for frontend hosting
 
 ### Success Criteria
 
 - User can register, login, and logout
-- Security rules prevent unauthorized data access
+- RLS policies prevent unauthorized data access
 - All dependencies installed and configured
 - Build/dev pipeline working
 - Can navigate between pages (unstyled but functional)
+- App deployed to Vercel
 
 ---
 
@@ -56,21 +58,21 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 
 ### Phase 2 Deliverables
 
-- `accounts` collection CRUD operations (business logic)
-- `categories` collection CRUD operations (business logic)
+- `accounts` table CRUD operations (business logic)
+- `categories` table CRUD operations (business logic)
 - Settings page with tabs: Accounts, Categories, Rules (basic tab switcher)
 - Simple HTML forms for create/edit (unstyled inputs and buttons)
 - Native HTML tables for listing accounts/categories
 - Data validation with Zod schemas
-- React Query integration for data fetching
+- React Query integration for data fetching with Supabase
 - Delete confirmation (browser confirm dialog)
 
 ### Phase 2 Success Criteria
 
 - User can create multiple accounts with opening balances
 - User can define custom category hierarchy
-- Data persists correctly in Firestore
-- Real-time updates reflected in UI
+- Data persists correctly in PostgreSQL
+- Real-time updates reflected in UI (via Supabase subscriptions)
 - Tab navigation works on Settings page
 
 ---
@@ -90,7 +92,7 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 - Staging UI: two native HTML tables side-by-side (New | Duplicates)
 - Batch import confirmation button
 - `sourceBatchId` generation and tracking
-- Transaction creation in Firestore
+- Transaction creation in PostgreSQL via Supabase
 
 ### Phase 3 Success Criteria
 
@@ -108,7 +110,7 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 
 ### Phase 4 Deliverables
 
-- `rules` collection CRUD operations (business logic)
+- `rules` table CRUD operations (business logic)
 - Rule matching engine (keyword-based, case-insensitive) - pure function
 - Auto-categorization during import (integrate with Phase 3)
 - Manual "Run Rules" button on Workbench page
@@ -303,7 +305,7 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 - `/src/lib/import/` - CSV parsing, normalization, deduplication
 - `/src/lib/rules/` - Rule matching engine
 - `/src/lib/validation/` - Zod schemas and validators
-- `/src/lib/firebase/` - Firestore operations (queries, mutations)
+- `/src/lib/supabase/` - Supabase client and database operations (queries, mutations)
 
 **UI Layer** (React components, minimal logic)
 
@@ -311,7 +313,7 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 - `/src/components/` - Reusable UI components
 - `/src/hooks/` - React Query hooks for data fetching
 
-**Testing Strategy**
+### Testing Strategy
 
 - Business logic: 100% unit test coverage (Vitest)
 - UI components: Test interactions, not styling (React Testing Library)
@@ -331,10 +333,11 @@ Each phase should include:
 
 1. **Floating-point precision** in split transactions (Phase 5)
 2. **Performance** of the data grid with 2000+ rows (Phase 5)
-3. **Security rules** ensuring proper user isolation (Phase 1)
+3. **Row Level Security policies** ensuring proper user isolation (Phase 1)
 4. **Duplicate detection accuracy** avoiding false positives (Phase 3)
 5. **Reconciliation math** must be exact to the cent (Phase 6)
 6. **Business logic coupling** - Keep UI and logic completely separate
+7. **Database indexes** - Ensure proper indexes on foreign keys and frequently queried columns
 
 ---
 
