@@ -1,7 +1,7 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
-import { User, Bookset, AccessGrant } from '../types/database';
+import { User, Bookset } from '../types/database';
 
 interface AuthContextType {
   user: User | null;
