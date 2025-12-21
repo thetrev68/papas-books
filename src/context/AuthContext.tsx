@@ -72,9 +72,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       console.error('Error fetching user data:', err);
       // If aborted, it's a timeout
       if (err instanceof Error && err.name === 'AbortError') {
-         setError(new Error('Database connection timed out. Please check your internet or API keys.'));
+        setError(
+          new Error('Database connection timed out. Please check your internet or API keys.')
+        );
       } else {
-         setError(err instanceof Error ? err : new Error('Unknown error'));
+        setError(err instanceof Error ? err : new Error('Unknown error'));
       }
       // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
       setUser(null);
@@ -97,18 +99,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     didInitRef.current = true;
 
     // Check active session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      setSupabaseUser(session?.user ?? null);
-      if (session?.user && !initialSessionHandledRef.current) {
-        initialSessionHandledRef.current = true;
-        runFetchUserData(session.user.id).finally(() => setLoading(false));
-        return;
-      }
-      if (!session?.user) setLoading(false);
-    }).catch(err => {
-      console.error('getSession error', err);
-      setLoading(false);
-    });
+    supabase.auth
+      .getSession()
+      .then(({ data: { session } }) => {
+        setSupabaseUser(session?.user ?? null);
+        if (session?.user && !initialSessionHandledRef.current) {
+          initialSessionHandledRef.current = true;
+          runFetchUserData(session.user.id).finally(() => setLoading(false));
+          return;
+        }
+        if (!session?.user) setLoading(false);
+      })
+      .catch((err) => {
+        console.error('getSession error', err);
+        setLoading(false);
+      });
 
     // Listen for auth changes
     const {
