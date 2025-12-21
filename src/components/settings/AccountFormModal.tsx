@@ -17,9 +17,9 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
   const [formData, setFormData] = useState({
     name: account?.name || '',
     type: account?.type || ('Asset' as 'Asset' | 'Liability'),
-    openingBalance: account ? account.openingBalance / 100 : 0,
-    openingBalanceDate: account?.openingBalanceDate
-      ? new Date(account.openingBalanceDate).toISOString().split('T')[0]
+    openingBalance: account ? account.opening_balance / 100 : 0,
+    openingBalanceDate: account?.opening_balance_date
+      ? new Date(account.opening_balance_date).toISOString().split('T')[0]
       : '',
   });
 
@@ -30,8 +30,8 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
       setFormData({
         name: account.name,
         type: account.type,
-        openingBalance: account.openingBalance / 100,
-        openingBalanceDate: new Date(account.openingBalanceDate).toISOString().split('T')[0],
+        openingBalance: account.opening_balance / 100,
+        openingBalanceDate: new Date(account.opening_balance_date).toISOString().split('T')[0],
       });
     }
   }, [account]);

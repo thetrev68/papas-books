@@ -20,7 +20,7 @@ export default function CategoriesTab() {
   }
 
   function handleDelete(id: string) {
-    const hasChildren = categories.some((c) => c.parentCategoryId === id);
+    const hasChildren = categories.some((c) => c.parent_category_id === id);
     if (hasChildren) {
       alert(
         'Cannot delete a category that has child categories. Please delete or reassign children first.'
@@ -69,11 +69,13 @@ export default function CategoriesTab() {
               <tr key={category.id} style={{ borderBottom: '1px solid #eee' }}>
                 <td style={{ padding: '0.5rem' }}>{category.name}</td>
                 <td style={{ textAlign: 'center', padding: '0.5rem' }}>
-                  {category.isTaxDeductible ? 'Yes' : 'No'}
+                  {category.is_tax_deductible ? 'Yes' : 'No'}
                 </td>
-                <td style={{ padding: '0.5rem' }}>{category.taxLineItem || '-'}</td>
-                <td style={{ padding: '0.5rem' }}>{getCategoryName(category.parentCategoryId)}</td>
-                <td style={{ textAlign: 'center', padding: '0.5rem' }}>{category.sortOrder}</td>
+                <td style={{ padding: '0.5rem' }}>{category.tax_line_item || '-'}</td>
+                <td style={{ padding: '0.5rem' }}>
+                  {getCategoryName(category.parent_category_id)}
+                </td>
+                <td style={{ textAlign: 'center', padding: '0.5rem' }}>{category.sort_order}</td>
                 <td style={{ padding: '0.5rem' }}>
                   <button onClick={() => handleEdit(category)} style={{ marginRight: '0.5rem' }}>
                     Edit

@@ -41,32 +41,32 @@ export interface AccessGrant {
 
 export interface Account {
   id: string;
-  booksetId: string;
+  bookset_id: string;
   name: string;
   type: 'Asset' | 'Liability';
-  openingBalance: number;
-  openingBalanceDate: string;
-  csvMapping?: Record<string, unknown>;
-  lastReconciledDate: string | null;
-  lastReconciledBalance: number;
-  createdAt: string;
-  updatedAt: string;
-  isArchived: boolean;
-  createdBy: string;
-  lastModifiedBy: string;
+  opening_balance: number;
+  opening_balance_date: string;
+  csv_mapping?: Record<string, unknown>;
+  last_reconciled_date: string | null;
+  last_reconciled_balance: number;
+  created_at: string;
+  updated_at: string;
+  is_archived: boolean;
+  created_by: string;
+  last_modified_by: string;
 }
 
 export interface Category {
   id: string;
-  booksetId: string;
+  bookset_id: string;
   name: string;
-  taxLineItem: string | null;
-  isTaxDeductible: boolean;
-  parentCategoryId: string | null;
-  sortOrder: number;
-  createdAt: string;
-  updatedAt: string;
-  isArchived: boolean;
-  createdBy: string;
-  lastModifiedBy: string;
+  tax_line_item: string | null;
+  is_tax_deductible: boolean;
+  parent_category_id: string | null;
+  sort_order: number;
+  created_at: string;
+  updated_at: string;
+  is_archived: boolean;
+  created_by: string;
+  last_modified_by: string;
 }

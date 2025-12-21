@@ -55,10 +55,10 @@ export default function AccountsTab() {
                 <td style={{ padding: '0.5rem' }}>{account.name}</td>
                 <td style={{ padding: '0.5rem' }}>{account.type}</td>
                 <td style={{ textAlign: 'right', padding: '0.5rem' }}>
-                  ${(account.openingBalance / 100).toFixed(2)}
+                  ${(account.opening_balance / 100).toFixed(2)}
                 </td>
                 <td style={{ padding: '0.5rem' }}>
-                  {new Date(account.openingBalanceDate).toLocaleDateString()}
+                  {new Date(account.opening_balance_date).toLocaleDateString()}
                 </td>
                 <td style={{ padding: '0.5rem' }}>
                   <button onClick={() => handleEdit(account)} style={{ marginRight: '0.5rem' }}>

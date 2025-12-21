@@ -17,10 +17,10 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
 
   const [formData, setFormData] = useState({
     name: category?.name || '',
-    isTaxDeductible: category?.isTaxDeductible || false,
-    taxLineItem: category?.taxLineItem || '',
-    parentCategoryId: category?.parentCategoryId || '',
-    sortOrder: category?.sortOrder ?? 0,
+    isTaxDeductible: category?.is_tax_deductible || false,
+    taxLineItem: category?.tax_line_item || '',
+    parentCategoryId: category?.parent_category_id || '',
+    sortOrder: category?.sort_order ?? 0,
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
@@ -29,10 +29,10 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
     if (category) {
       setFormData({
         name: category.name,
-        isTaxDeductible: category.isTaxDeductible,
-        taxLineItem: category.taxLineItem || '',
-        parentCategoryId: category.parentCategoryId || '',
-        sortOrder: category.sortOrder,
+        isTaxDeductible: category.is_tax_deductible,
+        taxLineItem: category.tax_line_item || '',
+        parentCategoryId: category.parent_category_id || '',
+        sortOrder: category.sort_order,
       });
     }
   }, [category]);
