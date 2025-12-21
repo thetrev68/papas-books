@@ -70,3 +70,87 @@ export interface Category {
   created_by: string;
   last_modified_by: string;
 }
+
+export interface Transaction {
+  id: string;
+  bookset_id: string;
+  account_id: string;
+
+  // Core Financial Data
+  date: string; // ISO 8601 date (YYYY-MM-DD)
+  amount: number; // Integer in cents (e.g., -1499 for -$14.99)
+  payee: string; // Cleaned name (initially same as original_description)
+  original_description: string; // Raw bank text (immutable)
+
+  // Metadata & Audit
+  fingerprint: string; // SHA-256 hash for duplicate detection
+  source_batch_id: string | null; // Link to import_batches
+  import_date: string; // ISO timestamp
+
+  // Status Flags
+  is_reviewed: boolean; // False = "New", True = "Accepted"
+  is_split: boolean; // Phase 5 feature
+  reconciled: boolean; // Phase 6 feature
+
+  // Split transaction data (Phase 5)
+  lines: unknown; // JSONB - array of split lines
+
+  // Timestamps
+  created_at: string;
+  updated_at: string;
+
+  // Audit trail (set by triggers)
+  created_by: string; // uuid, foreign key to users.id
+  last_modified_by: string; // uuid, foreign key to users.id
+}
+
+export interface ImportBatch {
+  id: string;
+  bookset_id: string;
+  account_id: string;
+  file_name: string;
+  imported_at: string;
+  imported_by: string;
+
+  // Statistics
+  total_rows: number;
+  imported_count: number;
+  duplicate_count: number;
+  error_count: number;
+
+  // Audit Snapshot
+  csv_mapping_snapshot: unknown; // JSONB - Copy of CsvMapping used for this import
+
+  // Undo support (future feature)
+  is_undone: boolean;
+  undone_at: string | null;
+  undone_by: string | null;
+}
+
+export interface Rule {
+  id: string;
+  bookset_id: string;
+
+  // Matching criteria
+  keyword: string; // Lowercase search string
+  match_type: 'contains' | 'exact' | 'startsWith' | 'regex';
+  case_sensitive: boolean;
+
+  // Action to take
+  target_category_id: string;
+  suggested_payee: string | null;
+
+  // Priority and control
+  priority: number;
+  is_enabled: boolean;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+  use_count: number;
+
+  // Audit trail
+  created_by: string;
+  last_modified_by: string;
+}

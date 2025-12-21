@@ -23,7 +23,7 @@ Phase 3 implements the "ingestion engine" for Papa's Books. This is the most cri
 
 ## Database Schema & Types
 
-The schema was created in Phase 1. We will strict strict TypeScript interfaces to interact with it.
+The schema was created in Phase 1. We will use strict TypeScript interfaces to interact with it.
 
 ### 1. The Transaction Record (`transactions` table)
 
@@ -208,6 +208,7 @@ export function mapRowToTransaction(
 **Objective:** Generate a deterministic ID for duplicate detection.
 
 **Algorithm:**
+
 The hash input string must be normalized to prevent slight variations from breaking detection.
 `HashInput = ISO_Date + "|" + Amount_Cents + "|" + Normalized_Description`
 

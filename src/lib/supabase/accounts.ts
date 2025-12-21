@@ -1,6 +1,7 @@
 import { supabase } from './config';
 import type { Account } from '../../types/database';
 import type { InsertAccount, UpdateAccount } from '../validation/accounts';
+import type { CsvMapping } from '../../types/import';
 
 export async function fetchAccounts(booksetId: string): Promise<Account[]> {
   const { data, error } = await supabase
@@ -55,6 +56,21 @@ export async function updateAccount(id: string, updates: UpdateAccount): Promise
 
 export async function deleteAccount(id: string): Promise<void> {
   const { error } = await supabase.from('accounts').update({ is_archived: true }).eq('id', id);
+
+  if (error) throw error;
+}
+
+/**
+ * Updates the CSV mapping configuration for an account.
+ *
+ * @param accountId - Account UUID
+ * @param mapping - CSV mapping configuration
+ */
+export async function updateAccountMapping(accountId: string, mapping: CsvMapping): Promise<void> {
+  const { error } = await supabase
+    .from('accounts')
+    .update({ csv_mapping: mapping })
+    .eq('id', accountId);
 
   if (error) throw error;
 }
