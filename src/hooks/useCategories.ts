@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase/config';
 import {
   fetchCategories,
   createCategory,
@@ -10,12 +12,37 @@ import type { UpdateCategory } from '../lib/validation/categories';
 
 export function useCategories() {
   const { activeBookset } = useAuth();
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['categories', activeBookset?.id],
     queryFn: () => fetchCategories(activeBookset!.id),
     enabled: !!activeBookset,
   });
+
+  useEffect(() => {
+    if (!activeBookset) return;
+
+    const channel = supabase
+      .channel(`categories-changes-${activeBookset.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'categories',
+          filter: `bookset_id=eq.${activeBookset.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['categories', activeBookset.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeBookset?.id, queryClient]);
 
   return {
     categories: query.data || [],

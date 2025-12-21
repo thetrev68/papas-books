@@ -1,5 +1,7 @@
+import { useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
+import { supabase } from '../lib/supabase/config';
 import {
   fetchAccounts,
   createAccount,
@@ -10,12 +12,37 @@ import type { UpdateAccount } from '../lib/validation/accounts';
 
 export function useAccounts() {
   const { activeBookset } = useAuth();
+  const queryClient = useQueryClient();
 
   const query = useQuery({
     queryKey: ['accounts', activeBookset?.id],
     queryFn: () => fetchAccounts(activeBookset!.id),
     enabled: !!activeBookset,
   });
+
+  useEffect(() => {
+    if (!activeBookset) return;
+
+    const channel = supabase
+      .channel(`accounts-changes-${activeBookset.id}`)
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'accounts',
+          filter: `bookset_id=eq.${activeBookset.id}`,
+        },
+        () => {
+          queryClient.invalidateQueries({ queryKey: ['accounts', activeBookset.id] });
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
+  }, [activeBookset?.id, queryClient]);
 
   return {
     accounts: query.data || [],
