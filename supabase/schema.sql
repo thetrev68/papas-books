@@ -21,7 +21,7 @@ CREATE TABLE public.users (
 
 -- Table: booksets
 CREATE TABLE public.booksets (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   owner_id uuid REFERENCES public.users(id) NOT NULL,
   name text NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
@@ -36,7 +36,7 @@ ALTER TABLE public.users ADD CONSTRAINT fk_users_own_bookset FOREIGN KEY (own_bo
 
 -- Table: access_grants
 CREATE TABLE public.access_grants (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   user_id uuid REFERENCES public.users(id) NOT NULL,
   granted_by uuid REFERENCES public.users(id) NOT NULL,
@@ -51,7 +51,7 @@ CREATE TABLE public.access_grants (
 
 -- Table: accounts
 CREATE TABLE public.accounts (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   name text NOT NULL,
   type text CHECK (type IN ('Asset', 'Liability')) NOT NULL,
@@ -74,7 +74,7 @@ CREATE TABLE public.accounts (
 
 -- Table: categories
 CREATE TABLE public.categories (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   name text NOT NULL,
   tax_line_item text,
@@ -94,7 +94,7 @@ CREATE TABLE public.categories (
 
 -- Table: transactions
 CREATE TABLE public.transactions (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   account_id uuid REFERENCES public.accounts(id) NOT NULL,
   date timestamp with time zone NOT NULL,
@@ -122,7 +122,7 @@ CREATE TABLE public.transactions (
 
 -- Table: rules
 CREATE TABLE public.rules (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   keyword text NOT NULL,
   match_type text CHECK (match_type IN ('contains', 'exact', 'startsWith', 'regex')) NOT NULL,
@@ -142,7 +142,7 @@ CREATE TABLE public.rules (
 
 -- Table: reconciliations
 CREATE TABLE public.reconciliations (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   account_id uuid REFERENCES public.accounts(id) NOT NULL,
   statement_date timestamp with time zone NOT NULL,
@@ -161,7 +161,7 @@ CREATE TABLE public.reconciliations (
 
 -- Table: import_batches
 CREATE TABLE public.import_batches (
-  id uuid PRIMARY KEY DEFAULT uuid_generate_v4(),
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
   account_id uuid REFERENCES public.accounts(id) NOT NULL,
   file_name text NOT NULL,
@@ -386,7 +386,9 @@ CREATE OR REPLACE FUNCTION protect_user_fields()
 RETURNS TRIGGER AS $$
 BEGIN
   -- Prevent non-admins from changing is_admin
-  IF NEW.is_admin != OLD.is_admin AND NOT user_is_admin() THEN
+  -- Only check if auth.uid() is present (real user request)
+  -- If auth.uid() is null (system/trigger), allow changes (like initial creation)
+  IF auth.uid() IS NOT NULL AND NEW.is_admin != OLD.is_admin AND NOT user_is_admin() THEN
      RAISE EXCEPTION 'Only admins can change admin status';
   END IF;
   
@@ -394,7 +396,7 @@ BEGIN
   NEW.last_modified_by = auth.uid();
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
 
 -- Apply triggers
 CREATE TRIGGER users_protect_fields BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION protect_user_fields();
@@ -437,7 +439,7 @@ BEGIN
 
   RETURN new;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
 
 -- Trigger on auth.users
 CREATE OR REPLACE TRIGGER on_auth_user_created
