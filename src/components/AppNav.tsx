@@ -17,7 +17,7 @@ export default function AppNav() {
   return (
     <nav style={{ padding: '1rem', borderBottom: '1px solid #ccc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
       <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-        <strong>Papa's Books</strong>
+        <strong>Papa&apos;s Books</strong>
         <Link to="/app/dashboard">Dashboard</Link>
         <Link to="/app/workbench">Workbench</Link>
         <Link to="/app/import">Import</Link>

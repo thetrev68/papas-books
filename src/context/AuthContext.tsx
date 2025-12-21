@@ -65,9 +65,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const active = booksets.find(b => b.id === activeId) || booksets[0] || null;
       setActiveBookset(active);
 
-    } catch (err: any) {
+    } catch (err) {
       console.error('Error fetching user data:', err);
-      setError(err);
+      setError(err instanceof Error ? err : new Error('Unknown error'));
       // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
       setUser(null);
     }

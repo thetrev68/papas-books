@@ -21,8 +21,9 @@ export default function SignupPage() {
       // Usually Supabase requires email verification by default, so we might not navigate immediately.
       // But for this phase let's assume auto-login or redirect to login.
       navigate('/login'); 
-    } catch (error: any) {
-      showError(error.message || 'Failed to sign up');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to sign up';
+      showError(message);
     } finally {
       setLoading(false);
     }

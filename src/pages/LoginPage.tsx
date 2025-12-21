@@ -17,8 +17,9 @@ export default function LoginPage() {
     try {
       await signIn(email, password);
       navigate('/app/dashboard');
-    } catch (error: any) {
-      showError(error.message || 'Failed to sign in');
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Failed to sign in';
+      showError(message);
     } finally {
       setLoading(false);
     }
@@ -57,7 +58,7 @@ export default function LoginPage() {
           <Link to="/forgot-password">Forgot Password?</Link>
         </p>
         <p>
-          Don't have an account? <Link to="/signup">Sign Up</Link>
+          Don&apos;t have an account? <Link to="/signup">Sign Up</Link>
         </p>
       </div>
     </div>
