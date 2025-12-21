@@ -1,7 +1,7 @@
-import { createContext, useContext, useEffect, useState } from 'react';
-import { User as SupabaseUser } from '@supabase/supabase-js';
-import { supabase } from '../lib/supabase/config';
-import { User, Bookset } from '../types/database';
+import { createContext, useContext, useEffect, useState } from "react";
+import { User as SupabaseUser } from "@supabase/supabase-js";
+import { supabase } from "../lib/supabase/config";
+import { User, Bookset } from "../types/database";
 
 interface AuthContextType {
   user: User | null;
@@ -10,7 +10,11 @@ interface AuthContextType {
   error: Error | null;
   activeBookset: Bookset | null;
   myBooksets: Bookset[];
-  signUp: (email: string, password: string, displayName?: string) => Promise<void>;
+  signUp: (
+    email: string,
+    password: string,
+    displayName?: string,
+  ) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
@@ -34,40 +38,42 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       // 1. Fetch user profile
       const { data: userData, error: userError } = await supabase
-        .from('users')
-        .select('*')
-        .eq('id', userId)
+        .from("users")
+        .select("*")
+        .eq("id", userId)
         .single();
 
       if (userError || !userData) {
         if (retries > 0) {
-          console.log(`User profile not found, retrying in ${delay}ms... (${retries} attempts left)`);
-          await new Promise(resolve => setTimeout(resolve, delay));
+          console.log(
+            `User profile not found, retrying in ${delay}ms... (${retries} attempts left)`,
+          );
+          await new Promise((resolve) => setTimeout(resolve, delay));
           return fetchUserData(userId, retries - 1, delay);
         }
-        throw userError || new Error('User profile not found');
+        throw userError || new Error("User profile not found");
       }
 
       setUser(userData);
 
       // 2. Fetch accessible booksets (owned + granted)
       const { data: booksetsData, error: booksetsError } = await supabase
-        .from('booksets')
-        .select('*');
+        .from("booksets")
+        .select("*");
 
       if (booksetsError) throw booksetsError;
-      
+
       const booksets = booksetsData || [];
       setMyBooksets(booksets);
 
       // 3. Set active bookset
       const activeId = userData.active_bookset_id;
-      const active = booksets.find(b => b.id === activeId) || booksets[0] || null;
+      const active =
+        booksets.find((b) => b.id === activeId) || booksets[0] || null;
       setActiveBookset(active);
-
     } catch (err) {
-      console.error('Error fetching user data:', err);
-      setError(err instanceof Error ? err : new Error('Unknown error'));
+      console.error("Error fetching user data:", err);
+      setError(err instanceof Error ? err : new Error("Unknown error"));
       // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
       setUser(null);
     }
@@ -85,18 +91,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     });
 
     // Listen for auth changes
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
         setLoading(true);
-        
+
         // If this is a new signup, give the DB trigger a moment
-        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
-             // Small initial delay to allow trigger to complete
-             await new Promise(resolve => setTimeout(resolve, 500));
-             await fetchUserData(session.user.id);
+        if (_event === "SIGNED_IN" || _event === "TOKEN_REFRESHED") {
+          // Small initial delay to allow trigger to complete
+          await new Promise((resolve) => setTimeout(resolve, 500));
+          await fetchUserData(session.user.id);
         } else {
-             await fetchUserData(session.user.id);
+          await fetchUserData(session.user.id);
         }
         setLoading(false);
       } else {
@@ -110,7 +118,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return () => subscription.unsubscribe();
   }, []);
 
-  const signUp = async (email: string, password: string, displayName?: string) => {
+  const signUp = async (
+    email: string,
+    password: string,
+    displayName?: string,
+  ) => {
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -143,20 +155,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   const switchBookset = async (booksetId: string) => {
     if (!user) return;
-    
+
     // Optimistic update
-    const target = myBooksets.find(b => b.id === booksetId);
+    const target = myBooksets.find((b) => b.id === booksetId);
     if (target) {
       setActiveBookset(target);
-      
+
       // Update in DB
       const { error } = await supabase
-        .from('users')
+        .from("users")
         .update({ active_bookset_id: booksetId })
-        .eq('id', user.id);
-        
+        .eq("id", user.id);
+
       if (error) {
-        console.error('Failed to update active bookset', error);
+        console.error("Failed to update active bookset", error);
         // Revert? For now just log
       } else {
         // Update local user state
@@ -165,28 +177,30 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     }
   };
 
-  const canEdit = !!activeBookset; // Phase 1 simplified: assume if you can see it you can edit it unless RLS stops you. 
+  const canEdit = !!activeBookset; // Phase 1 simplified: assume if you can see it you can edit it unless RLS stops you.
   // Real implementation needs to check grants.
   // We'll refine this when we pull grants.
 
   const canAdmin = !!user?.is_admin;
 
   return (
-    <AuthContext.Provider value={{
-      user,
-      supabaseUser,
-      loading,
-      error,
-      activeBookset,
-      myBooksets,
-      signUp,
-      signIn,
-      signOut,
-      resetPassword,
-      switchBookset,
-      canEdit,
-      canAdmin
-    }}>
+    <AuthContext.Provider
+      value={{
+        user,
+        supabaseUser,
+        loading,
+        error,
+        activeBookset,
+        myBooksets,
+        signUp,
+        signIn,
+        signOut,
+        resetPassword,
+        switchBookset,
+        canEdit,
+        canAdmin,
+      }}
+    >
       {children}
     </AuthContext.Provider>
   );
@@ -195,7 +209,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 export function useAuth() {
   const context = useContext(AuthContext);
   if (context === undefined) {
-    throw new Error('useAuth must be used within an AuthProvider');
+    throw new Error("useAuth must be used within an AuthProvider");
   }
   return context;
 }

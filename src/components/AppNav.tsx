@@ -1,5 +1,5 @@
-import { Link, useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
+import { Link, useNavigate } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
 
 export default function AppNav() {
   const { user, activeBookset, myBooksets, switchBookset, signOut } = useAuth();
@@ -8,15 +8,23 @@ export default function AppNav() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/login');
+      navigate("/login");
     } catch (error) {
-      console.error('Error signing out:', error);
+      console.error("Error signing out:", error);
     }
   };
 
   return (
-    <nav style={{ padding: '1rem', borderBottom: '1px solid #ccc', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+    <nav
+      style={{
+        padding: "1rem",
+        borderBottom: "1px solid #ccc",
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+      }}
+    >
+      <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
         <strong>Papa&apos;s Books</strong>
         <Link to="/app/dashboard">Dashboard</Link>
         <Link to="/app/workbench">Workbench</Link>
@@ -26,16 +34,16 @@ export default function AppNav() {
         <Link to="/app/settings">Settings</Link>
       </div>
 
-      <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+      <div style={{ display: "flex", gap: "1rem", alignItems: "center" }}>
         {user && (
           <select
-            value={activeBookset?.id || ''}
+            value={activeBookset?.id || ""}
             onChange={(e) => switchBookset(e.target.value)}
-            style={{ padding: '0.25rem' }}
+            style={{ padding: "0.25rem" }}
           >
             {myBooksets.map((b) => (
               <option key={b.id} value={b.id}>
-                {b.name} {b.owner_id === user.id ? '(Mine)' : '(Shared)'}
+                {b.name} {b.owner_id === user.id ? "(Mine)" : "(Shared)"}
               </option>
             ))}
           </select>

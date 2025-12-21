@@ -1,11 +1,11 @@
-import React, { useState } from 'react';
-import { useNavigate, Link } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext';
-import { useToast } from '../components/GlobalToastProvider';
+import React, { useState } from "react";
+import { useNavigate, Link } from "react-router-dom";
+import { useAuth } from "../context/AuthContext";
+import { useToast } from "../components/GlobalToastProvider";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
   const { signIn } = useAuth();
   const { showError } = useToast();
@@ -16,9 +16,10 @@ export default function LoginPage() {
     setLoading(true);
     try {
       await signIn(email, password);
-      navigate('/app/dashboard');
+      navigate("/app/dashboard");
     } catch (error) {
-      const message = error instanceof Error ? error.message : 'Failed to sign in';
+      const message =
+        error instanceof Error ? error.message : "Failed to sign in";
       showError(message);
     } finally {
       setLoading(false);
@@ -26,9 +27,20 @@ export default function LoginPage() {
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '4rem auto', padding: '2rem', border: '1px solid #ddd', borderRadius: '8px' }}>
+    <div
+      style={{
+        maxWidth: "400px",
+        margin: "4rem auto",
+        padding: "2rem",
+        border: "1px solid #ddd",
+        borderRadius: "8px",
+      }}
+    >
       <h1>Sign In</h1>
-      <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+      <form
+        onSubmit={handleSubmit}
+        style={{ display: "flex", flexDirection: "column", gap: "1rem" }}
+      >
         <div>
           <label>Email</label>
           <input
@@ -36,7 +48,7 @@ export default function LoginPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
-            style={{ width: '100%', padding: '0.5rem' }}
+            style={{ width: "100%", padding: "0.5rem" }}
           />
         </div>
         <div>
@@ -46,14 +58,18 @@ export default function LoginPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            style={{ width: '100%', padding: '0.5rem' }}
+            style={{ width: "100%", padding: "0.5rem" }}
           />
         </div>
-        <button type="submit" disabled={loading} style={{ padding: '0.75rem', cursor: 'pointer' }}>
-          {loading ? 'Signing in...' : 'Sign In'}
+        <button
+          type="submit"
+          disabled={loading}
+          style={{ padding: "0.75rem", cursor: "pointer" }}
+        >
+          {loading ? "Signing in..." : "Sign In"}
         </button>
       </form>
-      <div style={{ marginTop: '1rem', textAlign: 'center' }}>
+      <div style={{ marginTop: "1rem", textAlign: "center" }}>
         <p>
           <Link to="/forgot-password">Forgot Password?</Link>
         </p>
