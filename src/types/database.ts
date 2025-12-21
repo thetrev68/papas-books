@@ -6,7 +6,7 @@ export interface User {
   active_bookset_id: string;
   own_bookset_id: string;
   preferences: {
-    defaultView?: "dashboard" | "workbench" | "import";
+    defaultView?: 'dashboard' | 'workbench' | 'import';
     autoRunRules: boolean;
     autoMarkReviewed: boolean;
   };
@@ -21,7 +21,7 @@ export interface Bookset {
   name: string;
   created_at: string;
   updated_at: string;
-  business_type?: "personal" | "sole_proprietor" | "llc" | "corporation";
+  business_type?: 'personal' | 'sole_proprietor' | 'llc' | 'corporation';
   tax_year?: number;
 }
 
@@ -30,7 +30,7 @@ export interface AccessGrant {
   bookset_id: string;
   user_id: string;
   granted_by: string;
-  role: "owner" | "editor" | "viewer";
+  role: 'owner' | 'editor' | 'viewer';
   created_at: string;
   expires_at?: string;
   revoked_at?: string;

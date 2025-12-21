@@ -1,20 +1,20 @@
-import React from "react";
-import ReactDOM from "react-dom/client";
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
-import { AuthProvider } from "./context/AuthContext";
-import { GlobalToastProvider } from "./components/GlobalToastProvider";
-import ProtectedRoute from "./components/ProtectedRoute";
-import LoginPage from "./pages/LoginPage";
-import SignupPage from "./pages/SignupPage";
-import ForgotPasswordPage from "./pages/ForgotPasswordPage";
-import DashboardPage from "./pages/DashboardPage";
-import SettingsPage from "./pages/SettingsPage";
-import ImportPage from "./pages/ImportPage";
-import WorkbenchPage from "./pages/WorkbenchPage";
-import ReconcilePage from "./pages/ReconcilePage";
-import ReportsPage from "./pages/ReportsPage";
+import React from 'react';
+import ReactDOM from 'react-dom/client';
+import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { AuthProvider } from './context/AuthContext';
+import { GlobalToastProvider } from './components/GlobalToastProvider';
+import ProtectedRoute from './components/ProtectedRoute';
+import LoginPage from './pages/LoginPage';
+import SignupPage from './pages/SignupPage';
+import ForgotPasswordPage from './pages/ForgotPasswordPage';
+import DashboardPage from './pages/DashboardPage';
+import SettingsPage from './pages/SettingsPage';
+import ImportPage from './pages/ImportPage';
+import WorkbenchPage from './pages/WorkbenchPage';
+import ReconcilePage from './pages/ReconcilePage';
+import ReportsPage from './pages/ReportsPage';
 
-ReactDOM.createRoot(document.getElementById("root")!).render(
+ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <BrowserRouter>
       <GlobalToastProvider>
@@ -34,13 +34,10 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
               <Route path="" element={<Navigate to="dashboard" replace />} />
             </Route>
 
-            <Route
-              path="/"
-              element={<Navigate to="/app/dashboard" replace />}
-            />
+            <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
           </Routes>
         </AuthProvider>
       </GlobalToastProvider>
     </BrowserRouter>
-  </React.StrictMode>,
+  </React.StrictMode>
 );
