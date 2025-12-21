@@ -261,7 +261,7 @@ CREATE POLICY "Users can create own profile"
 CREATE POLICY "Users can update own profile"
   ON public.users FOR UPDATE
   USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id AND (OLD.is_admin = NEW.is_admin OR user_is_admin()));
+  WITH CHECK (auth.uid() = id);
 
 CREATE POLICY "Admins can manage users"
   ON public.users FOR UPDATE
@@ -382,7 +382,23 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
+CREATE OR REPLACE FUNCTION protect_user_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Prevent non-admins from changing is_admin
+  IF NEW.is_admin != OLD.is_admin AND NOT user_is_admin() THEN
+     RAISE EXCEPTION 'Only admins can change admin status';
+  END IF;
+  
+  -- Update last_modified_by
+  NEW.last_modified_by = auth.uid();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
 -- Apply triggers
+CREATE TRIGGER users_protect_fields BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION protect_user_fields();
+
 CREATE TRIGGER accounts_set_audit_on_create BEFORE INSERT ON public.accounts FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
 CREATE TRIGGER accounts_prevent_audit_changes BEFORE UPDATE ON public.accounts FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
 
