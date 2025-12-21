@@ -1,4 +1,5 @@
 import { Rule } from './database';
+export type { Rule };
 
 export type MatchType = 'contains' | 'exact' | 'startsWith' | 'regex';
 
@@ -26,7 +27,7 @@ export interface RuleApplicationResult {
   applied: boolean; // True if rule was applied
   matchedRule?: Rule; // The rule that was applied
   reason?: string; // Why it wasn't applied (if applicable)
-  previousCategoryId?: string; // For undo functionality (future)
+  previousCategoryId?: string | null; // For undo functionality (future)
 }
 
 export interface RuleBatchResult {

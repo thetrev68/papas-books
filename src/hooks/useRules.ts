@@ -49,7 +49,7 @@ export function useCreateRule() {
 
   return {
     createRule: mutation.mutateAsync,
-    isLoading: mutation.isLoading,
+    isLoading: mutation.isPending,
     error: mutation.error as Error | null,
   };
 }
@@ -72,7 +72,7 @@ export function useUpdateRule() {
 
   return {
     updateRule: (id: string, updates: UpdateRule) => mutation.mutateAsync({ id, updates }),
-    isLoading: mutation.isLoading,
+    isLoading: mutation.isPending,
     error: mutation.error as Error | null,
   };
 }
@@ -95,7 +95,7 @@ export function useDeleteRule() {
 
   return {
     deleteRule: mutation.mutateAsync,
-    isLoading: mutation.isLoading,
+    isLoading: mutation.isPending,
     error: mutation.error as Error | null,
   };
 }

@@ -54,7 +54,7 @@ export function useApplyRules() {
 
   return {
     applyRules: mutation.mutateAsync,
-    isApplying: mutation.isLoading,
+    isApplying: mutation.isPending,
     error: mutation.error as Error | null,
     result,
   };
