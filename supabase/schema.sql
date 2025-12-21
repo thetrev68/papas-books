@@ -2,6 +2,21 @@
 CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 
 -- -----------------------------------------------------------------------------
+-- 0. Cleanup (Reset Schema)
+-- -----------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP TABLE IF EXISTS public.reconciliations CASCADE;
+DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TABLE IF EXISTS public.import_batches CASCADE;
+DROP TABLE IF EXISTS public.rules CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.accounts CASCADE;
+DROP TABLE IF EXISTS public.access_grants CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+DROP TABLE IF EXISTS public.booksets CASCADE;
+
+-- -----------------------------------------------------------------------------
 -- 1. Tables
 -- -----------------------------------------------------------------------------
 
