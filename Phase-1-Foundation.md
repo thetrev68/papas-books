@@ -473,7 +473,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 ### RLS Policies by Table
 
-#### Table: `users`
+#### RLS Policy: `users`
 
 ```sql
 -- Enable RLS
@@ -502,7 +502,7 @@ CREATE POLICY "Admins can manage users"
   WITH CHECK (user_is_admin());
 ```
 
-#### Table: `booksets`
+#### RLS Policy: `booksets`
 
 ```sql
 -- Enable RLS
@@ -527,7 +527,7 @@ CREATE POLICY "Owners can update booksets"
 -- No deletes allowed (use soft delete via archiving if needed)
 ```
 
-#### Table: `access_grants`
+#### RLS Policy: `access_grants`
 
 ```sql
 -- Enable RLS
@@ -592,7 +592,7 @@ CREATE POLICY "Editors can update"
 -- No DELETE policies - use soft delete flags
 ```
 
-#### Table: `transactions`
+#### RLS Policy: `transactions`
 
 ```sql
 -- Enable RLS
@@ -617,7 +617,7 @@ CREATE POLICY "Editors can update unreconciled transactions"
 -- No DELETE policy
 ```
 
-#### Table: `reconciliations`
+#### RLS Policy: `reconciliations`
 
 ```sql
 -- Enable RLS

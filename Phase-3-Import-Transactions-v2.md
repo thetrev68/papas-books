@@ -378,13 +378,13 @@ If `results.errors.length > 0`, the function should still resolve but include er
 
 **Objective:** Transform raw CSV rows into strongly-typed transaction objects.
 
-### Installation
+### Installation (Mapping)
 
 ```bash
 npm install date-fns
 ```
 
-### Types
+### Types (Mapping)
 
 ```typescript
 import { CsvMapping } from '../../types/import';
@@ -716,7 +716,7 @@ export async function addFingerprints(
 
 **Objective:** Detect exact duplicate transactions using fingerprint matching.
 
-### Types
+### Types (Deduplication)
 
 ```typescript
 import { Transaction } from '../../types/database';
@@ -797,7 +797,7 @@ From Implementation Plan Phase 3:
    - Date is within ±3 days
    - Description similarity > 80% (optional - Phase 3 uses exact amount + date window)
 
-### Types
+### Types (Fuzzy Match)
 
 ```typescript
 export interface FuzzyMatchOptions {
@@ -806,7 +806,7 @@ export interface FuzzyMatchOptions {
 }
 ```
 
-### Implementation
+### Implementation (Fuzzy Match)
 
 ```typescript
 import { Transaction } from '../../types/database';

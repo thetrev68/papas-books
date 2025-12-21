@@ -8,6 +8,8 @@
     "build": "tsc && vite build",
     "lint": "eslint . --report-unused-disable-directives --max-warnings 0",
     "lint:fix": "eslint . --fix",
+    "lint:md": "markdownlint \"**/*.md\" --ignore node_modules",
+    "lint:md:fix": "markdownlint \"**/*.md\" --fix --ignore node_modules",
     "format": "prettier --write \"src/**/*.{ts,tsx,css,md}\"",
     "format:check": "prettier --check \"src/**/*.{ts,tsx,css,md}\"",
     "preview": "vite preview",
@@ -49,6 +51,7 @@
     "husky": "^9.1.7",
     "jsdom": "^27.3.0",
     "lint-staged": "^15.5.2",
+    "markdownlint-cli": "^0.47.0",
     "postcss": "^8.4.38",
     "prettier": "^3.7.4",
     "tailwindcss": "^3.4.1",
@@ -62,7 +65,11 @@
       "eslint --fix",
       "prettier --write"
     ],
-    "*.{css,md}": [
+    "*.css": [
+      "prettier --write"
+    ],
+    "*.md": [
+      "markdownlint --fix",
       "prettier --write"
     ]
   }
