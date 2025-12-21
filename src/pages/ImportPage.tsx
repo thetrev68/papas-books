@@ -13,6 +13,7 @@ export default function ImportPage() {
     checkDuplicates,
     commit,
     reset,
+    setApplyRulesOnImport,
     isProcessing,
   } = useImportSession();
   const { accounts } = useAccounts();
@@ -167,14 +168,27 @@ export default function ImportPage() {
             )}
 
             {state.stats.new > 0 && (
-              <div>
-                <button
-                  onClick={commit}
-                  disabled={isProcessing}
-                  className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
-                >
-                  Import {state.stats.new} Transactions
-                </button>
+              <div className="flex flex-col gap-4">
+                <div className="mb-4">
+                  <label className="flex items-center gap-2">
+                    <input
+                      type="checkbox"
+                      checked={state.applyRulesOnImport}
+                      onChange={(e) => setApplyRulesOnImport(e.target.checked)}
+                      className="rounded border-gray-300"
+                    />
+                    Automatically apply rules after import
+                  </label>
+                </div>
+                <div>
+                  <button
+                    onClick={commit}
+                    disabled={isProcessing}
+                    className="bg-green-600 text-white px-6 py-2 rounded hover:bg-green-700 disabled:bg-gray-400 disabled:cursor-not-allowed"
+                  >
+                    Import {state.stats.new} Transactions
+                  </button>
+                </div>
               </div>
             )}
           </section>
@@ -198,6 +212,22 @@ export default function ImportPage() {
               <p>Successfully imported {state.stats.new} transactions.</p>
               <p className="text-sm text-gray-600">Batch ID: {state.importResult.batchId}</p>
             </div>
+
+            {state.ruleApplicationResult && (
+              <div className="mt-4 p-4 bg-gray-50 rounded border border-gray-200">
+                <h3 className="font-semibold mb-2">Rule Application Results:</h3>
+                <ul className="space-y-1 text-sm">
+                  <li>Applied: {state.ruleApplicationResult.appliedCount}</li>
+                  <li>Skipped: {state.ruleApplicationResult.skippedCount}</li>
+                  {state.ruleApplicationResult.errorCount > 0 && (
+                    <li className="text-red-600">
+                      Errors: {state.ruleApplicationResult.errorCount}
+                    </li>
+                  )}
+                </ul>
+              </div>
+            )}
+
             <button
               onClick={reset}
               className="mt-4 bg-blue-600 text-white px-6 py-2 rounded hover:bg-blue-700"

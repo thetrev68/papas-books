@@ -11,7 +11,12 @@ import {
   commitImportBatch,
 } from '../lib/supabase/import';
 import { updateAccountMapping } from '../lib/supabase/accounts';
+import { fetchRules } from '../lib/supabase/rules';
+import { applyRulesToBatch } from '../lib/rules/applicator';
+import { supabase } from '../lib/supabase/config';
 import type { CsvMapping } from '../types/import';
+import type { RuleBatchResult } from '../types/rules';
+import type { Transaction } from '../types/database';
 
 type ImportStep = 'upload' | 'mapping' | 'review' | 'importing' | 'complete' | 'error';
 
@@ -41,6 +46,10 @@ interface ImportSessionState {
     errors: number;
   };
 
+  // Rule Application
+  applyRulesOnImport: boolean;
+  ruleApplicationResult: RuleBatchResult | null;
+
   // Import result
   importResult: {
     batchId: string;
@@ -63,6 +72,7 @@ export interface UseImportSessionResult {
   checkDuplicates: () => Promise<void>;
   commit: () => Promise<void>;
   reset: () => void;
+  setApplyRulesOnImport: (value: boolean) => void;
 
   // Loading flags
   isProcessing: boolean;
@@ -78,6 +88,8 @@ const initialState: ImportSessionState = {
   stagedTransactions: [],
   processedTransactions: [],
   stats: { total: 0, new: 0, exact_duplicates: 0, fuzzy_duplicates: 0, errors: 0 },
+  applyRulesOnImport: true,
+  ruleApplicationResult: null,
   importResult: null,
   error: null,
 };
@@ -90,6 +102,11 @@ export function useImportSession(): UseImportSessionResult {
   // Action: Select account
   const selectAccount = (accountId: string) => {
     setState((prev) => ({ ...prev, selectedAccountId: accountId }));
+  };
+
+  // Action: Set apply rules preference
+  const setApplyRulesOnImport = (value: boolean) => {
+    setState((prev) => ({ ...prev, applyRulesOnImport: value }));
   };
 
   // Action: Upload file and preview
@@ -250,13 +267,35 @@ export function useImportSession(): UseImportSessionResult {
       // Save mapping to account (for next import)
       await updateAccountMapping(state.selectedAccountId, state.mapping);
 
+      // Apply rules if enabled
+      let ruleResult: RuleBatchResult | null = null;
+      if (state.applyRulesOnImport && result.transactionIds.length > 0) {
+        // Fetch the newly created transactions
+        const { data: newTransactions } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('id', result.transactionIds);
+
+        // Fetch rules
+        const rules = await fetchRules(activeBookset.id);
+
+        if (newTransactions && rules.length > 0) {
+          // Apply rules
+          ruleResult = await applyRulesToBatch(newTransactions as Transaction[], rules, {
+            setReviewedFlag: true,
+          });
+        }
+      }
+
       setState((prev) => ({
         ...prev,
         importResult: result,
+        ruleApplicationResult: ruleResult,
         step: 'complete',
         error: null,
       }));
     } catch (error) {
+      console.error('Commit failed:', error);
       setState((prev) => ({
         ...prev,
         error: error instanceof Error ? error.message : 'Failed to commit import',
@@ -281,6 +320,7 @@ export function useImportSession(): UseImportSessionResult {
     checkDuplicates,
     commit,
     reset,
+    setApplyRulesOnImport,
     isProcessing,
   };
 }

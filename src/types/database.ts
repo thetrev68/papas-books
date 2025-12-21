@@ -126,3 +126,31 @@ export interface ImportBatch {
   undone_at: string | null;
   undone_by: string | null;
 }
+
+export interface Rule {
+  id: string;
+  bookset_id: string;
+
+  // Matching criteria
+  keyword: string; // Lowercase search string
+  match_type: 'contains' | 'exact' | 'startsWith' | 'regex';
+  case_sensitive: boolean;
+
+  // Action to take
+  target_category_id: string;
+  suggested_payee: string | null;
+
+  // Priority and control
+  priority: number;
+  is_enabled: boolean;
+
+  // Metadata
+  created_at: string;
+  updated_at: string;
+  last_used_at: string | null;
+  use_count: number;
+
+  // Audit trail
+  created_by: string;
+  last_modified_by: string;
+}
