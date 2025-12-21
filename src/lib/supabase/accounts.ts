@@ -6,8 +6,8 @@ export async function fetchAccounts(booksetId: string): Promise<Account[]> {
   const { data, error } = await supabase
     .from('accounts')
     .select('*')
-    .eq('booksetId', booksetId)
-    .eq('isArchived', false)
+    .eq('bookset_id', booksetId)
+    .eq('is_archived', false)
     .order('name', { ascending: true });
 
   if (error) throw error;
@@ -18,14 +18,14 @@ export async function createAccount(account: InsertAccount): Promise<Account> {
   const { data, error } = await supabase
     .from('accounts')
     .insert({
-      booksetId: account.booksetId,
+      bookset_id: account.booksetId,
       name: account.name,
       type: account.type,
-      openingBalance: account.openingBalance,
-      openingBalanceDate: account.openingBalanceDate,
-      isArchived: false,
-      lastReconciledDate: null,
-      lastReconciledBalance: 0,
+      opening_balance: account.openingBalance,
+      opening_balance_date: account.openingBalanceDate,
+      is_archived: false,
+      last_reconciled_date: null,
+      last_reconciled_balance: 0,
     })
     .select()
     .single();
@@ -35,9 +35,16 @@ export async function createAccount(account: InsertAccount): Promise<Account> {
 }
 
 export async function updateAccount(id: string, updates: UpdateAccount): Promise<Account> {
+  const dbUpdates: Record<string, unknown> = {};
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.type !== undefined) dbUpdates.type = updates.type;
+  if (updates.openingBalance !== undefined) dbUpdates.opening_balance = updates.openingBalance;
+  if (updates.openingBalanceDate !== undefined)
+    dbUpdates.opening_balance_date = updates.openingBalanceDate;
+
   const { data, error } = await supabase
     .from('accounts')
-    .update(updates)
+    .update(dbUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -47,7 +54,7 @@ export async function updateAccount(id: string, updates: UpdateAccount): Promise
 }
 
 export async function deleteAccount(id: string): Promise<void> {
-  const { error } = await supabase.from('accounts').update({ isArchived: true }).eq('id', id);
+  const { error } = await supabase.from('accounts').update({ is_archived: true }).eq('id', id);
 
   if (error) throw error;
 }

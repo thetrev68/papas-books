@@ -6,9 +6,9 @@ export async function fetchCategories(booksetId: string): Promise<Category[]> {
   const { data, error } = await supabase
     .from('categories')
     .select('*')
-    .eq('booksetId', booksetId)
-    .eq('isArchived', false)
-    .order('sortOrder', { ascending: true });
+    .eq('bookset_id', booksetId)
+    .eq('is_archived', false)
+    .order('sort_order', { ascending: true });
 
   if (error) throw error;
   return data || [];
@@ -18,13 +18,13 @@ export async function createCategory(category: InsertCategory): Promise<Category
   const { data, error } = await supabase
     .from('categories')
     .insert({
-      booksetId: category.booksetId,
+      bookset_id: category.booksetId,
       name: category.name,
-      isTaxDeductible: category.isTaxDeductible ?? false,
-      taxLineItem: category.taxLineItem ?? null,
-      parentCategoryId: category.parentCategoryId ?? null,
-      sortOrder: category.sortOrder ?? 0,
-      isArchived: false,
+      is_tax_deductible: category.isTaxDeductible ?? false,
+      tax_line_item: category.taxLineItem ?? null,
+      parent_category_id: category.parentCategoryId ?? null,
+      sort_order: category.sortOrder ?? 0,
+      is_archived: false,
     })
     .select()
     .single();
@@ -34,9 +34,17 @@ export async function createCategory(category: InsertCategory): Promise<Category
 }
 
 export async function updateCategory(id: string, updates: UpdateCategory): Promise<Category> {
+  const dbUpdates: Record<string, unknown> = {};
+  if (updates.name !== undefined) dbUpdates.name = updates.name;
+  if (updates.isTaxDeductible !== undefined) dbUpdates.is_tax_deductible = updates.isTaxDeductible;
+  if (updates.taxLineItem !== undefined) dbUpdates.tax_line_item = updates.taxLineItem;
+  if (updates.parentCategoryId !== undefined)
+    dbUpdates.parent_category_id = updates.parentCategoryId;
+  if (updates.sortOrder !== undefined) dbUpdates.sort_order = updates.sortOrder;
+
   const { data, error } = await supabase
     .from('categories')
-    .update(updates)
+    .update(dbUpdates)
     .eq('id', id)
     .select()
     .single();
@@ -46,7 +54,7 @@ export async function updateCategory(id: string, updates: UpdateCategory): Promi
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  const { error } = await supabase.from('categories').update({ isArchived: true }).eq('id', id);
+  const { error } = await supabase.from('categories').update({ is_archived: true }).eq('id', id);
 
   if (error) throw error;
 }
