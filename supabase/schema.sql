@@ -22,7 +22,7 @@ DROP TABLE IF EXISTS public.booksets CASCADE;
 
 -- Table: users
 CREATE TABLE public.users (
-  id uuid REFERENCES auth.users(id) PRIMARY KEY,
+  id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
   email text NOT NULL,
   display_name text,
   is_admin boolean DEFAULT false,
@@ -37,7 +37,7 @@ CREATE TABLE public.users (
 -- Table: booksets
 CREATE TABLE public.booksets (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  owner_id uuid REFERENCES public.users(id) NOT NULL,
+  owner_id uuid REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
@@ -46,14 +46,14 @@ CREATE TABLE public.booksets (
 );
 
 -- Add circular foreign keys for users table
-ALTER TABLE public.users ADD CONSTRAINT fk_users_active_bookset FOREIGN KEY (active_bookset_id) REFERENCES public.booksets(id);
-ALTER TABLE public.users ADD CONSTRAINT fk_users_own_bookset FOREIGN KEY (own_bookset_id) REFERENCES public.booksets(id);
+ALTER TABLE public.users ADD CONSTRAINT fk_users_active_bookset FOREIGN KEY (active_bookset_id) REFERENCES public.booksets(id) ON DELETE SET NULL;
+ALTER TABLE public.users ADD CONSTRAINT fk_users_own_bookset FOREIGN KEY (own_bookset_id) REFERENCES public.booksets(id) ON DELETE SET NULL;
 
 -- Table: access_grants
 CREATE TABLE public.access_grants (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
-  user_id uuid REFERENCES public.users(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  user_id uuid REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
   granted_by uuid REFERENCES public.users(id) NOT NULL,
   role text CHECK (role IN ('owner', 'editor', 'viewer')) NOT NULL,
   created_at timestamp with time zone DEFAULT now(),
@@ -67,7 +67,7 @@ CREATE TABLE public.access_grants (
 -- Table: accounts
 CREATE TABLE public.accounts (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
   type text CHECK (type IN ('Asset', 'Liability')) NOT NULL,
   opening_balance bigint DEFAULT 0, -- in cents
@@ -90,7 +90,7 @@ CREATE TABLE public.accounts (
 -- Table: categories
 CREATE TABLE public.categories (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
   tax_line_item text,
   is_tax_deductible boolean DEFAULT false,
@@ -110,8 +110,8 @@ CREATE TABLE public.categories (
 -- Table: transactions
 CREATE TABLE public.transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
-  account_id uuid REFERENCES public.accounts(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
   date timestamp with time zone NOT NULL,
   payee text NOT NULL,
   original_description text NOT NULL,
@@ -138,7 +138,7 @@ CREATE TABLE public.transactions (
 -- Table: rules
 CREATE TABLE public.rules (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
   keyword text NOT NULL,
   match_type text CHECK (match_type IN ('contains', 'exact', 'startsWith', 'regex')) NOT NULL,
   case_sensitive boolean DEFAULT false,
@@ -158,8 +158,8 @@ CREATE TABLE public.rules (
 -- Table: reconciliations
 CREATE TABLE public.reconciliations (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
-  account_id uuid REFERENCES public.accounts(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
   statement_date timestamp with time zone NOT NULL,
   statement_balance bigint NOT NULL,
   calculated_balance bigint NOT NULL,
@@ -177,8 +177,8 @@ CREATE TABLE public.reconciliations (
 -- Table: import_batches
 CREATE TABLE public.import_batches (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) NOT NULL,
-  account_id uuid REFERENCES public.accounts(id) NOT NULL,
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
   file_name text NOT NULL,
   imported_at timestamp with time zone DEFAULT now(),
   imported_by uuid REFERENCES public.users(id),
@@ -193,7 +193,7 @@ CREATE TABLE public.import_batches (
 );
 
 -- Add transaction source_batch_id FK
-ALTER TABLE public.transactions ADD CONSTRAINT fk_transactions_batch FOREIGN KEY (source_batch_id) REFERENCES public.import_batches(id);
+ALTER TABLE public.transactions ADD CONSTRAINT fk_transactions_batch FOREIGN KEY (source_batch_id) REFERENCES public.import_batches(id) ON DELETE SET NULL;
 
 -- -----------------------------------------------------------------------------
 -- 2. RLS Helper Functions
