@@ -29,8 +29,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<Error | null>(null);
 
-  // Helper to fetch user profile and booksets
-  const fetchUserData = async (userId: string) => {
+  // Helper to fetch user profile and booksets with retry logic
+  const fetchUserData = async (userId: string, retries = 3, delay = 1000) => {
     try {
       // 1. Fetch user profile
       const { data: userData, error: userError } = await supabase
@@ -39,13 +39,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         .eq('id', userId)
         .single();
 
-      if (userError) throw userError;
-      if (!userData) throw new Error('User profile not found');
+      if (userError || !userData) {
+        if (retries > 0) {
+          console.log(`User profile not found, retrying in ${delay}ms... (${retries} attempts left)`);
+          await new Promise(resolve => setTimeout(resolve, delay));
+          return fetchUserData(userId, retries - 1, delay);
+        }
+        throw userError || new Error('User profile not found');
+      }
 
       setUser(userData);
 
       // 2. Fetch accessible booksets (owned + granted)
-      // Since Supabase RLS policies filter this for us, we can just query all booksets we can see
       const { data: booksetsData, error: booksetsError } = await supabase
         .from('booksets')
         .select('*');
@@ -63,6 +68,8 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } catch (err: any) {
       console.error('Error fetching user data:', err);
       setError(err);
+      // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
+      setUser(null);
     }
   };
 
@@ -82,10 +89,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
         setLoading(true);
-        // Wait a bit for the database trigger to create the user profile on sign up
-        if (_event === 'SIGNED_IN') {
-             // If this is a new signup, the trigger might need a moment. 
-             // Ideally we'd have a retry logic or realtime subscription, but for Phase 1 simplistic delay/retry
+        
+        // If this is a new signup, give the DB trigger a moment
+        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
+             // Small initial delay to allow trigger to complete
+             await new Promise(resolve => setTimeout(resolve, 500));
              await fetchUserData(session.user.id);
         } else {
              await fetchUserData(session.user.id);
