@@ -16,6 +16,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "knip": "knip",
     "prepare": "husky install"
   },
   "dependencies": {
@@ -50,6 +51,7 @@
     "globals": "^16.5.0",
     "husky": "^9.1.7",
     "jsdom": "^27.3.0",
+    "knip": "^5.76.2",
     "lint-staged": "^15.5.2",
     "markdownlint-cli": "^0.47.0",
     "postcss": "^8.4.38",

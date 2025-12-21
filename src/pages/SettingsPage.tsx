@@ -3,6 +3,7 @@ import { useAuth } from '../context/AuthContext';
 import AppNav from '../components/AppNav';
 import AccountsTab from '../components/settings/AccountsTab';
 import CategoriesTab from '../components/settings/CategoriesTab';
+import RulesTab from '../components/settings/RulesTab';
 import AccessTab from '../components/settings/AccessTab';
 
 export default function SettingsPage() {
@@ -41,7 +42,7 @@ export default function SettingsPage() {
         >
           {activeTab === 'accounts' && <AccountsTab />}
           {activeTab === 'categories' && <CategoriesTab />}
-          {activeTab === 'rules' && <div>Rules content (Phase 4)</div>}
+          {activeTab === 'rules' && <RulesTab />}
           {activeTab === 'access' && <AccessTab />}
         </div>
       </div>
