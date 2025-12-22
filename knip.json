@@ -1,6 +1,18 @@
 {
   "entry": ["src/main.tsx"],
   "ignore": ["src/**/*.test.{ts,tsx}"],
+  "include": [
+    "src/components/workbench/CreateRuleFromTransactionButton.tsx",
+    "src/lib/validation/import.ts",
+    "src/lib/rules/applicator.ts",
+    "src/lib/rules/matcher.ts",
+    "src/lib/import/parser.ts",
+    "src/lib/import/bank-profiles.ts",
+    "src/lib/validation/rules.ts",
+    "src/types/database.ts",
+    "src/types/import.ts",
+    "src/hooks/useImportSession.ts"
+  ],
   "ignoreDependencies": [
     "@vitest/coverage-v8",
     "@testing-library/jest-dom",

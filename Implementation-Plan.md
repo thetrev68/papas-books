@@ -115,7 +115,7 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 - Auto-categorization during import (integrate with Phase 3)
 - Manual "Run Rules" button on Workbench page
 - "Create Rule from Selection" button (simple form)
-- `isReviewed` flag auto-set when rule matches *configurable in settings!
+- `isReviewed` flag auto-set when rule matches \*configurable in settings!
 - Rules tab on Settings page (add to existing tabs)
 - Rules list as native HTML table with edit/delete buttons
 - Rule testing function (pure logic)
