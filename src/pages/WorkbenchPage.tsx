@@ -70,7 +70,12 @@ export default function WorkbenchPage() {
   };
 
   const handleDelete = (transaction: Transaction) => {
-    if (confirm('Delete this transaction?')) {
+    const amountStr = (transaction.amount / 100).toFixed(2);
+    if (
+      confirm(
+        `Are you sure you want to delete the transaction with "${transaction.payee}" for $${amountStr}?`
+      )
+    ) {
       deleteTransaction(transaction.id);
     }
   };

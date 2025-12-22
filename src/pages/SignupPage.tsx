@@ -51,6 +51,7 @@ export default function SignupPage() {
             value={displayName}
             onChange={(e) => setDisplayName(e.target.value)}
             placeholder="John Doe"
+            autoComplete="name"
             style={{ width: '100%', padding: '0.5rem' }}
           />
         </div>
@@ -61,6 +62,7 @@ export default function SignupPage() {
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
+            autoComplete="email"
             style={{ width: '100%', padding: '0.5rem' }}
           />
         </div>
@@ -71,6 +73,7 @@ export default function SignupPage() {
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
+            autoComplete="new-password"
             style={{ width: '100%', padding: '0.5rem' }}
           />
         </div>

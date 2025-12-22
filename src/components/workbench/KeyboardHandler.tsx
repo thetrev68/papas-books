@@ -68,8 +68,15 @@ function KeyboardHandler({
       if (e.ctrlKey && e.key === 'd') {
         e.preventDefault();
         const tx = transactions[selectedRow];
-        if (tx && confirm('Delete this transaction?')) {
-          onDelete(tx);
+        if (tx) {
+          const amountStr = (tx.amount / 100).toFixed(2);
+          if (
+            confirm(
+              `Are you sure you want to delete the transaction with "${tx.payee}" for $${amountStr}?`
+            )
+          ) {
+            onDelete(tx);
+          }
         }
       }
 
