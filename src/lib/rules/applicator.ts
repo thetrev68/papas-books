@@ -56,7 +56,7 @@ export async function applyRuleToTransaction(
         {
           category_id: rule.target_category_id,
           amount: transaction.amount,
-          memo: null,
+          memo: '',
         },
       ],
     };

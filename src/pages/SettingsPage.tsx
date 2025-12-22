@@ -4,13 +4,14 @@ import AppNav from '../components/AppNav';
 import AccountsTab from '../components/settings/AccountsTab';
 import CategoriesTab from '../components/settings/CategoriesTab';
 import RulesTab from '../components/settings/RulesTab';
+import PayeesTab from '../components/settings/PayeesTab';
 import AccessTab from '../components/settings/AccessTab';
 
 export default function SettingsPage() {
   const { activeBookset } = useAuth();
-  const [activeTab, setActiveTab] = useState<'accounts' | 'categories' | 'rules' | 'access'>(
-    'accounts'
-  );
+  const [activeTab, setActiveTab] = useState<
+    'accounts' | 'categories' | 'payees' | 'rules' | 'access'
+  >('accounts');
 
   return (
     <div>
@@ -24,6 +25,9 @@ export default function SettingsPage() {
           </button>
           <button onClick={() => setActiveTab('categories')} disabled={activeTab === 'categories'}>
             Categories
+          </button>
+          <button onClick={() => setActiveTab('payees')} disabled={activeTab === 'payees'}>
+            Payees
           </button>
           <button onClick={() => setActiveTab('rules')} disabled={activeTab === 'rules'}>
             Rules
@@ -42,6 +46,7 @@ export default function SettingsPage() {
         >
           {activeTab === 'accounts' && <AccountsTab />}
           {activeTab === 'categories' && <CategoriesTab />}
+          {activeTab === 'payees' && <PayeesTab />}
           {activeTab === 'rules' && <RulesTab />}
           {activeTab === 'access' && <AccessTab />}
         </div>

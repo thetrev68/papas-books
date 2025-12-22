@@ -121,6 +121,7 @@ CREATE TABLE public.transactions (
   is_reviewed boolean DEFAULT false,
   reconciled boolean DEFAULT false,
   reconciled_date timestamp with time zone,
+  is_archived boolean DEFAULT false,
   source_batch_id uuid, -- FK added later
   import_date timestamp with time zone DEFAULT now(),
   fingerprint text,
@@ -172,6 +173,19 @@ CREATE TABLE public.reconciliations (
   created_by uuid REFERENCES public.users(id),
   notes text,
   discrepancy_resolution text
+);
+
+-- Table: payees
+CREATE TABLE public.payees (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  aliases text[] DEFAULT '{}',
+  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id)
 );
 
 -- Table: import_batches
@@ -315,16 +329,18 @@ CREATE POLICY "Owners can update grants"
   USING (user_owns_bookset(bookset_id))
   WITH CHECK (user_owns_bookset(bookset_id));
 
--- Child Tables (Accounts, Categories, Rules, Import Batches)
+-- Child Tables (Accounts, Categories, Rules, Payees, Import Batches)
 ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
 
 -- Read policies
 CREATE POLICY "Users can read accounts" ON public.accounts FOR SELECT USING (user_can_read_bookset(bookset_id));
 CREATE POLICY "Users can read categories" ON public.categories FOR SELECT USING (user_can_read_bookset(bookset_id));
 CREATE POLICY "Users can read rules" ON public.rules FOR SELECT USING (user_can_read_bookset(bookset_id));
+CREATE POLICY "Users can read payees" ON public.payees FOR SELECT USING (user_can_read_bookset(bookset_id));
 CREATE POLICY "Users can read import_batches" ON public.import_batches FOR SELECT USING (user_can_read_bookset(bookset_id));
 
 -- Write policies
@@ -336,6 +352,9 @@ CREATE POLICY "Editors can update categories" ON public.categories FOR UPDATE US
 
 CREATE POLICY "Editors can insert rules" ON public.rules FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update rules" ON public.rules FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert payees" ON public.payees FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can update payees" ON public.payees FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
 
 CREATE POLICY "Editors can insert import_batches" ON public.import_batches FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update import_batches" ON public.import_batches FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
@@ -428,6 +447,9 @@ CREATE TRIGGER transactions_prevent_audit_changes BEFORE UPDATE ON public.transa
 CREATE TRIGGER rules_set_audit_on_create BEFORE INSERT ON public.rules FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
 CREATE TRIGGER rules_prevent_audit_changes BEFORE UPDATE ON public.rules FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
 
+CREATE TRIGGER payees_set_audit_on_create BEFORE INSERT ON public.payees FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
+CREATE TRIGGER payees_prevent_audit_changes BEFORE UPDATE ON public.payees FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+
 -- -----------------------------------------------------------------------------
 -- 5. User Creation Trigger (Sync Auth to Public Users)
 -- -----------------------------------------------------------------------------
@@ -461,3 +483,16 @@ CREATE OR REPLACE TRIGGER on_auth_user_created
   AFTER INSERT ON auth.users
   FOR EACH ROW
   EXECUTE FUNCTION public.handle_new_user();
+
+-- -----------------------------------------------------------------------------
+-- Payee Alias Management Function
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION add_payee_alias(payee_id uuid, new_alias text)
+RETURNS void AS $$
+BEGIN
+  UPDATE payees
+  SET aliases = array_append(aliases, new_alias)
+  WHERE id = payee_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;

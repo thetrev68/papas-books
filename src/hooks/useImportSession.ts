@@ -13,6 +13,8 @@ import {
 import { updateAccountMapping } from '../lib/supabase/accounts';
 import { fetchRules } from '../lib/supabase/rules';
 import { applyRulesToBatch } from '../lib/rules/applicator';
+import { fetchPayees, createPayee } from '../lib/supabase/payees';
+import { guessPayee } from '../lib/payee/payeeGuesser';
 import { supabase } from '../lib/supabase/config';
 import type { CsvMapping } from '../types/import';
 import type { RuleBatchResult } from '../types/rules';
@@ -242,7 +244,8 @@ export function useImportSession(): UseImportSessionResult {
         is_reviewed: false,
         is_split: false,
         reconciled: false,
-        lines: null, // Will be set by commitImportBatch
+        is_archived: false,
+        lines: [], // Will be set by commitImportBatch
       }));
 
       // Build batch object
@@ -284,6 +287,55 @@ export function useImportSession(): UseImportSessionResult {
           ruleResult = await applyRulesToBatch(newTransactions as Transaction[], rules, {
             setReviewedFlag: true,
           });
+        }
+      }
+
+      // Apply payee guessing
+      if (result.transactionIds.length > 0) {
+        // Fetch existing payees for guessing
+        const existingPayees = await fetchPayees(activeBookset.id);
+
+        // Fetch the newly created transactions
+        const { data: newTransactions } = await supabase
+          .from('transactions')
+          .select('*')
+          .in('id', result.transactionIds);
+
+        if (newTransactions) {
+          // Process each transaction for payee guessing
+          for (const transaction of newTransactions as Transaction[]) {
+            const guess = guessPayee(transaction.original_description, existingPayees);
+
+            if (guess.payee && guess.confidence >= 80) {
+              // High confidence match - update the transaction
+              await supabase
+                .from('transactions')
+                .update({ payee: guess.payee.name })
+                .eq('id', transaction.id);
+            } else if (guess.suggestedName && guess.confidence >= 60) {
+              // Medium confidence - create new payee and update transaction
+              try {
+                const newPayee = await createPayee({
+                  bookset_id: activeBookset.id,
+                  name: guess.suggestedName,
+                  aliases: [transaction.original_description],
+                });
+
+                await supabase
+                  .from('transactions')
+                  .update({ payee: newPayee.name })
+                  .eq('id', transaction.id);
+                // eslint-disable-next-line @typescript-eslint/no-unused-vars
+              } catch (_error) {
+                // Payee might already exist, just update the transaction with the suggested name
+                await supabase
+                  .from('transactions')
+                  .update({ payee: guess.suggestedName })
+                  .eq('id', transaction.id);
+              }
+            }
+            // Low confidence - leave as original description
+          }
         }
       }
 

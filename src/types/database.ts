@@ -71,6 +71,12 @@ export interface Category {
   last_modified_by: string;
 }
 
+export interface SplitLine {
+  category_id: string;
+  amount: number; // In cents (can be positive or negative)
+  memo?: string; // Optional note for this line
+}
+
 export interface Transaction {
   id: string;
   bookset_id: string;
@@ -91,9 +97,10 @@ export interface Transaction {
   is_reviewed: boolean; // False = "New", True = "Accepted"
   is_split: boolean; // Phase 5 feature
   reconciled: boolean; // Phase 6 feature
+  is_archived: boolean; // Soft delete flag
 
   // Split transaction data (Phase 5)
-  lines: unknown; // JSONB - array of split lines
+  lines: SplitLine[]; // JSONB - array of split lines
 
   // Timestamps
   created_at: string;
@@ -125,6 +132,18 @@ export interface ImportBatch {
   is_undone: boolean;
   undone_at: string | null;
   undone_by: string | null;
+}
+
+export interface Payee {
+  id: string;
+  bookset_id: string;
+  name: string; // Clean, normalized name (e.g., "Starbucks")
+  aliases: string[]; // Array of raw descriptions that map to this payee
+  category_id?: string; // Default category for this payee
+  created_at: string;
+  updated_at: string;
+  created_by: string;
+  last_modified_by: string;
 }
 
 export interface Rule {
