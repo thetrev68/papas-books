@@ -45,11 +45,17 @@ export function guessPayee(description: string, existingPayees: Payee[]): PayeeG
  * Extracts merchant name from bank description
  */
 function extractMerchantName(description: string): string | null {
-  // Remove common prefixes/suffixes
+  // Remove common banking prefixes and transaction types
   const clean = description
-    .replace(/^(POS|DEBIT|CHECK|ATM|ONLINE|WEB)\s+/i, '')
-    .replace(/\s+(PURCHASE|PAYMENT|WITHDRAWAL|DEPOSIT)$/i, '')
+    .replace(/^(POS|DEBIT|CHECK|ATM|ONLINE|WEB|ACH|CREDIT|CHARGE)\s+/i, '')
+    .replace(/\s+(PURCHASE|PAYMENT|WITHDRAWAL|DEPOSIT|TRANSFER|TRANSACTION)(\s|$)/i, ' ') // Remove transaction types
+    .replace(/\s+(#\d+|[A-Z]{2}\d{2,}|REF|REFUND)$/i, '') // Remove reference numbers
     .trim();
+
+  // If the description is too short after cleaning, return null
+  if (clean.length < 2) {
+    return null;
+  }
 
   // Take first 2-3 words as merchant name
   const words = clean.split(/\s+/).slice(0, 3);
