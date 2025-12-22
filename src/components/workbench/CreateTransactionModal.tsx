@@ -1,14 +1,21 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import type { Transaction } from '../../types/database';
 import { createManualTransaction } from '../../lib/transactionOperations';
+import { useCategories } from '../../hooks/useCategories';
 
 interface CreateTransactionModalProps {
   accountId: string;
+  initialTransaction?: Transaction;
   onSave: (transaction: Transaction) => void;
   onClose: () => void;
 }
 
-function CreateTransactionModal({ accountId, onSave, onClose }: CreateTransactionModalProps) {
+function CreateTransactionModal({
+  accountId,
+  initialTransaction,
+  onSave,
+  onClose,
+}: CreateTransactionModalProps) {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
     payee: '',
@@ -17,16 +24,49 @@ function CreateTransactionModal({ accountId, onSave, onClose }: CreateTransactio
     isSplit: false,
   });
 
-  const handleSave = () => {
-    const transaction = createManualTransaction(
-      accountId,
-      formData.date,
-      formData.payee,
-      Math.round(formData.amount * 100), // Convert to cents
-      formData.categoryId
-    );
+  const { categories } = useCategories();
 
-    onSave(transaction);
+  useEffect(() => {
+    if (initialTransaction) {
+      setFormData({
+        date: initialTransaction.date.split('T')[0],
+        payee: initialTransaction.payee,
+        amount: initialTransaction.amount / 100,
+        categoryId: initialTransaction.lines[0]?.category_id || '',
+        isSplit: initialTransaction.is_split,
+      });
+    }
+  }, [initialTransaction]);
+
+  const handleSave = () => {
+    if (initialTransaction) {
+      const updatedTransaction: Transaction = {
+        ...initialTransaction,
+        date: formData.date,
+        payee: formData.payee,
+        amount: Math.round(formData.amount * 100),
+        is_split: formData.isSplit,
+        lines: formData.isSplit
+          ? initialTransaction.lines
+          : [
+              {
+                category_id: formData.categoryId,
+                amount: Math.round(formData.amount * 100),
+                memo: '',
+              },
+            ],
+      };
+      onSave(updatedTransaction);
+    } else {
+      const transaction = createManualTransaction(
+        accountId,
+        formData.date,
+        formData.payee,
+        Math.round(formData.amount * 100), // Convert to cents
+        formData.categoryId
+      );
+      onSave(transaction);
+    }
   };
 
   return (
@@ -55,7 +95,9 @@ function CreateTransactionModal({ accountId, onSave, onClose }: CreateTransactio
           overflow: 'auto',
         }}
       >
-        <h3 style={{ marginTop: 0 }}>Create Transaction</h3>
+        <h3 style={{ marginTop: 0 }}>
+          {initialTransaction ? 'Edit Transaction' : 'Create Transaction'}
+        </h3>
 
         <div style={{ marginBottom: '1rem' }}>
           <label style={{ display: 'block', marginBottom: '0.5rem' }}>Date:</label>
@@ -129,10 +171,11 @@ function CreateTransactionModal({ accountId, onSave, onClose }: CreateTransactio
               }}
             >
               <option value="">Select Category</option>
-              {/* Categories would be loaded from useCategories hook */}
-              <option value="cat1">Groceries</option>
-              <option value="cat2">Utilities</option>
-              <option value="cat3">Entertainment</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
             </select>
           </div>
         )}
@@ -154,7 +197,7 @@ function CreateTransactionModal({ accountId, onSave, onClose }: CreateTransactio
               cursor: 'pointer',
             }}
           >
-            Create
+            {initialTransaction ? 'Save' : 'Create'}
           </button>
           <button
             onClick={onClose}

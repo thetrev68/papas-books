@@ -8,10 +8,14 @@ import { MatchType } from '../../types/rules';
 
 interface RuleFormModalProps {
   rule: Rule | null; // null = creating, non-null = editing
+  initialValues?: {
+    keyword?: string;
+    suggestedPayee?: string;
+  };
   onClose: () => void;
 }
 
-export default function RuleFormModal({ rule, onClose }: RuleFormModalProps) {
+export default function RuleFormModal({ rule, initialValues, onClose }: RuleFormModalProps) {
   const { activeBookset } = useAuth();
   const { createRule, isLoading: isCreating } = useCreateRule();
   const { updateRule, isLoading: isUpdating } = useUpdateRule();
@@ -19,11 +23,11 @@ export default function RuleFormModal({ rule, onClose }: RuleFormModalProps) {
 
   // Initialize form data with mapping from snake_case (DB) to camelCase (Form)
   const [formData, setFormData] = useState({
-    keyword: rule?.keyword || '',
+    keyword: rule?.keyword || initialValues?.keyword || '',
     matchType: rule?.match_type || 'contains',
     caseSensitive: rule?.case_sensitive ?? false,
     targetCategoryId: rule?.target_category_id || '',
-    suggestedPayee: rule?.suggested_payee || '',
+    suggestedPayee: rule?.suggested_payee || initialValues?.suggestedPayee || '',
     priority: rule?.priority ?? 50,
     isEnabled: rule?.is_enabled ?? true,
   });

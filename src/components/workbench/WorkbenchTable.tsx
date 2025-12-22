@@ -12,6 +12,8 @@ import {
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { Transaction } from '../../types/database';
 import InlineEditCell from './InlineEditCell';
+import { useCategories } from '../../hooks/useCategories';
+import { useAccounts } from '../../hooks/useAccounts';
 
 interface WorkbenchTableProps {
   transactions: Transaction[];
@@ -20,6 +22,8 @@ interface WorkbenchTableProps {
   onDelete: (transaction: Transaction) => void;
   onReview: (transaction: Transaction) => void;
   onUpdatePayee: (transactionId: string, newPayee: string) => void;
+  onUpdateCategory: (transactionId: string, categoryId: string) => void;
+  onCreateRule: (transaction: Transaction) => void;
 }
 
 function WorkbenchTable({
@@ -29,29 +33,22 @@ function WorkbenchTable({
   onDelete,
   onReview,
   onUpdatePayee,
+  onUpdateCategory,
+  onCreateRule,
 }: WorkbenchTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [editingPayee, setEditingPayee] = useState<string | null>(null);
 
+  const { categories } = useCategories();
+  const { accounts } = useAccounts();
+
   const columnHelper = createColumnHelper<Transaction>();
 
-  // Placeholder functions - these would be passed as props or from hooks
-  function getCategoryName(categoryId?: string): string {
-    return categoryId || 'Uncategorized';
-  }
-
   function getAccountName(accountId: string): string {
-    return `Account ${accountId}`;
-  }
-
-  function CreateRuleFromTransactionButton({
-    transaction,
-  }: {
-    transaction: Transaction;
-  }): JSX.Element {
-    return <button onClick={() => console.log('Create rule from', transaction.id)}>Rule</button>;
+    const account = accounts.find((a) => a.id === accountId);
+    return account ? account.name : `Account ${accountId}`;
   }
 
   const columns = [
@@ -114,8 +111,27 @@ function WorkbenchTable({
             </div>
           );
         } else {
-          const categoryName = getCategoryName(row.original.lines[0]?.category_id);
-          return <span>{categoryName}</span>;
+          const currentCategoryId = row.original.lines[0]?.category_id || '';
+          return (
+            <select
+              value={currentCategoryId}
+              onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
+              style={{
+                width: '100%',
+                padding: '4px',
+                border: '1px solid transparent',
+                borderRadius: '4px',
+                backgroundColor: 'transparent',
+              }}
+            >
+              <option value="">Select Category</option>
+              {categories.map((cat) => (
+                <option key={cat.id} value={cat.id}>
+                  {cat.name}
+                </option>
+              ))}
+            </select>
+          );
         }
       },
     }),
@@ -141,7 +157,7 @@ function WorkbenchTable({
           <button onClick={() => onEdit(row.original)}>Edit</button>
           <button onClick={() => onSplit(row.original)}>Split</button>
           <button onClick={() => onDelete(row.original)}>Delete</button>
-          <CreateRuleFromTransactionButton transaction={row.original} />
+          <button onClick={() => onCreateRule(row.original)}>Rule</button>
         </div>
       ),
     }),
@@ -172,6 +188,11 @@ function WorkbenchTable({
     overscan: 5,
   });
 
+  const items = virtualizer.getVirtualItems();
+  const paddingTop = items.length > 0 ? items[0].start : 0;
+  const paddingBottom =
+    items.length > 0 ? virtualizer.getTotalSize() - items[items.length - 1].end : 0;
+
   return (
     <div>
       {/* Filters */}
@@ -187,7 +208,15 @@ function WorkbenchTable({
       {/* Table */}
       <div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}>
         <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
+          <thead
+            style={{
+              position: 'sticky',
+              top: 0,
+              zIndex: 10,
+              background: 'white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}
+          >
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
@@ -215,7 +244,12 @@ function WorkbenchTable({
             ))}
           </thead>
           <tbody>
-            {virtualizer.getVirtualItems().map((virtualRow) => {
+            {paddingTop > 0 && (
+              <tr>
+                <td colSpan={columns.length} style={{ height: `${paddingTop}px` }} />
+              </tr>
+            )}
+            {items.map((virtualRow) => {
               const row = table.getRowModel().rows[virtualRow.index];
               return (
                 <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
@@ -227,6 +261,11 @@ function WorkbenchTable({
                 </tr>
               );
             })}
+            {paddingBottom > 0 && (
+              <tr>
+                <td colSpan={columns.length} style={{ height: `${paddingBottom}px` }} />
+              </tr>
+            )}
           </tbody>
         </table>
       </div>

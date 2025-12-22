@@ -7,6 +7,8 @@ import { useTransactionMutations } from '../hooks/useTransactionMutations';
 import WorkbenchTable from '../components/workbench/WorkbenchTable';
 import CreateTransactionModal from '../components/workbench/CreateTransactionModal';
 import RuleBatchResultModal from '../components/workbench/RuleBatchResultModal';
+import SplitModal from '../components/workbench/SplitModal';
+import RuleFormModal from '../components/settings/RuleFormModal';
 import type { Transaction } from '../types/database';
 
 export default function WorkbenchPage() {
@@ -16,7 +18,12 @@ export default function WorkbenchPage() {
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
-  const { transactions, isLoading } = useWorkbenchData(activeBookset?.id || '');
+  // Modal states
+  const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
+  const [splitTransaction, setSplitTransaction] = useState<Transaction | null>(null);
+  const [ruleTransaction, setRuleTransaction] = useState<Transaction | null>(null);
+
+  const { transactions, isLoading, filter, setFilter } = useWorkbenchData(activeBookset?.id || '');
   const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
 
   async function handleRunRulesOnAll() {
@@ -51,11 +58,15 @@ export default function WorkbenchPage() {
   }
 
   const handleEdit = (transaction: Transaction) => {
-    console.log('Edit transaction', transaction.id);
+    setEditTransaction(transaction);
   };
 
   const handleSplit = (transaction: Transaction) => {
-    console.log('Split transaction', transaction.id);
+    setSplitTransaction(transaction);
+  };
+
+  const handleCreateRule = (transaction: Transaction) => {
+    setRuleTransaction(transaction);
   };
 
   const handleDelete = (transaction: Transaction) => {
@@ -75,9 +86,34 @@ export default function WorkbenchPage() {
     }
   };
 
+  const handleUpdateCategory = (transactionId: string, categoryId: string) => {
+    const transaction = transactions.find((t) => t.id === transactionId);
+    if (transaction) {
+      updateTransaction({
+        ...transaction,
+        lines: [
+          {
+            ...transaction.lines[0],
+            category_id: categoryId,
+          },
+        ],
+      });
+    }
+  };
+
   const handleCreateTransaction = (transaction: Transaction) => {
     createTransaction(transaction);
     setShowCreateModal(false);
+  };
+
+  const handleSaveEdit = (transaction: Transaction) => {
+    updateTransaction(transaction);
+    setEditTransaction(null);
+  };
+
+  const handleSaveSplit = (transaction: Transaction) => {
+    updateTransaction(transaction);
+    setSplitTransaction(null);
   };
 
   return (
@@ -86,7 +122,15 @@ export default function WorkbenchPage() {
       <div style={{ padding: '2rem' }}>
         <h1>Transaction Workbench</h1>
 
-        <div style={{ marginBottom: '1rem', display: 'flex', gap: '1rem' }}>
+        <div
+          style={{
+            marginBottom: '1rem',
+            display: 'flex',
+            gap: '1rem',
+            alignItems: 'center',
+            flexWrap: 'wrap',
+          }}
+        >
           <button onClick={() => setShowCreateModal(true)} disabled={isLoading}>
             Create Transaction
           </button>
@@ -99,6 +143,30 @@ export default function WorkbenchPage() {
           >
             Run Rules on Selected ({selectedTransactionIds.length})
           </button>
+
+          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <label>Status:</label>
+            <select
+              value={
+                filter.isReviewed === undefined
+                  ? 'all'
+                  : filter.isReviewed
+                    ? 'reviewed'
+                    : 'unreviewed'
+              }
+              onChange={(e) => {
+                const val = e.target.value;
+                setFilter({
+                  isReviewed: val === 'all' ? undefined : val === 'reviewed',
+                });
+              }}
+              style={{ padding: '4px' }}
+            >
+              <option value="unreviewed">Unreviewed</option>
+              <option value="reviewed">Reviewed</option>
+              <option value="all">All</option>
+            </select>
+          </div>
         </div>
 
         {isLoading && <div>Loading transactions...</div>}
@@ -112,6 +180,8 @@ export default function WorkbenchPage() {
               onDelete={handleDelete}
               onReview={handleReview}
               onUpdatePayee={handleUpdatePayee}
+              onUpdateCategory={handleUpdateCategory}
+              onCreateRule={handleCreateRule}
             />
           </div>
         )}
@@ -121,6 +191,34 @@ export default function WorkbenchPage() {
             accountId={activeBookset?.id || ''}
             onSave={handleCreateTransaction}
             onClose={() => setShowCreateModal(false)}
+          />
+        )}
+
+        {editTransaction && (
+          <CreateTransactionModal
+            accountId={activeBookset?.id || ''}
+            initialTransaction={editTransaction}
+            onSave={handleSaveEdit}
+            onClose={() => setEditTransaction(null)}
+          />
+        )}
+
+        {splitTransaction && (
+          <SplitModal
+            transaction={splitTransaction}
+            onSave={handleSaveSplit}
+            onClose={() => setSplitTransaction(null)}
+          />
+        )}
+
+        {ruleTransaction && (
+          <RuleFormModal
+            rule={null}
+            initialValues={{
+              keyword: ruleTransaction.payee || ruleTransaction.original_description,
+              suggestedPayee: ruleTransaction.payee,
+            }}
+            onClose={() => setRuleTransaction(null)}
           />
         )}
 

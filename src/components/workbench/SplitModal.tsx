@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Transaction } from '../../types/database';
 import { calculateSplitRemainder, validateSplitTransaction } from '../../lib/splitCalculator';
+import { useCategories } from '../../hooks/useCategories';
 
 interface SplitModalProps {
   transaction: Transaction;
@@ -11,6 +12,7 @@ interface SplitModalProps {
 function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
   const [lines, setLines] = useState(transaction.lines || []);
   const [newLine, setNewLine] = useState({ categoryId: '', amount: 0, memo: '' });
+  const { categories } = useCategories();
 
   const remainder = calculateSplitRemainder({ ...transaction, lines });
   const validation = validateSplitTransaction({ ...transaction, lines });
@@ -109,10 +111,11 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
                     }}
                   >
                     <option value="">Select Category</option>
-                    {/* Categories would be loaded from useCategories hook */}
-                    <option value="cat1">Groceries</option>
-                    <option value="cat2">Utilities</option>
-                    <option value="cat3">Entertainment</option>
+                    {categories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.name}
+                      </option>
+                    ))}
                   </select>
                 </td>
                 <td style={{ padding: '8px' }}>
@@ -169,9 +172,11 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
             style={{ flex: 1, padding: '4px', border: '1px solid #ccc', borderRadius: '3px' }}
           >
             <option value="">Select Category</option>
-            <option value="cat1">Groceries</option>
-            <option value="cat2">Utilities</option>
-            <option value="cat3">Entertainment</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
           </select>
           <input
             type="number"
