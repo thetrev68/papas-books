@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/GlobalToastProvider';
@@ -7,20 +7,34 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, error: authError } = useAuth();
+  const { signIn, error: authError, user } = useAuth();
   const { showError } = useToast();
   const navigate = useNavigate();
+
+  // Redirect when user is authenticated
+  useEffect(() => {
+    if (user) {
+      navigate('/app/dashboard');
+    }
+  }, [user, navigate]);
+
+  // Stop loading if an auth error occurs from context (e.g. profile fetch failed)
+  useEffect(() => {
+    if (authError) {
+      setLoading(false);
+    }
+  }, [authError]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await signIn(email, password);
-      navigate('/app/dashboard');
+      // Do not navigate here. Wait for 'user' to be set in context.
+      // Do not set loading to false here; keep it true until redirect or error.
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       showError(message);
-    } finally {
       setLoading(false);
     }
   };
