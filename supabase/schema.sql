@@ -495,4 +495,47 @@ BEGIN
   SET aliases = array_append(aliases, new_alias)
   WHERE id = payee_id;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER;C R E A T E   O R   R E P L A C E   F U N C T I O N   f i n a l i z e _ r e c o n c i l i a t i o n (  
+     _ b o o k s e t _ i d   u u i d ,  
+     _ a c c o u n t _ i d   u u i d ,  
+     _ s t a t e m e n t _ b a l a n c e   b i g i n t ,  
+     _ s t a t e m e n t _ d a t e   t i m e s t a m p   w i t h   t i m e   z o n e ,  
+     _ o p e n i n g _ b a l a n c e   b i g i n t ,  
+     _ c a l c u l a t e d _ b a l a n c e   b i g i n t ,  
+     _ t r a n s a c t i o n _ i d s   u u i d [ ]  
+ )   R E T U R N S   v o i d   A S   $ $  
+ D E C L A R E  
+     _ d i f f e r e n c e   b i g i n t ;  
+ B E G I N  
+     - -   C a l c u l a t e   d i f f e r e n c e   ( t r u s t   b u t   v e r i f y )  
+     _ d i f f e r e n c e   : =   _ s t a t e m e n t _ b a l a n c e   -   _ c a l c u l a t e d _ b a l a n c e ;  
+  
+     - -   1 .   C r e a t e   R e c o n c i l i a t i o n   R e c o r d  
+     I N S E R T   I N T O   r e c o n c i l i a t i o n s   (  
+         " b o o k s e t _ i d " ,   " a c c o u n t _ i d " ,  
+         " s t a t e m e n t _ b a l a n c e " ,   " s t a t e m e n t _ d a t e " ,  
+         " o p e n i n g _ b a l a n c e " ,   " c a l c u l a t e d _ b a l a n c e " ,  
+         " d i f f e r e n c e " ,   " s t a t u s " ,   " f i n a l i z e d _ a t " ,  
+         " t r a n s a c t i o n _ c o u n t " ,   " t r a n s a c t i o n _ i d s "  
+     )   V A L U E S   (  
+         _ b o o k s e t _ i d ,   _ a c c o u n t _ i d ,  
+         _ s t a t e m e n t _ b a l a n c e ,   _ s t a t e m e n t _ d a t e ,  
+         _ o p e n i n g _ b a l a n c e ,   _ c a l c u l a t e d _ b a l a n c e ,  
+         _ d i f f e r e n c e ,   ' b a l a n c e d ' ,   n o w ( ) ,  
+         a r r a y _ l e n g t h ( _ t r a n s a c t i o n _ i d s ,   1 ) ,   c a s t ( _ t r a n s a c t i o n _ i d s   a s   t e x t [ ] )  
+     ) ;  
+  
+     - -   2 .   M a r k   T r a n s a c t i o n s   a s   R e c o n c i l e d  
+     U P D A T E   t r a n s a c t i o n s  
+     S E T   r e c o n c i l e d   =   t r u e ,   " r e c o n c i l e d _ d a t e "   =   n o w ( )  
+     W H E R E   i d   =   A N Y ( _ t r a n s a c t i o n _ i d s )  
+     A N D   " b o o k s e t _ i d "   =   _ b o o k s e t _ i d ;  
+  
+     - -   3 .   U p d a t e   A c c o u n t   L a s t   R e c o n c i l e d   S t a t e  
+     U P D A T E   a c c o u n t s  
+     S E T   " l a s t _ r e c o n c i l e d _ b a l a n c e "   =   _ s t a t e m e n t _ b a l a n c e ,  
+             " l a s t _ r e c o n c i l e d _ d a t e "   =   _ s t a t e m e n t _ d a t e  
+     W H E R E   i d   =   _ a c c o u n t _ i d ;  
+ E N D ;  
+ $ $   L A N G U A G E   p l p g s q l   S E C U R I T Y   D E F I N E R ;  
+ 
