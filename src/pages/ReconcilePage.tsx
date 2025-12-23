@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AppNav from '../components/AppNav';
 import { useAccounts } from '../hooks/useAccounts';
 import ReconcileSetup from '../components/reconcile/ReconcileSetup';
 import ReconcileWorkspace from '../components/reconcile/ReconcileWorkspace';
@@ -24,36 +23,50 @@ export default function ReconcilePage() {
     setStep(1);
   };
 
-  if (isLoading) return <div>Loading accounts...</div>;
+  if (isLoading) {
+    return (
+      <div className="p-4 md:p-8 max-w-7xl mx-auto text-lg text-neutral-500">
+        Loading accounts...
+      </div>
+    );
+  }
 
   const selectedAccount = setupData ? accounts.find((a) => a.id === setupData.accountId) : null;
 
   return (
-    <div>
-      <AppNav />
-      <div style={{ padding: '2rem' }}>
-        {step === 1 && <ReconcileSetup accounts={accounts} onNext={handleSetupComplete} />}
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <header className="mb-8">
+        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Reconciliation</h1>
+        <p className="text-lg text-neutral-600">
+          Match your statement to lock in accurate balances.
+        </p>
+      </header>
+      {step === 1 && <ReconcileSetup accounts={accounts} onNext={handleSetupComplete} />}
 
-        {step === 2 && setupData && selectedAccount && (
-          <ReconcileWorkspace
-            account={selectedAccount}
-            statementDate={setupData.statementDate}
-            statementBalance={setupData.statementBalance}
-            onSuccess={handleSuccess}
-            onCancel={handleReset}
-          />
-        )}
+      {step === 2 && setupData && selectedAccount && (
+        <ReconcileWorkspace
+          account={selectedAccount}
+          statementDate={setupData.statementDate}
+          statementBalance={setupData.statementBalance}
+          onSuccess={handleSuccess}
+          onCancel={handleReset}
+        />
+      )}
 
-        {step === 3 && (
-          <div style={{ textAlign: 'center', maxWidth: '400px', margin: '0 auto' }}>
-            <h2>Reconciliation Complete!</h2>
-            <p>Your account is now balanced and transactions have been locked.</p>
-            <button onClick={handleReset} style={{ padding: '0.75rem', marginTop: '1rem' }}>
-              Reconcile Another Account
-            </button>
-          </div>
-        )}
-      </div>
+      {step === 3 && (
+        <div className="text-center max-w-md mx-auto mt-8">
+          <h2 className="text-2xl font-bold mb-4">Reconciliation Complete!</h2>
+          <p className="text-lg text-neutral-600 mb-6">
+            Your account is now balanced and transactions have been locked.
+          </p>
+          <button
+            onClick={handleReset}
+            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl hover:bg-brand-700 transition-colors"
+          >
+            Reconcile Another Account
+          </button>
+        </div>
+      )}
     </div>
   );
 }

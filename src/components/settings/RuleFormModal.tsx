@@ -5,6 +5,7 @@ import { useCreateRule, useUpdateRule } from '../../hooks/useRules';
 import { insertRuleSchema, validateRegex } from '../../lib/validation/rules';
 import { Rule } from '../../types/database';
 import { MatchType, RuleConditions } from '../../types/rules';
+import Modal from '../ui/Modal';
 
 interface RuleFormModalProps {
   rule: Rule | null; // null = creating, non-null = editing
@@ -124,249 +125,203 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-          background: 'white',
-          padding: '20px',
-          maxWidth: '500px',
-          width: '100%',
-          borderRadius: '8px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-      >
-        <h2>{rule ? 'Edit Rule' : 'Create Rule'}</h2>
-        <form
-          onSubmit={handleSubmit}
-          style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
-        >
-          {/* ... Basic Fields ... */}
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Keyword:</label>
-            <input
-              type="text"
-              value={formData.keyword}
-              onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
-              placeholder="e.g., target, starbucks, amazon"
-              style={{ width: '100%', padding: '8px' }}
-            />
-            {errors.keyword && (
-              <div style={{ color: 'red', fontSize: '0.8em' }}>{errors.keyword}</div>
-            )}
-          </div>
+    <Modal title={rule ? 'Edit Rule' : 'Create Rule'} onClose={onClose} size="lg">
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Keyword</label>
+          <input
+            type="text"
+            value={formData.keyword}
+            onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
+            placeholder="e.g., target, starbucks, amazon"
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          />
+          {errors.keyword && <div className="text-danger-700 text-sm mt-1">{errors.keyword}</div>}
+        </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Match Type:</label>
-            <select
-              value={formData.matchType}
-              onChange={(e) => setFormData({ ...formData, matchType: e.target.value as MatchType })}
-              style={{ width: '100%', padding: '8px' }}
-            >
-              <option value="contains">Contains (default)</option>
-              <option value="exact">Exact match</option>
-              <option value="startsWith">Starts with</option>
-              <option value="regex">Regular expression</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Match Type</label>
+          <select
+            value={formData.matchType}
+            onChange={(e) => setFormData({ ...formData, matchType: e.target.value as MatchType })}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          >
+            <option value="contains">Contains (default)</option>
+            <option value="exact">Exact match</option>
+            <option value="startsWith">Starts with</option>
+            <option value="regex">Regular expression</option>
+          </select>
+        </div>
 
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-              <input
-                type="checkbox"
-                checked={formData.caseSensitive}
-                onChange={(e) => setFormData({ ...formData, caseSensitive: e.target.checked })}
-              />
-              Case sensitive
-            </label>
-          </div>
+        <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
+          <input
+            type="checkbox"
+            checked={formData.caseSensitive}
+            onChange={(e) => setFormData({ ...formData, caseSensitive: e.target.checked })}
+            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+          />
+          <span className="text-lg font-medium text-neutral-900">Case sensitive</span>
+        </label>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Category:</label>
-            <select
-              value={formData.targetCategoryId}
-              onChange={(e) => setFormData({ ...formData, targetCategoryId: e.target.value })}
-              style={{ width: '100%', padding: '8px' }}
-            >
-              <option value="">-- Select Category --</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
-            {errors.targetCategoryId && (
-              <div style={{ color: 'red', fontSize: '0.8em' }}>{errors.targetCategoryId}</div>
-            )}
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Category</label>
+          <select
+            value={formData.targetCategoryId}
+            onChange={(e) => setFormData({ ...formData, targetCategoryId: e.target.value })}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          >
+            <option value="">-- Select Category --</option>
+            {categories.map((cat) => (
+              <option key={cat.id} value={cat.id}>
+                {cat.name}
+              </option>
+            ))}
+          </select>
+          {errors.targetCategoryId && (
+            <div className="text-danger-700 text-sm mt-1">{errors.targetCategoryId}</div>
+          )}
+        </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px' }}>
-              Suggested Payee (optional):
-            </label>
-            <input
-              type="text"
-              value={formData.suggestedPayee}
-              onChange={(e) => setFormData({ ...formData, suggestedPayee: e.target.value })}
-              placeholder="e.g., Target, Starbucks"
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">
+            Suggested Payee (optional)
+          </label>
+          <input
+            type="text"
+            value={formData.suggestedPayee}
+            onChange={(e) => setFormData({ ...formData, suggestedPayee: e.target.value })}
+            placeholder="e.g., Target, Starbucks"
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          />
+        </div>
 
-          <div>
-            <label style={{ display: 'block', marginBottom: '5px' }}>Priority (1-100):</label>
-            <input
-              type="number"
-              min="1"
-              max="100"
-              value={formData.priority}
-              onChange={(e) =>
-                setFormData({ ...formData, priority: parseInt(e.target.value) || 50 })
-              }
-              style={{ width: '100%', padding: '8px' }}
-            />
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Priority (1-100)</label>
+          <input
+            type="number"
+            min="1"
+            max="100"
+            value={formData.priority}
+            onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 50 })}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          />
+        </div>
 
-          {/* Advanced Conditions Toggle */}
-          <div>
-            <button
-              type="button"
-              onClick={() => setShowAdvanced(!showAdvanced)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: 'blue',
-                cursor: 'pointer',
-                padding: 0,
-              }}
-            >
-              {showAdvanced ? 'Hide Advanced Conditions' : 'Show Advanced Conditions'}
-            </button>
-          </div>
+        <div>
+          <button
+            type="button"
+            onClick={() => setShowAdvanced(!showAdvanced)}
+            className="text-brand-700 font-bold hover:underline"
+          >
+            {showAdvanced ? 'Hide Advanced Conditions' : 'Show Advanced Conditions'}
+          </button>
+        </div>
 
-          {showAdvanced && (
-            <div
-              style={{
-                background: '#f9f9f9',
-                padding: '10px',
-                borderRadius: '4px',
-                display: 'flex',
-                flexDirection: 'column',
-                gap: '10px',
-              }}
-            >
-              <div>
-                <label className="block text-sm font-medium">Amount Range (cents):</label>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input
-                    type="number"
-                    placeholder="Min"
-                    value={formData.amountMin}
-                    onChange={(e) => setFormData({ ...formData, amountMin: e.target.value })}
-                    style={{ width: '50%', padding: '6px' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="Max"
-                    value={formData.amountMax}
-                    onChange={(e) => setFormData({ ...formData, amountMax: e.target.value })}
-                    style={{ width: '50%', padding: '6px' }}
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">
-                  Description Regex (AND condition):
-                </label>
+        {showAdvanced && (
+          <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 space-y-4">
+            <div>
+              <label className="block text-sm font-bold text-neutral-500 mb-1">
+                Amount Range (cents)
+              </label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <input
-                  type="text"
-                  placeholder="/pattern/i"
-                  value={formData.descriptionRegex}
-                  onChange={(e) => setFormData({ ...formData, descriptionRegex: e.target.value })}
-                  style={{ width: '100%', padding: '6px' }}
+                  type="number"
+                  placeholder="Min"
+                  value={formData.amountMin}
+                  onChange={(e) => setFormData({ ...formData, amountMin: e.target.value })}
+                  className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
                 />
-                {errors.descriptionRegex && (
-                  <div style={{ color: 'red', fontSize: '0.8em' }}>{errors.descriptionRegex}</div>
-                )}
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium">Date Range:</label>
-                <div style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
-                  <input
-                    type="number"
-                    placeholder="Start Month (1-12)"
-                    value={formData.startMonth}
-                    onChange={(e) => setFormData({ ...formData, startMonth: e.target.value })}
-                    style={{ width: '50%', padding: '6px' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="End Month (1-12)"
-                    value={formData.endMonth}
-                    onChange={(e) => setFormData({ ...formData, endMonth: e.target.value })}
-                    style={{ width: '50%', padding: '6px' }}
-                  />
-                </div>
-                <div style={{ display: 'flex', gap: '10px' }}>
-                  <input
-                    type="number"
-                    placeholder="Start Day (1-31)"
-                    value={formData.startDay}
-                    onChange={(e) => setFormData({ ...formData, startDay: e.target.value })}
-                    style={{ width: '50%', padding: '6px' }}
-                  />
-                  <input
-                    type="number"
-                    placeholder="End Day (1-31)"
-                    value={formData.endDay}
-                    onChange={(e) => setFormData({ ...formData, endDay: e.target.value })}
-                    style={{ width: '50%', padding: '6px' }}
-                  />
-                </div>
+                <input
+                  type="number"
+                  placeholder="Max"
+                  value={formData.amountMax}
+                  onChange={(e) => setFormData({ ...formData, amountMax: e.target.value })}
+                  className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                />
               </div>
             </div>
-          )}
 
-          <div>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <div>
+              <label className="block text-sm font-bold text-neutral-500 mb-1">
+                Description Regex (AND condition)
+              </label>
               <input
-                type="checkbox"
-                checked={formData.isEnabled}
-                onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
+                type="text"
+                placeholder="/pattern/i"
+                value={formData.descriptionRegex}
+                onChange={(e) => setFormData({ ...formData, descriptionRegex: e.target.value })}
+                className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
               />
-              Enabled
-            </label>
-          </div>
+              {errors.descriptionRegex && (
+                <div className="text-danger-700 text-sm mt-1">{errors.descriptionRegex}</div>
+              )}
+            </div>
 
-          <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-            <button
-              type="submit"
-              disabled={isCreating || isUpdating}
-              style={{ padding: '8px 16px' }}
-            >
-              {isCreating || isUpdating ? 'Saving...' : 'Save'}
-            </button>
-            <button type="button" onClick={onClose} style={{ padding: '8px 16px' }}>
-              Cancel
-            </button>
+            <div>
+              <label className="block text-sm font-bold text-neutral-500 mb-1">Date Range</label>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
+                <input
+                  type="number"
+                  placeholder="Start Month (1-12)"
+                  value={formData.startMonth}
+                  onChange={(e) => setFormData({ ...formData, startMonth: e.target.value })}
+                  className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                />
+                <input
+                  type="number"
+                  placeholder="End Month (1-12)"
+                  value={formData.endMonth}
+                  onChange={(e) => setFormData({ ...formData, endMonth: e.target.value })}
+                  className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                <input
+                  type="number"
+                  placeholder="Start Day (1-31)"
+                  value={formData.startDay}
+                  onChange={(e) => setFormData({ ...formData, startDay: e.target.value })}
+                  className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                />
+                <input
+                  type="number"
+                  placeholder="End Day (1-31)"
+                  value={formData.endDay}
+                  onChange={(e) => setFormData({ ...formData, endDay: e.target.value })}
+                  className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                />
+              </div>
+            </div>
           </div>
-        </form>
-      </div>
-    </div>
+        )}
+
+        <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
+          <input
+            type="checkbox"
+            checked={formData.isEnabled}
+            onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
+            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+          />
+          <span className="text-lg font-medium text-neutral-900">Enabled</span>
+        </label>
+
+        <div className="flex flex-wrap gap-3 justify-end">
+          <button
+            type="submit"
+            disabled={isCreating || isUpdating}
+            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+          >
+            {isCreating || isUpdating ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

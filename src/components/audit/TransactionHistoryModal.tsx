@@ -1,5 +1,6 @@
 import { Transaction } from '../../types/database';
 import { parseHistory, formatChanges } from '../../lib/audit/format';
+import Modal from '../ui/Modal';
 
 interface TransactionHistoryModalProps {
   transaction: Transaction;
@@ -13,67 +14,36 @@ export default function TransactionHistoryModal({
   const history = parseHistory(transaction.change_history);
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-          background: 'white',
-          padding: '20px',
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: '8px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-      >
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="text-xl font-bold">Transaction History</h2>
-          <button onClick={onClose} className="text-gray-500 hover:text-gray-700">
-            &times;
-          </button>
-        </div>
-
-        <div className="space-y-4">
-          {history.length === 0 ? (
-            <p className="text-gray-500">No history available.</p>
-          ) : (
-            history.map((entry, index) => (
-              <div key={index} className="border-b pb-2">
-                <div className="flex justify-between text-sm text-gray-500 mb-1">
-                  <span>{new Date(entry.timestamp).toLocaleString()}</span>
-                  <span className="font-mono">{entry.userId}</span>
-                </div>
-                <ul className="list-disc pl-5 text-sm">
-                  {formatChanges(entry).map((change, i) => (
-                    <li key={i}>{change}</li>
-                  ))}
-                </ul>
+    <Modal title="Transaction History" onClose={onClose} size="lg">
+      <div className="space-y-4">
+        {history.length === 0 ? (
+          <p className="text-neutral-500">No history available.</p>
+        ) : (
+          history.map((entry, index) => (
+            <div key={index} className="border-b border-neutral-200 pb-3">
+              <div className="flex flex-wrap justify-between text-sm text-neutral-500 mb-2">
+                <span>{new Date(entry.timestamp).toLocaleString()}</span>
+                <span className="font-mono">{entry.userId}</span>
               </div>
-            ))
-          )}
-        </div>
+              <ul className="list-disc pl-6 text-lg text-neutral-700">
+                {formatChanges(entry).map((change, i) => (
+                  <li key={i}>{change}</li>
+                ))}
+              </ul>
+            </div>
+          ))
+        )}
 
-        <div className="mt-6 flex justify-end">
+        <div className="flex justify-end">
           <button
             onClick={onClose}
-            className="bg-gray-200 text-gray-800 px-4 py-2 rounded hover:bg-gray-300"
+            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            type="button"
           >
             Close
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

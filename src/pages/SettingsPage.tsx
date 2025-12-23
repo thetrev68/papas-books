@@ -1,6 +1,5 @@
 import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
-import AppNav from '../components/AppNav';
 import AccountsTab from '../components/settings/AccountsTab';
 import CategoriesTab from '../components/settings/CategoriesTab';
 import RulesTab from '../components/settings/RulesTab';
@@ -13,43 +12,41 @@ export default function SettingsPage() {
     'accounts' | 'categories' | 'payees' | 'rules' | 'access'
   >('accounts');
 
+  const tabs = [
+    { id: 'accounts', label: 'Accounts' },
+    { id: 'categories', label: 'Categories' },
+    { id: 'payees', label: 'Payees' },
+    { id: 'rules', label: 'Rules' },
+    { id: 'access', label: 'Access' },
+  ] as const;
+
   return (
-    <div>
-      <AppNav />
-      <div style={{ padding: '2rem' }}>
-        <h1>Settings - {activeBookset?.name}</h1>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-neutral-900">Settings - {activeBookset?.name}</h1>
 
-        <div style={{ display: 'flex', gap: '1rem', marginBottom: '1rem' }}>
-          <button onClick={() => setActiveTab('accounts')} disabled={activeTab === 'accounts'}>
-            Accounts
+      <div className="flex flex-wrap gap-2 mb-6">
+        {tabs.map((tab) => (
+          <button
+            key={tab.id}
+            onClick={() => setActiveTab(tab.id)}
+            disabled={activeTab === tab.id}
+            className={`px-6 py-3 rounded-xl font-bold transition-all ${
+              activeTab === tab.id
+                ? 'bg-brand-600 text-white shadow-md'
+                : 'bg-white text-neutral-600 border border-neutral-200 hover:bg-neutral-50'
+            }`}
+          >
+            {tab.label}
           </button>
-          <button onClick={() => setActiveTab('categories')} disabled={activeTab === 'categories'}>
-            Categories
-          </button>
-          <button onClick={() => setActiveTab('payees')} disabled={activeTab === 'payees'}>
-            Payees
-          </button>
-          <button onClick={() => setActiveTab('rules')} disabled={activeTab === 'rules'}>
-            Rules
-          </button>
-          <button onClick={() => setActiveTab('access')} disabled={activeTab === 'access'}>
-            Access
-          </button>
-        </div>
+        ))}
+      </div>
 
-        <div
-          style={{
-            border: '1px solid #ddd',
-            padding: '1rem',
-            borderRadius: '4px',
-          }}
-        >
-          {activeTab === 'accounts' && <AccountsTab />}
-          {activeTab === 'categories' && <CategoriesTab />}
-          {activeTab === 'payees' && <PayeesTab />}
-          {activeTab === 'rules' && <RulesTab />}
-          {activeTab === 'access' && <AccessTab />}
-        </div>
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+        {activeTab === 'accounts' && <AccountsTab />}
+        {activeTab === 'categories' && <CategoriesTab />}
+        {activeTab === 'payees' && <PayeesTab />}
+        {activeTab === 'rules' && <RulesTab />}
+        {activeTab === 'access' && <AccessTab />}
       </div>
     </div>
   );

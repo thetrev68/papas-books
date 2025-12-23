@@ -1,4 +1,5 @@
 import { RuleBatchResult } from '../../types/rules';
+import Modal from '../ui/Modal';
 
 interface RuleBatchResultModalProps {
   result: RuleBatchResult;
@@ -7,36 +8,11 @@ interface RuleBatchResultModalProps {
 
 export default function RuleBatchResultModal({ result, onClose }: RuleBatchResultModalProps) {
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
-        zIndex: 1000,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-    >
-      <div
-        style={{
-          background: 'white',
-          padding: '20px',
-          maxWidth: '600px',
-          width: '100%',
-          borderRadius: '8px',
-          maxHeight: '90vh',
-          overflowY: 'auto',
-        }}
-      >
-        <h2>Rule Application Results</h2>
-
-        <div style={{ marginBottom: '20px' }}>
-          <h3>Summary:</h3>
-          <ul style={{ listStyleType: 'none', padding: 0 }}>
+    <Modal title="Rule Application Results" onClose={onClose} size="lg">
+      <div className="space-y-6">
+        <div>
+          <h3 className="text-lg font-bold text-neutral-900 mb-2">Summary</h3>
+          <ul className="space-y-2 text-lg text-neutral-700">
             <li>Total transactions: {result.totalTransactions}</li>
             <li>Rules applied: {result.appliedCount}</li>
             <li>Skipped (no match or already reviewed): {result.skippedCount}</li>
@@ -46,8 +22,8 @@ export default function RuleBatchResultModal({ result, onClose }: RuleBatchResul
 
         {result.errorCount > 0 && (
           <div>
-            <h3>Errors:</h3>
-            <ul>
+            <h3 className="text-lg font-bold text-neutral-900 mb-2">Errors</h3>
+            <ul className="list-disc pl-6 text-neutral-700">
               {result.results
                 .filter(
                   (r) =>
@@ -64,12 +40,16 @@ export default function RuleBatchResultModal({ result, onClose }: RuleBatchResul
           </div>
         )}
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '20px' }}>
-          <button onClick={onClose} style={{ padding: '8px 16px' }}>
+        <div className="flex justify-end">
+          <button
+            onClick={onClose}
+            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            type="button"
+          >
             Close
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }

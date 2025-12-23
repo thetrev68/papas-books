@@ -53,13 +53,7 @@ function InlineEditCell({ value, onSave, onCancel, isEditing, setIsEditing }: In
         onChange={(e) => setEditValue(e.target.value)}
         onBlur={handleSave}
         onKeyDown={handleKeyDown}
-        style={{
-          width: '100%',
-          padding: '4px',
-          border: '1px solid #007bff',
-          borderRadius: '3px',
-          fontSize: '14px',
-        }}
+        className="w-full p-2 text-lg border-2 border-brand-500 rounded-lg focus:outline-none focus:ring-4 focus:ring-brand-100"
       />
     );
   }
@@ -67,19 +61,7 @@ function InlineEditCell({ value, onSave, onCancel, isEditing, setIsEditing }: In
   return (
     <span
       onClick={handleClick}
-      style={{
-        cursor: 'pointer',
-        padding: '4px',
-        borderRadius: '3px',
-        display: 'inline-block',
-        width: '100%',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.backgroundColor = '#f8f9fa';
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.backgroundColor = 'transparent';
-      }}
+      className="cursor-pointer px-2 py-1 rounded-lg inline-block w-full hover:bg-neutral-100"
     >
       {value || 'Unknown'}
     </span>

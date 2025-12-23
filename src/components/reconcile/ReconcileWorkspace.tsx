@@ -98,81 +98,95 @@ export default function ReconcileWorkspace({
   if (isLoading) return <div>Loading transactions...</div>;
   if (error) return <div>Error loading transactions: {(error as Error).message}</div>;
 
-  const formatMoney = (cents: number) => (cents / 100).toFixed(2);
+  const formatMoney = (cents: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 
   return (
-    <div>
-      <div
-        style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'flex-start',
-          marginBottom: '1rem',
-        }}
-      >
+    <div className="space-y-6">
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <div>
-          <h3>Reconciling: {account.name}</h3>
-          <p>Statement Date: {statementDate}</p>
+          <h3 className="text-2xl font-bold text-neutral-900">Reconciling: {account.name}</h3>
+          <p className="text-lg text-neutral-600 mt-2">Statement Date: {statementDate}</p>
         </div>
-        <div style={{ textAlign: 'right' }}>
-          <div>Target Balance: {formatMoney(statementBalance)}</div>
-          <div>Calculated Balance: {formatMoney(reconciliationState.calculatedEndingBalance)}</div>
-          <div
-            style={{
-              fontWeight: 'bold',
-              color: reconciliationState.difference === 0 ? 'green' : 'red',
-            }}
-          >
-            Difference: {formatMoney(reconciliationState.difference)}
+        <div className="text-right space-y-2">
+          <div className="text-lg text-neutral-600">
+            Target Balance:{' '}
+            <span className="font-bold text-neutral-900">{formatMoney(statementBalance)}</span>
           </div>
-          <div style={{ marginTop: '0.5rem' }}>
+          <div className="text-lg text-neutral-600">
+            Calculated Balance:{' '}
+            <span className="font-bold text-neutral-900">
+              {formatMoney(reconciliationState.calculatedEndingBalance)}
+            </span>
+          </div>
+          <div
+            className={`text-2xl font-bold ${
+              reconciliationState.difference === 0 ? 'text-success-700' : 'text-danger-700'
+            }`}
+          >
+            {reconciliationState.difference === 0
+              ? 'Balanced ✓'
+              : `Difference: ${formatMoney(reconciliationState.difference)}`}
+          </div>
+          <div className="flex flex-wrap gap-3 justify-end pt-2">
             <button
               onClick={() => finalizeMutation.mutate()}
               disabled={!reconciliationState.isBalanced || finalizeMutation.isPending}
-              style={{ marginRight: '0.5rem' }}
+              className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+              type="button"
             >
               {finalizeMutation.isPending ? 'Finalizing...' : 'Finish Reconciliation'}
             </button>
-            <button onClick={onCancel}>Cancel</button>
+            <button
+              onClick={onCancel}
+              className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+              type="button"
+            >
+              Cancel
+            </button>
           </div>
         </div>
       </div>
 
-      <table border={1} cellPadding={5} style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr>
-            <th>X</th>
-            <th>Date</th>
-            <th>Payee</th>
-            <th>Amount</th>
-          </tr>
-        </thead>
-        <tbody>
-          {candidates.map((tx) => {
-            const amount = sumTransactionAmountForReconcile(tx);
-            const isChecked = checkedIds.has(tx.id);
-            return (
-              <tr
-                key={tx.id}
-                style={{ cursor: 'pointer', background: isChecked ? '#e0f7fa' : 'transparent' }}
-                onClick={() => toggleTransaction(tx.id)}
-              >
-                <td>
-                  <input
-                    type="checkbox"
-                    checked={isChecked}
-                    onChange={() => {}} // Handled by tr onClick
-                    style={{ pointerEvents: 'none' }}
-                  />
-                </td>
-                <td>{tx.date}</td>
-                <td>{tx.payee}</td>
-                <td>{formatMoney(amount)}</td>
-              </tr>
-            );
-          })}
-        </tbody>
-      </table>
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+            <tr>
+              <th className="p-4 text-base font-bold text-neutral-600 text-center">Match</th>
+              <th className="p-4 text-base font-bold text-neutral-600">Date</th>
+              <th className="p-4 text-base font-bold text-neutral-600">Payee</th>
+              <th className="p-4 text-base font-bold text-neutral-600 text-right">Amount</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-neutral-200 text-lg">
+            {candidates.map((tx) => {
+              const amount = sumTransactionAmountForReconcile(tx);
+              const isChecked = checkedIds.has(tx.id);
+              return (
+                <tr
+                  key={tx.id}
+                  className={`cursor-pointer ${isChecked ? 'bg-brand-50' : 'bg-white'} hover:bg-neutral-50`}
+                  onClick={() => toggleTransaction(tx.id)}
+                >
+                  <td className="p-4 text-center">
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={() => {}}
+                      className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 pointer-events-none"
+                    />
+                  </td>
+                  <td className="p-4 text-neutral-700">{new Date(tx.date).toLocaleDateString()}</td>
+                  <td className="p-4 text-neutral-900 font-medium">{tx.payee}</td>
+                  <td className="p-4 text-right font-bold text-neutral-900">
+                    {formatMoney(amount)}
+                  </td>
+                </tr>
+              );
+            })}
+          </tbody>
+        </table>
+      </div>
     </div>
   );
 }

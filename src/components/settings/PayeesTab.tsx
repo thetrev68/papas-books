@@ -106,28 +106,15 @@ export default function PayeesTab() {
     }));
   };
 
-  if (isLoading) return <div>Loading payees...</div>;
+  if (isLoading) return <div className="text-lg text-neutral-500">Loading payees...</div>;
 
   return (
     <div>
-      <div
-        style={{
-          marginBottom: '1rem',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-        }}
-      >
-        <h2>Payees</h2>
+      <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
+        <h2 className="text-2xl font-bold text-neutral-900">Payees</h2>
         <button
           onClick={() => setShowForm(true)}
-          style={{
-            padding: '0.5rem 1rem',
-            backgroundColor: '#007bff',
-            color: 'white',
-            border: 'none',
-            borderRadius: '4px',
-          }}
+          className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
         >
           Add Payee
         </button>
@@ -136,42 +123,31 @@ export default function PayeesTab() {
       {showForm && (
         <form
           onSubmit={handleSubmit}
-          style={{
-            marginBottom: '2rem',
-            padding: '1rem',
-            border: '1px solid #ddd',
-            borderRadius: '4px',
-          }}
+          className="mb-8 p-6 bg-white rounded-2xl border border-neutral-200 shadow-sm space-y-4"
         >
-          <h3>{editingPayee ? 'Edit Payee' : 'Add Payee'}</h3>
+          <h3 className="text-xl font-bold text-neutral-900">
+            {editingPayee ? 'Edit Payee' : 'Add Payee'}
+          </h3>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Name:</label>
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
               required
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-              }}
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Default Category:</label>
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">
+              Default Category
+            </label>
             <select
               value={formData.category_id}
               onChange={(e) => setFormData((prev) => ({ ...prev, category_id: e.target.value }))}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-              }}
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">No default category</option>
               {categories?.map((category) => (
@@ -182,72 +158,51 @@ export default function PayeesTab() {
             </select>
           </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-              Aliases:
+          <div>
+            <div className="flex items-center justify-between mb-2">
+              <label className="block text-sm font-bold text-neutral-500">Aliases</label>
               <button
                 type="button"
                 onClick={handleAddAlias}
-                style={{ marginLeft: '1rem', padding: '0.25rem 0.5rem', fontSize: '0.8rem' }}
+                className="px-3 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
               >
                 Add Alias
               </button>
-            </label>
-            {formData.aliases.map((alias, index) => (
-              <div key={index} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                <input
-                  type="text"
-                  value={alias}
-                  onChange={(e) => handleUpdateAlias(index, e.target.value)}
-                  placeholder="Alias text"
-                  style={{
-                    flex: 1,
-                    padding: '0.5rem',
-                    border: '1px solid #ccc',
-                    borderRadius: '4px',
-                  }}
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAlias(index)}
-                  style={{
-                    padding: '0.5rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '4px',
-                  }}
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
+            </div>
+            <div className="space-y-3">
+              {formData.aliases.map((alias, index) => (
+                <div key={index} className="flex flex-wrap gap-2">
+                  <input
+                    type="text"
+                    value={alias}
+                    onChange={(e) => handleUpdateAlias(index, e.target.value)}
+                    placeholder="Alias text"
+                    className="flex-1 min-w-[220px] p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => handleRemoveAlias(index)}
+                    className="px-4 py-3 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
           </div>
 
-          <div style={{ display: 'flex', gap: '1rem' }}>
+          <div className="flex flex-wrap gap-3 justify-end">
             <button
               type="submit"
               disabled={createMutation.isPending || updateMutation.isPending}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#28a745',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-              }}
+              className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
             >
               {editingPayee ? 'Update' : 'Create'} Payee
             </button>
             <button
               type="button"
               onClick={resetForm}
-              style={{
-                padding: '0.5rem 1rem',
-                backgroundColor: '#6c757d',
-                color: 'white',
-                border: 'none',
-                borderRadius: '4px',
-              }}
+              className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
             >
               Cancel
             </button>
@@ -255,57 +210,53 @@ export default function PayeesTab() {
         </form>
       )}
 
-      <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-        <thead>
-          <tr style={{ borderBottom: '1px solid #ccc' }}>
-            <th style={{ textAlign: 'left', padding: '0.5rem' }}>Name</th>
-            <th style={{ textAlign: 'left', padding: '0.5rem' }}>Default Category</th>
-            <th style={{ textAlign: 'left', padding: '0.5rem' }}>Aliases</th>
-            <th style={{ textAlign: 'left', padding: '0.5rem' }}>Actions</th>
-          </tr>
-        </thead>
-        <tbody>
-          {payees?.map((payee) => (
-            <tr key={payee.id} style={{ borderBottom: '1px solid #eee' }}>
-              <td style={{ padding: '0.5rem' }}>{payee.name}</td>
-              <td style={{ padding: '0.5rem' }}>
-                {categories?.find((c) => c.id === payee.category_id)?.name || 'None'}
-              </td>
-              <td style={{ padding: '0.5rem' }}>
-                {payee.aliases.length > 0 ? payee.aliases.join(', ') : 'None'}
-              </td>
-              <td style={{ padding: '0.5rem' }}>
-                <button
-                  onClick={() => handleEdit(payee)}
-                  style={{ marginRight: '0.5rem', padding: '0.25rem 0.5rem' }}
-                >
-                  Edit
-                </button>
-                <button
-                  onClick={() => {
-                    if (confirm(`Delete payee "${payee.name}"?`)) {
-                      deleteMutation.mutate(payee.id);
-                    }
-                  }}
-                  disabled={deleteMutation.isPending}
-                  style={{
-                    padding: '0.25rem 0.5rem',
-                    backgroundColor: '#dc3545',
-                    color: 'white',
-                    border: 'none',
-                    borderRadius: '3px',
-                  }}
-                >
-                  Delete
-                </button>
-              </td>
+      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+            <tr>
+              <th className="p-4 text-base font-bold text-neutral-600">Name</th>
+              <th className="p-4 text-base font-bold text-neutral-600">Default Category</th>
+              <th className="p-4 text-base font-bold text-neutral-600">Aliases</th>
+              <th className="p-4 text-base font-bold text-neutral-600">Actions</th>
             </tr>
-          ))}
-        </tbody>
-      </table>
+          </thead>
+          <tbody className="divide-y divide-neutral-200 text-lg">
+            {payees?.map((payee) => (
+              <tr key={payee.id} className="hover:bg-neutral-50">
+                <td className="p-4 font-medium text-neutral-900">{payee.name}</td>
+                <td className="p-4">
+                  {categories?.find((c) => c.id === payee.category_id)?.name || 'None'}
+                </td>
+                <td className="p-4">
+                  {payee.aliases.length > 0 ? payee.aliases.join(', ') : 'None'}
+                </td>
+                <td className="p-4">
+                  <button
+                    onClick={() => handleEdit(payee)}
+                    className="px-4 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 mr-2"
+                  >
+                    Edit
+                  </button>
+                  <button
+                    onClick={() => {
+                      if (confirm(`Delete payee "${payee.name}"?`)) {
+                        deleteMutation.mutate(payee.id);
+                      }
+                    }}
+                    disabled={deleteMutation.isPending}
+                    className="px-4 py-2 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200 disabled:opacity-50"
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
 
       {payees?.length === 0 && (
-        <p style={{ textAlign: 'center', color: '#666', marginTop: '2rem' }}>
+        <p className="text-center text-neutral-500 mt-8">
           No payees configured yet. Add your first payee to enable payee normalization.
         </p>
       )}

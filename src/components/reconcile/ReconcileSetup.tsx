@@ -27,19 +27,17 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
   };
 
   return (
-    <div style={{ maxWidth: '400px', margin: '0 auto' }}>
-      <h2>Start Reconciliation</h2>
-      <form
-        onSubmit={handleSubmit}
-        style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}
-      >
-        <label style={{ display: 'flex', flexDirection: 'column' }}>
-          Select Account
+    <div className="max-w-xl mx-auto bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
+      <h2 className="text-2xl font-bold text-neutral-900 mb-2">Start Reconciliation</h2>
+      <p className="text-lg text-neutral-600 mb-6">Enter your statement details to begin.</p>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Select Account</label>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             required
-            style={{ padding: '0.5rem' }}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           >
             <option value="" disabled>
               Select an account
@@ -50,21 +48,23 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
               </option>
             ))}
           </select>
-        </label>
+        </div>
 
-        <label style={{ display: 'flex', flexDirection: 'column' }}>
-          Statement Date
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Statement Date</label>
           <input
             type="date"
             value={statementDate}
             onChange={(e) => setStatementDate(e.target.value)}
             required
-            style={{ padding: '0.5rem' }}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
-        </label>
+        </div>
 
-        <label style={{ display: 'flex', flexDirection: 'column' }}>
-          Statement Ending Balance
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">
+            Statement Ending Balance
+          </label>
           <input
             type="number"
             step="0.01"
@@ -72,11 +72,14 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
             onChange={(e) => setStatementBalance(e.target.value)}
             required
             placeholder="0.00"
-            style={{ padding: '0.5rem' }}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
-        </label>
+        </div>
 
-        <button type="submit" style={{ padding: '0.75rem', cursor: 'pointer' }}>
+        <button
+          type="submit"
+          className="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
+        >
           Start Reconciling
         </button>
       </form>

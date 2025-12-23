@@ -28,17 +28,11 @@ export function GlobalToastProvider({ children }: { children: React.ReactNode })
       {children}
       {toast && (
         <div
-          style={{
-            position: 'fixed',
-            top: '20px',
-            right: '20px',
-            padding: '1rem',
-            backgroundColor: toast.type === 'error' ? '#fee2e2' : '#dcfce7',
-            color: toast.type === 'error' ? '#991b1b' : '#166534',
-            borderRadius: '4px',
-            boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            zIndex: 9999,
-          }}
+          className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9999] px-6 py-4 rounded-xl shadow-lg text-lg font-bold border ${
+            toast.type === 'error'
+              ? 'bg-danger-100 text-danger-700 border-danger-700'
+              : 'bg-success-100 text-success-700 border-success-700'
+          }`}
         >
           {toast.message}
         </div>

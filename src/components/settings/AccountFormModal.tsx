@@ -3,6 +3,7 @@ import { useAuth } from '../../context/AuthContext';
 import { useCreateAccount, useUpdateAccount } from '../../hooks/useAccounts';
 import { insertAccountSchema } from '../../lib/validation/accounts';
 import type { Account } from '../../types/database';
+import Modal from '../ui/Modal';
 
 interface AccountFormModalProps {
   account: Account | null;
@@ -81,98 +82,83 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
   }
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0,0,0,0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-      }}
-      onClick={onClose}
-    >
-      <div
-        style={{
-          background: 'white',
-          padding: '2rem',
-          maxWidth: '500px',
-          width: '100%',
-          borderRadius: '8px',
-        }}
-        onClick={(e) => e.stopPropagation()}
-      >
-        <h2>{account ? 'Edit Account' : 'Create Account'}</h2>
-        <form onSubmit={handleSubmit}>
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Name:</label>
-            <input
-              type="text"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-            {errors.name && <div style={{ color: 'red', marginTop: '0.25rem' }}>{errors.name}</div>}
-          </div>
+    <Modal title={account ? 'Edit Account' : 'Create Account'} onClose={onClose}>
+      <form onSubmit={handleSubmit} className="space-y-4">
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
+          <input
+            type="text"
+            value={formData.name}
+            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          />
+          {errors.name && <div className="text-danger-700 mt-1 text-sm">{errors.name}</div>}
+        </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Type:</label>
-            <select
-              value={formData.type}
-              onChange={(e) =>
-                setFormData({ ...formData, type: e.target.value as 'Asset' | 'Liability' })
-              }
-              style={{ width: '100%', padding: '0.5rem' }}
-            >
-              <option value="Asset">Asset</option>
-              <option value="Liability">Liability</option>
-            </select>
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Type</label>
+          <select
+            value={formData.type}
+            onChange={(e) =>
+              setFormData({ ...formData, type: e.target.value as 'Asset' | 'Liability' })
+            }
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          >
+            <option value="Asset">Asset</option>
+            <option value="Liability">Liability</option>
+          </select>
+        </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Opening Balance ($):</label>
-            <input
-              type="number"
-              step="0.01"
-              value={formData.openingBalance}
-              onChange={(e) =>
-                setFormData({ ...formData, openingBalance: parseFloat(e.target.value) || 0 })
-              }
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-            {errors.openingBalance && (
-              <div style={{ color: 'red', marginTop: '0.25rem' }}>{errors.openingBalance}</div>
-            )}
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">
+            Opening Balance ($)
+          </label>
+          <input
+            type="number"
+            step="0.01"
+            value={formData.openingBalance}
+            onChange={(e) =>
+              setFormData({ ...formData, openingBalance: parseFloat(e.target.value) || 0 })
+            }
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          />
+          {errors.openingBalance && (
+            <div className="text-danger-700 mt-1 text-sm">{errors.openingBalance}</div>
+          )}
+        </div>
 
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Opening Date:</label>
-            <input
-              type="date"
-              value={formData.openingBalanceDate}
-              onChange={(e) => setFormData({ ...formData, openingBalanceDate: e.target.value })}
-              style={{ width: '100%', padding: '0.5rem' }}
-            />
-            {errors.openingBalanceDate && (
-              <div style={{ color: 'red', marginTop: '0.25rem' }}>{errors.openingBalanceDate}</div>
-            )}
-          </div>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Opening Date</label>
+          <input
+            type="date"
+            value={formData.openingBalanceDate}
+            onChange={(e) => setFormData({ ...formData, openingBalanceDate: e.target.value })}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          />
+          {errors.openingBalanceDate && (
+            <div className="text-danger-700 mt-1 text-sm">{errors.openingBalanceDate}</div>
+          )}
+        </div>
 
-          {errors.form && <div style={{ color: 'red', marginBottom: '1rem' }}>{errors.form}</div>}
+        {errors.form && <div className="text-danger-700 text-sm">{errors.form}</div>}
 
-          <div style={{ display: 'flex', gap: '1rem' }}>
-            <button type="submit" disabled={isCreating || isUpdating}>
-              {isCreating || isUpdating ? 'Saving...' : 'Save'}
-            </button>
-            <button type="button" onClick={onClose}>
-              Cancel
-            </button>
-          </div>
-        </form>
-      </div>
-    </div>
+        <div className="flex flex-wrap gap-3 justify-end">
+          <button
+            type="submit"
+            disabled={isCreating || isUpdating}
+            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+          >
+            {isCreating || isUpdating ? 'Saving...' : 'Save'}
+          </button>
+          <button
+            type="button"
+            onClick={onClose}
+            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+    </Modal>
   );
 }

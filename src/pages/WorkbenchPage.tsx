@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AppNav from '../components/AppNav';
 import { useAuth } from '../context/AuthContext';
 import { useApplyRules } from '../hooks/useApplyRules';
 import { useWorkbenchData } from '../hooks/useWorkbenchData';
@@ -122,115 +121,117 @@ export default function WorkbenchPage() {
   };
 
   return (
-    <div>
-      <AppNav />
-      <div style={{ padding: '2rem' }}>
-        <h1>Transaction Workbench</h1>
+    <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-neutral-900">Transaction Workbench</h1>
 
-        <div
-          style={{
-            marginBottom: '1rem',
-            display: 'flex',
-            gap: '1rem',
-            alignItems: 'center',
-            flexWrap: 'wrap',
-          }}
-        >
-          <button onClick={() => setShowCreateModal(true)} disabled={isLoading}>
+      <div className="flex flex-col xl:flex-row gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+        <div className="flex gap-4 flex-wrap">
+          <button
+            onClick={() => setShowCreateModal(true)}
+            disabled={isLoading}
+            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+          >
             Create Transaction
           </button>
-          <button onClick={handleRunRulesOnAll} disabled={isApplying || isLoading}>
+          <button
+            onClick={handleRunRulesOnAll}
+            disabled={isApplying || isLoading}
+            className="px-6 py-3 bg-white border-2 border-brand-600 text-brand-700 font-bold rounded-xl hover:bg-brand-50 disabled:opacity-50"
+          >
             {isApplying ? 'Applying Rules...' : 'Run Rules on All Unreviewed'}
           </button>
           <button
             onClick={handleRunRulesOnSelected}
             disabled={isApplying || selectedTransactionIds.length === 0}
+            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 disabled:opacity-50"
           >
             Run Rules on Selected ({selectedTransactionIds.length})
           </button>
-
-          <div style={{ marginLeft: 'auto', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <label>Status:</label>
-            <select
-              value={
-                filter.isReviewed === undefined
-                  ? 'all'
-                  : filter.isReviewed
-                    ? 'reviewed'
-                    : 'unreviewed'
-              }
-              onChange={(e) => {
-                const val = e.target.value;
-                setFilter({
-                  isReviewed: val === 'all' ? undefined : val === 'reviewed',
-                });
-              }}
-              style={{ padding: '4px' }}
-            >
-              <option value="unreviewed">Unreviewed</option>
-              <option value="reviewed">Reviewed</option>
-              <option value="all">All</option>
-            </select>
-          </div>
         </div>
 
-        {isLoading && <div>Loading transactions...</div>}
-
-        {!isLoading && transactions && (
-          <div style={{ marginTop: '20px' }}>
-            <WorkbenchTable
-              transactions={transactions}
-              onEdit={handleEdit}
-              onSplit={handleSplit}
-              onDelete={handleDelete}
-              onReview={handleReview}
-              onUpdatePayee={handleUpdatePayee}
-              onUpdateCategory={handleUpdateCategory}
-              onCreateRule={handleCreateRule}
-            />
-          </div>
-        )}
-
-        {showCreateModal && (
-          <CreateTransactionModal
-            accountId={activeBookset?.id || ''}
-            onSave={handleCreateTransaction}
-            onClose={() => setShowCreateModal(false)}
-          />
-        )}
-
-        {editTransaction && (
-          <CreateTransactionModal
-            accountId={activeBookset?.id || ''}
-            initialTransaction={editTransaction}
-            onSave={handleSaveEdit}
-            onClose={() => setEditTransaction(null)}
-          />
-        )}
-
-        {splitTransaction && (
-          <SplitModal
-            transaction={splitTransaction}
-            onSave={handleSaveSplit}
-            onClose={() => setSplitTransaction(null)}
-          />
-        )}
-
-        {ruleTransaction && (
-          <RuleFormModal
-            rule={null}
-            initialValues={{
-              keyword: ruleTransaction.payee || ruleTransaction.original_description,
-              suggestedPayee: ruleTransaction.payee,
+        <div className="xl:ml-auto flex items-center gap-4">
+          <label className="font-bold text-neutral-600">Status:</label>
+          <select
+            value={
+              filter.isReviewed === undefined
+                ? 'all'
+                : filter.isReviewed
+                  ? 'reviewed'
+                  : 'unreviewed'
+            }
+            onChange={(e) => {
+              const val = e.target.value;
+              setFilter({
+                isReviewed: val === 'all' ? undefined : val === 'reviewed',
+              });
             }}
-            onClose={() => setRuleTransaction(null)}
-          />
-        )}
-
-        {showResultModal && result && (
-          <RuleBatchResultModal result={result} onClose={() => setShowResultModal(false)} />
-        )}
+            className="p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          >
+            <option value="unreviewed">Unreviewed</option>
+            <option value="reviewed">Reviewed</option>
+            <option value="all">All</option>
+          </select>
+        </div>
       </div>
+
+      {isLoading && (
+        <div className="text-xl p-8 text-center text-neutral-500">Loading transactions...</div>
+      )}
+
+      {!isLoading && transactions && (
+        <div className="mt-6">
+          <WorkbenchTable
+            transactions={transactions}
+            onEdit={handleEdit}
+            onSplit={handleSplit}
+            onDelete={handleDelete}
+            onReview={handleReview}
+            onUpdatePayee={handleUpdatePayee}
+            onUpdateCategory={handleUpdateCategory}
+            onCreateRule={handleCreateRule}
+          />
+        </div>
+      )}
+
+      {showCreateModal && (
+        <CreateTransactionModal
+          accountId={activeBookset?.id || ''}
+          onSave={handleCreateTransaction}
+          onClose={() => setShowCreateModal(false)}
+        />
+      )}
+
+      {editTransaction && (
+        <CreateTransactionModal
+          accountId={activeBookset?.id || ''}
+          initialTransaction={editTransaction}
+          onSave={handleSaveEdit}
+          onClose={() => setEditTransaction(null)}
+        />
+      )}
+
+      {splitTransaction && (
+        <SplitModal
+          transaction={splitTransaction}
+          onSave={handleSaveSplit}
+          onClose={() => setSplitTransaction(null)}
+        />
+      )}
+
+      {ruleTransaction && (
+        <RuleFormModal
+          rule={null}
+          initialValues={{
+            keyword: ruleTransaction.payee || ruleTransaction.original_description,
+            suggestedPayee: ruleTransaction.payee,
+          }}
+          onClose={() => setRuleTransaction(null)}
+        />
+      )}
+
+      {showResultModal && result && (
+        <RuleBatchResultModal result={result} onClose={() => setShowResultModal(false)} />
+      )}
     </div>
   );
 }

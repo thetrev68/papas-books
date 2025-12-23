@@ -54,7 +54,11 @@ function WorkbenchTable({
   const columns = [
     columnHelper.accessor('date', {
       header: 'Date',
-      cell: (info) => new Date(info.getValue()).toLocaleDateString(),
+      cell: (info) => (
+        <span className="text-neutral-600 font-medium">
+          {new Date(info.getValue()).toLocaleDateString()}
+        </span>
+      ),
       sortingFn: 'datetime',
     }),
     columnHelper.accessor('payee', {
@@ -73,13 +77,8 @@ function WorkbenchTable({
       header: 'Description',
       cell: (info) => (
         <span
+          className="text-neutral-500 italic block truncate max-w-[200px]"
           title={info.getValue()}
-          style={{
-            maxWidth: '200px',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            display: 'inline-block',
-          }}
         >
           {info.getValue()}
         </span>
@@ -91,7 +90,7 @@ function WorkbenchTable({
         const amount = info.getValue();
         const sign = amount >= 0 ? '+' : '';
         return (
-          <span style={{ color: amount >= 0 ? 'green' : 'red' }}>
+          <span className={`font-bold ${amount >= 0 ? 'text-success-700' : 'text-neutral-900'}`}>
             {sign}${(Math.abs(amount) / 100).toFixed(2)}
           </span>
         );
@@ -105,7 +104,10 @@ function WorkbenchTable({
         if (row.original.is_split) {
           return (
             <div>
-              <button onClick={row.getToggleExpandedHandler()}>
+              <button
+                onClick={row.getToggleExpandedHandler()}
+                className="text-brand-600 font-bold hover:underline"
+              >
                 {row.getIsExpanded() ? '▼' : '▶'} Split ({row.original.lines.length})
               </button>
             </div>
@@ -113,51 +115,115 @@ function WorkbenchTable({
         } else {
           const currentCategoryId = row.original.lines[0]?.category_id || '';
           return (
-            <select
-              value={currentCategoryId}
-              onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
-              style={{
-                width: '100%',
-                padding: '4px',
-                border: '1px solid transparent',
-                borderRadius: '4px',
-                backgroundColor: 'transparent',
-              }}
-            >
-              <option value="">Select Category</option>
-              {categories.map((cat) => (
-                <option key={cat.id} value={cat.id}>
-                  {cat.name}
-                </option>
-              ))}
-            </select>
+            <div className="relative">
+              <select
+                value={currentCategoryId}
+                onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
+                className="appearance-none w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+              >
+                <option value="">Uncategorized</option>
+                {categories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.name}
+                  </option>
+                ))}
+              </select>
+              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-700">
+                <svg
+                  className="fill-current h-4 w-4"
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 20 20"
+                >
+                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                </svg>
+              </div>
+            </div>
           );
         }
       },
     }),
     columnHelper.accessor('account_id', {
       header: 'Account',
-      cell: (info) => getAccountName(info.getValue()),
+      cell: (info) => (
+        <span className="text-sm text-neutral-500 font-medium bg-neutral-100 px-2 py-1 rounded">
+          {getAccountName(info.getValue())}
+        </span>
+      ),
     }),
     columnHelper.accessor('is_reviewed', {
       header: 'Reviewed',
       cell: (info) => (
-        <input
-          type="checkbox"
-          checked={info.getValue()}
-          onChange={() => onReview(info.row.original)}
-        />
+        <div className="flex justify-center">
+          <input
+            type="checkbox"
+            checked={info.getValue()}
+            onChange={() => onReview(info.row.original)}
+            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 cursor-pointer"
+          />
+        </div>
       ),
     }),
     columnHelper.display({
       id: 'actions',
       header: 'Actions',
       cell: ({ row }) => (
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button onClick={() => onEdit(row.original)}>Edit</button>
-          <button onClick={() => onSplit(row.original)}>Split</button>
-          <button onClick={() => onDelete(row.original)}>Delete</button>
-          <button onClick={() => onCreateRule(row.original)}>Rule</button>
+        <div className="flex gap-2 justify-center">
+          <button
+            onClick={() => onEdit(row.original)}
+            className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+            title="Edit"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            onClick={() => onSplit(row.original)}
+            className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+            title="Split"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+              ></path>
+            </svg>
+          </button>
+          <button
+            onClick={() => onCreateRule(row.original)}
+            className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+            title="Create Rule"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+              ></path>
+            </svg>
+          </button>
+          <button
+            onClick={() => onDelete(row.original)}
+            className="p-2 text-neutral-400 hover:text-danger-700 transition-colors"
+            title="Delete"
+          >
+            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth="2"
+                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-2.14-1.928L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+              ></path>
+            </svg>
+          </button>
         </div>
       ),
     }),
@@ -179,12 +245,12 @@ function WorkbenchTable({
     getSortedRowModel: getSortedRowModel(),
   });
 
-  // Virtualization for performance
+  // Virtualization
   const parentRef = useRef<HTMLDivElement>(null);
   const virtualizer = useVirtualizer({
     count: table.getRowModel().rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 40,
+    estimateSize: () => 80, // Taller rows
     overscan: 5,
   });
 
@@ -195,55 +261,44 @@ function WorkbenchTable({
 
   return (
     <div>
-      {/* Filters */}
-      <div style={{ marginBottom: '1rem' }}>
+      {/* Search Filter */}
+      <div className="mb-4">
         <input
           value={globalFilter ?? ''}
           onChange={(e) => setGlobalFilter(e.target.value)}
-          placeholder="Search all columns..."
-          style={{ padding: '4px', width: '200px' }}
+          placeholder="Search..."
+          className="w-full md:w-96 p-4 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
         />
       </div>
 
-      {/* Table */}
-      <div ref={parentRef} style={{ height: '600px', overflow: 'auto' }}>
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead
-            style={{
-              position: 'sticky',
-              top: 0,
-              zIndex: 10,
-              background: 'white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            }}
-          >
+      {/* Desktop Table */}
+      <div
+        ref={parentRef}
+        className="hidden md:block bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden h-[calc(100vh-300px)] overflow-y-auto"
+      >
+        <table className="w-full text-left border-collapse">
+          <thead className="bg-neutral-100 border-b-2 border-neutral-200 sticky top-0 z-10 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    style={{ textAlign: 'left', borderBottom: '1px solid #ccc', padding: '8px' }}
+                    className="p-4 text-base font-bold text-neutral-600 cursor-pointer hover:bg-neutral-200 transition-colors"
+                    onClick={header.column.getToggleSortingHandler()}
                   >
-                    {header.isPlaceholder ? null : (
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-                        <span
-                          onClick={header.column.getToggleSortingHandler()}
-                          style={{ cursor: 'pointer' }}
-                        >
-                          {flexRender(header.column.columnDef.header, header.getContext())}
-                        </span>
-                        {{
-                          asc: ' 🔼',
-                          desc: ' 🔽',
-                        }[header.column.getIsSorted() as string] ?? null}
-                      </div>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {flexRender(header.column.columnDef.header, header.getContext())}
+                      {{
+                        asc: ' 🔼',
+                        desc: ' 🔽',
+                      }[header.column.getIsSorted() as string] ?? null}
+                    </div>
                   </th>
                 ))}
               </tr>
             ))}
           </thead>
-          <tbody>
+          <tbody className="divide-y divide-neutral-200 text-lg">
             {paddingTop > 0 && (
               <tr>
                 <td colSpan={columns.length} style={{ height: `${paddingTop}px` }} />
@@ -252,9 +307,9 @@ function WorkbenchTable({
             {items.map((virtualRow) => {
               const row = table.getRowModel().rows[virtualRow.index];
               return (
-                <tr key={row.id} style={{ borderBottom: '1px solid #eee' }}>
+                <tr key={row.id} className="hover:bg-brand-50 transition-colors group">
                   {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} style={{ padding: '8px' }}>
+                    <td key={cell.id} className="p-4 align-middle">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
                   ))}
@@ -268,6 +323,68 @@ function WorkbenchTable({
             )}
           </tbody>
         </table>
+      </div>
+
+      {/* Mobile Card View */}
+      <div className="md:hidden space-y-4">
+        {table.getRowModel().rows.map((row) => {
+          const t = row.original;
+          const currentCategoryId = t.lines[0]?.category_id || '';
+          return (
+            <div
+              key={row.id}
+              className={`bg-white p-5 rounded-2xl shadow-md border-l-8 ${t.is_reviewed ? 'border-success-500' : 'border-neutral-300'}`}
+            >
+              <div className="flex justify-between items-start mb-2">
+                <span className="text-neutral-500 font-semibold">
+                  {new Date(t.date).toLocaleDateString()}
+                </span>
+                <span
+                  className={`text-xl font-bold ${t.amount >= 0 ? 'text-success-700' : 'text-neutral-900'}`}
+                >
+                  {t.amount >= 0 ? '+' : ''}${(Math.abs(t.amount) / 100).toFixed(2)}
+                </span>
+              </div>
+              <div className="text-xl font-medium text-neutral-900 mb-3 truncate">
+                {t.payee || 'Unknown Payee'}
+              </div>
+
+              <div className="mb-4">
+                <select
+                  value={currentCategoryId}
+                  onChange={(e) => onUpdateCategory(t.id, e.target.value)}
+                  className="w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold"
+                >
+                  <option value="">Uncategorized</option>
+                  {categories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.name}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div className="flex gap-2">
+                <button
+                  onClick={() => onReview(t)}
+                  className={`flex-1 py-3 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors ${
+                    t.is_reviewed
+                      ? 'bg-success-100 text-success-700 border border-success-700'
+                      : 'bg-brand-600 text-white shadow-md'
+                  }`}
+                >
+                  {t.is_reviewed ? 'Reviewed' : 'Mark Reviewed'}
+                </button>
+                <button
+                  onClick={() => onEdit(t)}
+                  className="p-3 bg-white border-2 border-neutral-300 rounded-xl text-neutral-600"
+                >
+                  Edit
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
     </div>
   );

@@ -1,5 +1,4 @@
 import { useState } from 'react';
-import AppNav from '../components/AppNav';
 import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../hooks/useAccounts';
 import { useCategories } from '../hooks/useCategories';
@@ -89,36 +88,36 @@ export default function ReportsPage() {
   const formatMoney = (cents: number) => (cents / 100).toFixed(2);
 
   return (
-    <div>
-      <AppNav />
-      <div style={{ padding: '2rem' }}>
-        <h1>Reports</h1>
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <h1 className="text-3xl font-bold mb-6 text-neutral-900">Reports</h1>
 
-        <div
-          style={{
-            display: 'flex',
-            gap: '1rem',
-            flexWrap: 'wrap',
-            marginBottom: '2rem',
-            border: '1px solid #ccc',
-            padding: '1rem',
-          }}
-        >
-          <label style={{ display: 'flex', flexDirection: 'column' }}>
+      <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm mb-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+          <label className="flex flex-col gap-2 font-bold text-neutral-600">
             Start Date
-            <input type="date" value={startDate} onChange={(e) => setStartDate(e.target.value)} />
+            <input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column' }}>
+          <label className="flex flex-col gap-2 font-bold text-neutral-600">
             End Date
-            <input type="date" value={endDate} onChange={(e) => setEndDate(e.target.value)} />
+            <input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            />
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column' }}>
-            Accounts (hold Ctrl to select multiple)
+          <label className="flex flex-col gap-2 font-bold text-neutral-600">
+            Accounts (Hold Ctrl/Cmd)
             <select
               multiple
               value={selectedAccountIds}
               onChange={handleAccountChange}
-              style={{ height: '6rem' }}
+              className="h-24 p-2 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
@@ -127,11 +126,12 @@ export default function ReportsPage() {
               ))}
             </select>
           </label>
-          <label style={{ display: 'flex', flexDirection: 'column' }}>
+          <label className="flex flex-col gap-2 font-bold text-neutral-600">
             Category
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
+              className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">All Categories</option>
               {categories.map((category) => (
@@ -141,58 +141,75 @@ export default function ReportsPage() {
               ))}
             </select>
           </label>
-          <div style={{ display: 'flex', alignItems: 'flex-end' }}>
-            <button
-              onClick={handleRunReport}
-              disabled={isLoading}
-              style={{ padding: '0.5rem 1rem' }}
-            >
-              {isLoading ? 'Running...' : 'Run Report'}
-            </button>
-          </div>
         </div>
 
-        {error && <div style={{ color: 'red', marginBottom: '1rem' }}>{error}</div>}
+        <div className="mt-6 flex justify-end">
+          <button
+            onClick={handleRunReport}
+            disabled={isLoading}
+            className="px-8 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50 transition-colors"
+          >
+            {isLoading ? 'Running...' : 'Run Report'}
+          </button>
+        </div>
+      </div>
 
-        {reportData && (
-          <div>
-            <div style={{ marginBottom: '1rem' }}>
-              <button onClick={handleExportCsv} style={{ marginRight: '0.5rem' }}>
-                Export CSV
-              </button>
-              <button onClick={handleExportPdf}>Export PDF (Print)</button>
-            </div>
+      {error && (
+        <div className="p-4 bg-red-100 text-red-700 border border-red-200 rounded-xl mb-6 font-bold">
+          {error}
+        </div>
+      )}
 
-            <table border={1} cellPadding={5} style={{ width: '100%', borderCollapse: 'collapse' }}>
-              <thead>
-                <tr style={{ background: '#f0f0f0' }}>
-                  <th style={{ textAlign: 'left' }}>Category</th>
-                  <th style={{ textAlign: 'right' }}>Tx Count</th>
-                  <th style={{ textAlign: 'right' }}>Total Amount</th>
+      {reportData && (
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+          <div className="p-4 bg-neutral-50 border-b border-neutral-200 flex justify-end gap-4">
+            <button
+              onClick={handleExportCsv}
+              className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-bold text-neutral-700 hover:bg-neutral-100"
+            >
+              Export CSV
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-bold text-neutral-700 hover:bg-neutral-100"
+            >
+              Export PDF (Print)
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+                <tr>
+                  <th className="p-4 font-bold text-neutral-600">Category</th>
+                  <th className="p-4 font-bold text-neutral-600 text-right">Tx Count</th>
+                  <th className="p-4 font-bold text-neutral-600 text-right">Total Amount</th>
                 </tr>
               </thead>
-              <tbody>
+              <tbody className="divide-y divide-neutral-200 text-lg">
                 {reportData.map((row) => (
-                  <tr key={row.categoryId}>
-                    <td>{row.categoryName}</td>
-                    <td style={{ textAlign: 'right' }}>{row.transactionCount}</td>
-                    <td style={{ textAlign: 'right' }}>{formatMoney(row.totalAmount)}</td>
+                  <tr key={row.categoryId} className="hover:bg-neutral-50">
+                    <td className="p-4 font-medium">{row.categoryName}</td>
+                    <td className="p-4 text-right text-neutral-600">{row.transactionCount}</td>
+                    <td className="p-4 text-right font-bold text-neutral-900">
+                      {formatMoney(row.totalAmount)}
+                    </td>
                   </tr>
                 ))}
-                <tr style={{ fontWeight: 'bold', background: '#e0e0e0' }}>
-                  <td>TOTAL</td>
-                  <td style={{ textAlign: 'right' }}>
+                <tr className="bg-neutral-100 font-bold border-t-2 border-neutral-300">
+                  <td className="p-4 text-neutral-900">TOTAL</td>
+                  <td className="p-4 text-right text-neutral-900">
                     {reportData.reduce((sum, r) => sum + r.transactionCount, 0)}
                   </td>
-                  <td style={{ textAlign: 'right' }}>
+                  <td className="p-4 text-right text-neutral-900">
                     {formatMoney(reportData.reduce((sum, r) => sum + r.totalAmount, 0))}
                   </td>
                 </tr>
               </tbody>
             </table>
           </div>
-        )}
-      </div>
+        </div>
+      )}
     </div>
   );
 }

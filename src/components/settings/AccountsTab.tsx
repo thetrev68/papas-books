@@ -27,49 +27,66 @@ export default function AccountsTab() {
 
   return (
     <div>
-      <div style={{ marginBottom: '1rem' }}>
-        <button onClick={handleCreate}>Create Account</button>
+      <div className="mb-6">
+        <button
+          onClick={handleCreate}
+          className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
+        >
+          Create Account
+        </button>
       </div>
 
-      {isLoading && <div>Loading...</div>}
-      {error && <div style={{ color: 'red' }}>Error: {error.message}</div>}
+      {isLoading && <div className="text-lg text-neutral-500">Loading...</div>}
+      {error && <div className="text-danger-700">Error: {error.message}</div>}
 
       {!isLoading && !error && accounts.length === 0 && (
-        <div>No accounts yet. Create one to get started!</div>
+        <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 text-lg text-neutral-600">
+          No accounts yet. Create one to get started!
+        </div>
       )}
 
       {!isLoading && !error && accounts.length > 0 && (
-        <table style={{ width: '100%', borderCollapse: 'collapse' }}>
-          <thead>
-            <tr style={{ borderBottom: '2px solid #ddd' }}>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Name</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Type</th>
-              <th style={{ textAlign: 'right', padding: '0.5rem' }}>Opening Balance</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Opening Date</th>
-              <th style={{ textAlign: 'left', padding: '0.5rem' }}>Actions</th>
-            </tr>
-          </thead>
-          <tbody>
-            {accounts.map((account) => (
-              <tr key={account.id} style={{ borderBottom: '1px solid #eee' }}>
-                <td style={{ padding: '0.5rem' }}>{account.name}</td>
-                <td style={{ padding: '0.5rem' }}>{account.type}</td>
-                <td style={{ textAlign: 'right', padding: '0.5rem' }}>
-                  ${(account.opening_balance / 100).toFixed(2)}
-                </td>
-                <td style={{ padding: '0.5rem' }}>
-                  {new Date(account.opening_balance_date).toLocaleDateString()}
-                </td>
-                <td style={{ padding: '0.5rem' }}>
-                  <button onClick={() => handleEdit(account)} style={{ marginRight: '0.5rem' }}>
-                    Edit
-                  </button>
-                  <button onClick={() => handleDelete(account.id)}>Delete</button>
-                </td>
+        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+              <tr>
+                <th className="p-4 text-base font-bold text-neutral-600">Name</th>
+                <th className="p-4 text-base font-bold text-neutral-600">Type</th>
+                <th className="p-4 text-base font-bold text-neutral-600 text-right">
+                  Opening Balance
+                </th>
+                <th className="p-4 text-base font-bold text-neutral-600">Opening Date</th>
+                <th className="p-4 text-base font-bold text-neutral-600">Actions</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-neutral-200 text-lg">
+              {accounts.map((account) => (
+                <tr key={account.id} className="hover:bg-neutral-50">
+                  <td className="p-4 font-medium text-neutral-900">{account.name}</td>
+                  <td className="p-4">{account.type}</td>
+                  <td className="p-4 text-right">${(account.opening_balance / 100).toFixed(2)}</td>
+                  <td className="p-4">
+                    {new Date(account.opening_balance_date).toLocaleDateString()}
+                  </td>
+                  <td className="p-4">
+                    <button
+                      onClick={() => handleEdit(account)}
+                      className="px-4 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 mr-2"
+                    >
+                      Edit
+                    </button>
+                    <button
+                      onClick={() => handleDelete(account.id)}
+                      className="px-4 py-2 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
+                    >
+                      Delete
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       )}
 
       {isFormOpen && (

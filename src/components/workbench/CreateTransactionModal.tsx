@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 import type { Transaction } from '../../types/database';
 import { createManualTransaction } from '../../lib/transactionOperations';
 import { useCategories } from '../../hooks/useCategories';
+import Modal from '../ui/Modal';
 
 interface CreateTransactionModalProps {
   accountId: string;
@@ -70,105 +71,56 @@ function CreateTransactionModal({
   };
 
   return (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        backgroundColor: 'rgba(0, 0, 0, 0.5)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 1000,
-      }}
-    >
-      <div
-        style={{
-          backgroundColor: 'white',
-          padding: '2rem',
-          borderRadius: '8px',
-          maxWidth: '500px',
-          width: '100%',
-          maxHeight: '80vh',
-          overflow: 'auto',
-        }}
-      >
-        <h3 style={{ marginTop: 0 }}>
-          {initialTransaction ? 'Edit Transaction' : 'Create Transaction'}
-        </h3>
-
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Date:</label>
+    <Modal title={initialTransaction ? 'Edit Transaction' : 'Create Transaction'} onClose={onClose}>
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Date</label>
           <input
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-            }}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Payee:</label>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Payee</label>
           <input
             type="text"
             value={formData.payee}
             onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-            }}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>Amount:</label>
+        <div>
+          <label className="block text-sm font-bold text-neutral-500 mb-1">Amount</label>
           <input
             type="number"
             step="0.01"
             value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-            style={{
-              width: '100%',
-              padding: '0.5rem',
-              border: '1px solid #ccc',
-              borderRadius: '4px',
-            }}
+            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
         </div>
 
-        <div style={{ marginBottom: '1rem' }}>
-          <label style={{ display: 'block', marginBottom: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={formData.isSplit}
-              onChange={(e) => setFormData({ ...formData, isSplit: e.target.checked })}
-              style={{ marginRight: '0.5rem' }}
-            />
-            Split Transaction
-          </label>
-        </div>
+        <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
+          <input
+            type="checkbox"
+            checked={formData.isSplit}
+            onChange={(e) => setFormData({ ...formData, isSplit: e.target.checked })}
+            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+          />
+          <span className="text-lg font-medium text-neutral-900">Split Transaction</span>
+        </label>
 
         {!formData.isSplit && (
-          <div style={{ marginBottom: '1rem' }}>
-            <label style={{ display: 'block', marginBottom: '0.5rem' }}>Category:</label>
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">Category</label>
             <select
               value={formData.categoryId}
               onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              style={{
-                width: '100%',
-                padding: '0.5rem',
-                border: '1px solid #ccc',
-                borderRadius: '4px',
-              }}
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">Select Category</option>
               {categories.map((cat) => (
@@ -180,7 +132,7 @@ function CreateTransactionModal({
           </div>
         )}
 
-        <div style={{ display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
+        <div className="flex flex-wrap gap-3 justify-end">
           <button
             onClick={handleSave}
             disabled={
@@ -188,33 +140,21 @@ function CreateTransactionModal({
               formData.amount === 0 ||
               (!formData.isSplit && !formData.categoryId)
             }
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#007bff',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+            type="button"
           >
             {initialTransaction ? 'Save' : 'Create'}
           </button>
           <button
             onClick={onClose}
-            style={{
-              padding: '0.5rem 1rem',
-              backgroundColor: '#6c757d',
-              color: 'white',
-              border: 'none',
-              borderRadius: '4px',
-              cursor: 'pointer',
-            }}
+            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            type="button"
           >
             Cancel
           </button>
         </div>
       </div>
-    </div>
+    </Modal>
   );
 }
 
