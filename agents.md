@@ -88,6 +88,7 @@ When referencing code, use the format:
 
 - `[filename.ext:line_number](relative/path/filename.ext:line_number)` for specific lines
 - `[filename.ext](relative/path/filename.ext)` for general file references
+- If link rendering isn't supported, use inline code with an optional line number (example: `src/app.ts:42`)
 
 ### Change Tracking
 
@@ -184,11 +185,11 @@ Security-related changes require:
 
 ### When to Use Tools
 
-- **read_file**: Before making changes to understand context
-- **search_files**: Finding patterns or specific code
-- **execute_command**: Running tests, builds, or scripts
-- **apply_diff**: Precise code modifications
-- **write_to_file**: Creating new files or complete rewrites
+- **rg**: Finding patterns or specific code
+- **cat/less/sed**: Before making changes to understand context
+- **shell_command**: Running tests, builds, or scripts
+- **apply_patch**: Precise code modifications
+- **here-doc/printf**: Creating new files or complete rewrites
 
 ### Tool Coordination
 

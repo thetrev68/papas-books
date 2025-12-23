@@ -1,0 +1,411 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Papa's Books - Design Concept</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        brand: {
+                            50: '#f0f9ff',
+                            100: '#e0f2fe',
+                            500: '#0ea5e9', // Sky 500 - Clear Blue
+                            600: '#0284c7', // Sky 600
+                            700: '#0369a1', // Sky 700 - High Contrast Text
+                            900: '#0c4a6e', // Sky 900
+                        },
+                        success: {
+                            100: '#dcfce7',
+                            700: '#15803d',
+                        },
+                        danger: {
+                            100: '#fee2e2',
+                            700: '#b91c1c',
+                        },
+                        neutral: {
+                            50: '#f8fafc',
+                            100: '#f1f5f9',
+                            200: '#e2e8f0', // Borders
+                            800: '#1e293b', // Primary Text
+                            900: '#0f172a', // Headings
+                        }
+                    },
+                    fontSize: {
+                        'base': ['1.125rem', '1.75rem'], // 18px body
+                        'lg': ['1.25rem', '1.75rem'], // 20px
+                        'xl': ['1.5rem', '2rem'], // 24px headings
+                        '2xl': ['1.875rem', '2.25rem'], // 30px
+                    },
+                    spacing: {
+                        '18': '4.5rem', // Large touch targets
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        body { font-family: system-ui, -apple-system, sans-serif; }
+    </style>
+</head>
+<body class="bg-neutral-50 text-neutral-800 antialiased">
+
+    <!-- App Shell Wrapper -->
+    <div class="min-h-screen flex flex-col md:flex-row">
+
+        <!-- Mobile Header (Visible on small screens) -->
+        <div class="bg-brand-700 text-white p-4 flex justify-between items-center md:hidden shadow-lg">
+            <h1 class="text-xl font-bold">Papa's Books</h1>
+            <button class="p-2 bg-brand-600 rounded-lg" aria-label="Menu">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"></path></svg>
+            </button>
+        </div>
+
+        <!-- Sidebar Navigation (Desktop) -->
+        <nav class="hidden md:flex flex-col w-72 bg-white border-r border-neutral-200 h-screen sticky top-0">
+            <div class="p-6 bg-brand-700 text-white">
+                <h1 class="text-2xl font-bold">Papa's Books</h1>
+                <p class="text-brand-100 mt-2 text-base">Welcome, Papa</p>
+            </div>
+            <div class="flex-1 p-4 space-y-2">
+                <a href="#" class="flex items-center gap-4 p-4 rounded-xl bg-brand-50 text-brand-900 font-bold border border-brand-200">
+                    <svg class="w-8 h-8 text-brand-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                    Transactions
+                </a>
+                <a href="#" class="flex items-center gap-4 p-4 rounded-xl text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 font-medium transition-colors">
+                    <svg class="w-8 h-8 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                    Reports
+                </a>
+                <a href="#" class="flex items-center gap-4 p-4 rounded-xl text-neutral-600 hover:bg-neutral-100 hover:text-neutral-900 font-medium transition-colors">
+                    <svg class="w-8 h-8 text-neutral-500" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                    Settings
+                </a>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="flex-1 p-4 md:p-8 overflow-y-auto">
+            
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-neutral-900 mb-2">Dashboard</h2>
+                <p class="text-lg text-neutral-600">A clear snapshot of how things are going right now.</p>
+            </header>
+
+            <!-- Time Range -->
+            <div class="mb-8 flex flex-wrap items-center gap-3">
+                <span class="text-sm font-bold text-neutral-500 uppercase tracking-wide">Range</span>
+                <div class="inline-flex rounded-xl border-2 border-neutral-200 bg-white p-1">
+                    <button class="px-4 py-2 rounded-lg bg-brand-600 text-white font-bold">Month</button>
+                    <button class="px-4 py-2 rounded-lg text-neutral-600 font-bold hover:bg-neutral-100">Quarter</button>
+                    <button class="px-4 py-2 rounded-lg text-neutral-600 font-bold hover:bg-neutral-100">Year</button>
+                </div>
+                <div class="inline-flex rounded-xl border-2 border-neutral-200 bg-white p-1">
+                    <button class="px-4 py-2 rounded-lg bg-neutral-900 text-white font-bold">Current</button>
+                    <button class="px-4 py-2 rounded-lg text-neutral-600 font-bold hover:bg-neutral-100">Prior</button>
+                </div>
+            </div>
+
+            <!-- KPI Cards -->
+            <div class="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-10">
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <p class="text-sm font-bold text-neutral-500 uppercase tracking-wide">Total Cash</p>
+                    <div class="text-2xl font-bold text-neutral-900 mt-2">$42,880</div>
+                    <p class="text-sm text-success-700 font-semibold mt-2">+ $1,240 vs last month</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <p class="text-sm font-bold text-neutral-500 uppercase tracking-wide">Net Income</p>
+                    <div class="text-2xl font-bold text-neutral-900 mt-2">$2,140</div>
+                    <p class="text-sm text-success-700 font-semibold mt-2">+ $180 vs last month</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <p class="text-sm font-bold text-neutral-500 uppercase tracking-wide">Net Expenses</p>
+                    <div class="text-2xl font-bold text-neutral-900 mt-2">$1,860</div>
+                    <p class="text-sm text-danger-700 font-semibold mt-2">+ $140 vs last month</p>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <p class="text-sm font-bold text-neutral-500 uppercase tracking-wide">Uncategorized</p>
+                    <div class="text-2xl font-bold text-neutral-900 mt-2">12</div>
+                    <p class="text-sm text-neutral-500 font-semibold mt-2">Needs attention</p>
+                </div>
+            </div>
+
+            <!-- Alerts + Quick Actions -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Alerts & Tasks</h3>
+                    <div class="space-y-3">
+                        <button class="w-full text-left p-4 rounded-xl border-2 border-danger-100 bg-danger-100 text-danger-700 font-bold">
+                            12 transactions need categories
+                        </button>
+                        <button class="w-full text-left p-4 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold hover:border-brand-500">
+                            Reconcile account: Chase Checking
+                        </button>
+                        <button class="w-full text-left p-4 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold hover:border-brand-500">
+                            Import pending review
+                        </button>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Quick Actions</h3>
+                    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <button class="p-5 bg-brand-600 text-white text-lg font-bold rounded-xl shadow hover:bg-brand-700">
+                            Import CSV
+                        </button>
+                        <button class="p-5 bg-white border-2 border-brand-600 text-brand-700 text-lg font-bold rounded-xl hover:bg-brand-50">
+                            Add Transaction
+                        </button>
+                        <button class="p-5 bg-white border-2 border-neutral-300 text-neutral-700 text-lg font-bold rounded-xl hover:bg-neutral-50">
+                            Reconcile
+                        </button>
+                        <button class="p-5 bg-white border-2 border-neutral-300 text-neutral-700 text-lg font-bold rounded-xl hover:bg-neutral-50">
+                            View Reports
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Trends + Recent Activity -->
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Spending Trend</h3>
+                    <div class="space-y-3">
+                        <div>
+                            <div class="flex justify-between text-sm text-neutral-500 font-bold mb-1">
+                                <span>Week 1</span><span>$420</span>
+                            </div>
+                            <div class="h-4 rounded-full bg-neutral-100">
+                                <div class="h-4 rounded-full bg-brand-600" style="width: 65%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm text-neutral-500 font-bold mb-1">
+                                <span>Week 2</span><span>$310</span>
+                            </div>
+                            <div class="h-4 rounded-full bg-neutral-100">
+                                <div class="h-4 rounded-full bg-brand-600" style="width: 48%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm text-neutral-500 font-bold mb-1">
+                                <span>Week 3</span><span>$510</span>
+                            </div>
+                            <div class="h-4 rounded-full bg-neutral-100">
+                                <div class="h-4 rounded-full bg-brand-600" style="width: 80%;"></div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="flex justify-between text-sm text-neutral-500 font-bold mb-1">
+                                <span>Week 4</span><span>$260</span>
+                            </div>
+                            <div class="h-4 rounded-full bg-neutral-100">
+                                <div class="h-4 rounded-full bg-brand-600" style="width: 40%;"></div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
+                    <h3 class="text-xl font-bold text-neutral-900 mb-4">Recent Activity</h3>
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-neutral-900">Pharmacy</div>
+                                <div class="text-sm text-neutral-500">Dec 23 • Health</div>
+                            </div>
+                            <div class="font-bold text-neutral-900">$28.40</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-neutral-900">Electric Bill</div>
+                                <div class="text-sm text-neutral-500">Dec 21 • Utilities</div>
+                            </div>
+                            <div class="font-bold text-neutral-900">$96.10</div>
+                        </div>
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <div class="font-bold text-neutral-900">Grocery Store</div>
+                                <div class="text-sm text-neutral-500">Dec 20 • Groceries</div>
+                            </div>
+                            <div class="font-bold text-neutral-900">$142.00</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <header class="mb-8">
+                <h2 class="text-3xl font-bold text-neutral-900 mb-2">Workbench</h2>
+                <p class="text-lg text-neutral-600">Review and categorize your transactions.</p>
+            </header>
+
+            <!-- Action Bar -->
+            <div class="flex flex-col md:flex-row gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+                <div class="flex-1">
+                    <label class="block text-sm font-bold text-neutral-500 uppercase tracking-wide mb-1">Filter Account</label>
+                    <select class="w-full text-xl p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none transition-all">
+                        <option>All Accounts</option>
+                        <option>Chase Checking (...1234)</option>
+                        <option>Amex Gold (...5678)</option>
+                    </select>
+                </div>
+                <div class="flex gap-4">
+                    <button class="flex-1 md:flex-none px-8 py-3 bg-brand-600 text-white text-lg font-bold rounded-xl shadow hover:bg-brand-700 active:scale-95 transition-all flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M12 4v16m8-8H4"></path></svg>
+                        Add New
+                    </button>
+                    <button class="flex-1 md:flex-none px-8 py-3 bg-white border-2 border-brand-600 text-brand-700 text-lg font-bold rounded-xl hover:bg-brand-50 active:scale-95 transition-all">
+                        Import
+                    </button>
+                </div>
+            </div>
+
+            <!-- Mobile View (Card Based) - Visible only on mobile -->
+            <div class="md:hidden space-y-4">
+                <div class="bg-white p-5 rounded-2xl shadow-md border-l-8 border-brand-500">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-neutral-500 font-semibold">Dec 23, 2024</span>
+                        <span class="text-xl font-bold text-neutral-900">$45.50</span>
+                    </div>
+                    <div class="text-xl font-medium text-neutral-900 mb-3">Starbucks Coffee</div>
+                    <div class="flex gap-2 mb-4">
+                        <span class="bg-brand-100 text-brand-900 px-3 py-1 rounded-full text-sm font-bold">Dining Out</span>
+                        <span class="bg-neutral-100 text-neutral-600 px-3 py-1 rounded-full text-sm font-bold">Chase</span>
+                    </div>
+                    <button class="w-full py-3 bg-success-100 text-success-700 font-bold rounded-xl border border-success-700 flex items-center justify-center gap-2">
+                        <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M5 13l4 4L19 7"></path></svg>
+                        Mark Reviewed
+                    </button>
+                </div>
+
+                <div class="bg-white p-5 rounded-2xl shadow-md border-l-8 border-neutral-300 opacity-75">
+                    <div class="flex justify-between items-start mb-2">
+                        <span class="text-neutral-500 font-semibold">Dec 22, 2024</span>
+                        <span class="text-xl font-bold text-neutral-900">$120.00</span>
+                    </div>
+                    <div class="text-xl font-medium text-neutral-900 mb-3">Grocery Store Inc.</div>
+                    <div class="flex gap-2 mb-4">
+                        <span class="bg-neutral-200 text-neutral-800 px-3 py-1 rounded-full text-sm font-bold">Uncategorized</span>
+                    </div>
+                    <button class="w-full py-3 bg-white border-2 border-neutral-300 text-neutral-600 font-bold rounded-xl hover:bg-neutral-50">
+                        Edit Details
+                    </button>
+                </div>
+            </div>
+
+            <!-- Desktop View (Table Based) - Hidden on mobile -->
+            <div class="hidden md:block bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden">
+                <table class="w-full text-left border-collapse">
+                    <thead class="bg-neutral-100 border-b-2 border-neutral-200">
+                        <tr>
+                            <th class="p-4 text-base font-bold text-neutral-600">Date</th>
+                            <th class="p-4 text-base font-bold text-neutral-600">Payee</th>
+                            <th class="p-4 text-base font-bold text-neutral-600">Category</th>
+                            <th class="p-4 text-base font-bold text-neutral-600 text-right">Amount</th>
+                            <th class="p-4 text-base font-bold text-neutral-600 text-center">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody class="divide-y divide-neutral-200 text-lg">
+                        <!-- Row 1 -->
+                        <tr class="hover:bg-brand-50 transition-colors group">
+                            <td class="p-4 text-neutral-600">Dec 23</td>
+                            <td class="p-4 font-medium text-neutral-900">Starbucks Coffee</td>
+                            <td class="p-4">
+                                <button class="px-3 py-1 rounded-lg bg-brand-100 text-brand-900 font-bold hover:bg-brand-200 border border-brand-200">
+                                    Dining Out ▾
+                                </button>
+                            </td>
+                            <td class="p-4 text-right font-bold text-neutral-900">$45.50</td>
+                            <td class="p-4 text-center">
+                                <button class="p-2 text-neutral-400 hover:text-success-700 transition-colors" title="Mark Reviewed">
+                                    <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="3" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                                </button>
+                            </td>
+                        </tr>
+                        <!-- Row 2 -->
+                        <tr class="hover:bg-brand-50 transition-colors bg-neutral-50">
+                            <td class="p-4 text-neutral-600">Dec 22</td>
+                            <td class="p-4 font-medium text-neutral-900">Grocery Store Inc.</td>
+                            <td class="p-4">
+                                <span class="italic text-neutral-400">Uncategorized</span>
+                            </td>
+                            <td class="p-4 text-right font-bold text-neutral-900">$120.00</td>
+                            <td class="p-4 text-center">
+                                <button class="px-4 py-2 bg-white border-2 border-neutral-300 rounded-lg text-sm font-bold text-neutral-600 hover:border-brand-500 hover:text-brand-600">
+                                    Edit
+                                </button>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Component Gallery (For verification) -->
+            <div class="mt-12 p-8 border-t-4 border-neutral-200">
+                <h3 class="text-2xl font-bold text-neutral-400 mb-6 uppercase tracking-widest">Component Gallery</h3>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                    <!-- Buttons -->
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-neutral-500">Buttons</h4>
+                        <button class="w-full px-6 py-4 bg-brand-600 text-white text-lg font-bold rounded-xl shadow-md hover:bg-brand-700">
+                            Primary Action
+                        </button>
+                        <button class="w-full px-6 py-4 bg-white border-2 border-neutral-300 text-neutral-700 text-lg font-bold rounded-xl hover:bg-neutral-50">
+                            Secondary Action
+                        </button>
+                        <button class="w-full px-6 py-4 bg-danger-100 text-danger-700 border border-danger-700 text-lg font-bold rounded-xl hover:bg-danger-200">
+                            Danger / Delete
+                        </button>
+                    </div>
+
+                    <!-- Inputs -->
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-neutral-500">Inputs</h4>
+                        <div>
+                            <label class="block text-sm font-bold text-neutral-500 mb-1">Standard Input</label>
+                            <input type="text" placeholder="Type here..." class="w-full p-4 text-xl border-2 border-neutral-300 rounded-xl focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-bold text-neutral-500 mb-1">Checkbox</label>
+                            <label class="flex items-center gap-4 p-4 border-2 border-neutral-200 rounded-xl bg-white cursor-pointer hover:border-brand-500">
+                                <input type="checkbox" class="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300">
+                                <span class="text-lg font-medium text-neutral-900">Enable Feature</span>
+                            </label>
+                        </div>
+                    </div>
+
+                    <!-- Alerts -->
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-neutral-500">Feedback</h4>
+                        <div class="p-4 bg-success-100 border-l-8 border-success-700 text-success-700 rounded-r-xl font-medium text-lg">
+                            ✓ Transaction saved successfully.
+                        </div>
+                        <div class="p-4 bg-danger-100 border-l-8 border-danger-700 text-danger-700 rounded-r-xl font-medium text-lg">
+                            ⚠ Please select a category.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+        
+        <!-- Mobile Bottom Nav (Sticky) -->
+        <nav class="md:hidden sticky bottom-0 bg-white border-t border-neutral-200 flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)]">
+            <a href="#" class="flex flex-col items-center p-2 text-brand-600">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"></path></svg>
+                <span class="text-xs font-bold mt-1">Transact</span>
+            </a>
+            <a href="#" class="flex flex-col items-center p-2 text-neutral-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"></path></svg>
+                <span class="text-xs font-bold mt-1">Reports</span>
+            </a>
+            <a href="#" class="flex flex-col items-center p-2 text-neutral-400">
+                <svg class="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10.325 4.317c.426-1.756 2.924-1.756 3.35 0a1.724 1.724 0 002.573 1.066c1.543-.94 3.31.826 2.37 2.37a1.724 1.724 0 001.065 2.572c1.756.426 1.756 2.924 0 3.35a1.724 1.724 0 00-1.066 2.573c.94 1.543-.826 3.31-2.37 2.37a1.724 1.724 0 00-2.572 1.065c-.426 1.756-2.924 1.756-3.35 0a1.724 1.724 0 00-2.573-1.066c-1.543.94-3.31-.826-2.37-2.37a1.724 1.724 0 00-1.065-2.572c-1.756-.426-1.756-2.924 0-3.35a1.724 1.724 0 001.066-2.573c-.94-1.543.826-3.31 2.37-2.37.996.608 2.296.07 2.572-1.065z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path></svg>
+                <span class="text-xs font-bold mt-1">Settings</span>
+            </a>
+        </nav>
+
+    </div>
+</body>
+</html>

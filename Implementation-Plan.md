@@ -265,15 +265,15 @@ This plan breaks the Papa's Books MVP into 7 sequential phases, each delivering 
 
 ### Phase 8: Advanced Features
 
-- Multi-user support (bookkeeper + client role separation)
-- Audit trail / change history
-- Attachments (receipt images linked to transactions)
-- Scheduled reports / email delivery
-- Advanced rule types (amount ranges, date patterns, regex)
-- Undo import functionality (rollback by sourceBatchId)
-- Budget tracking against categories
-- Bank account balance tracking over time
-- Recurring transaction templates
+- [x] Multi-user support (bookkeeper + client role separation)
+- [x] Audit trail / change history
+- [ ] Attachments (receipt images linked to transactions)
+- [ ] Scheduled reports / email delivery
+- [x] Advanced rule types (amount ranges, date patterns, regex)
+- [x] Undo import functionality (rollback by sourceBatchId)
+- [ ] Budget tracking against categories
+- [ ] Bank account balance tracking over time
+- [ ] Recurring transaction templates
 
 ### Phase 9: Performance & Experience
 
