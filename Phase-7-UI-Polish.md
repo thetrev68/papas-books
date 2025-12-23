@@ -1,7 +1,7 @@
 # Phase 7: UI/UX Polish & Design System
 
 **Status:** Planned
-**Dependencies:** Phase 1-6 (Core Functionality), Phase 8 (Advanced Features)
+**Dependencies:** Phase 1-6 (Core Functionality)
 **Estimated Complexity:** High
 **Reference:** [Implementation-Plan.md](Implementation-Plan.md)
 
@@ -9,7 +9,7 @@
 
 ## Overview
 
-Phase 7 transforms the functional "skeleton" of Papa's Books into a professional, cohesive, and visually appealing application. We will implement a design system based on **Material Design principles** using **Tailwind CSS**.
+Phase 7 transforms the functional "skeleton" of Papa's Books into a professional, cohesive, and visually appealing application. We will implement a design system using **Tailwind CSS**.
 
 **Key Principles:**
 
@@ -45,7 +45,7 @@ Phase 7 transforms the functional "skeleton" of Papa's Books into a professional
 ### App Shell
 
 - **Navigation:** Transition from unstyled links to a professional Sidebar (collapsible) or Top Nav.
-- **Header:** Include the Bookset Switcher, User Profile, and Global Search.
+- **Header:** Include the Bookset Switcher and User Profile.
 - **Loading State:** Implement a global progress bar (nprogress style) or skeleton screens for data-heavy pages.
 
 ---
@@ -60,7 +60,7 @@ We will replace native HTML elements with styled React components:
 | **Inputs**       | Text, Number (with currency symbol), Date, Select, Checkbox, Radio |
 | **Feedback**     | Toast notifications (styled GlobalToast), Inline alerts, Tooltips  |
 | **Data Display** | Cards, Tables (styled TanStack rows), Badges (for categories/tags) |
-| **Overlays**     | Modals, Dropdowns, Context Menus (right-click on transactions)     |
+| **Overlays**     | Modals, Dropdowns                                                  |
 
 ---
 
@@ -79,24 +79,52 @@ We will replace native HTML elements with styled React components:
 - **Inline Editing:** Visual cues (blue border) when a cell is in edit mode.
 - **Filter Bar:** Collapsible sidebar or horizontal strip with "Chip" style filters.
 
+### Settings
+
+- **Tabs:** Styled tab component for Accounts, Categories, Rules.
+- **Forms:** Labeled inputs, clear validation states, and compact spacing.
+- **Tables:** Hover states and improved readability for long lists.
+
+### Import (Airlock)
+
+- **Drag-and-drop Zone:** Styled file drop area.
+- **Split-Screen Layout:** Clear visual separation between New and Duplicates.
+- **Progress Indicators:** Simple progress or step indicator during parsing/import.
+
 ### Reconciliation Wizard
 
 - **Step Indicator:** Visual "Breadcrumb" showing Step 1, 2, 3.
 - **The "Balance" Indicator:** Large, clear display of the current Difference.
 - **Animation:** Subtle success animation (check mark) when balanced.
+- **Scale Visual:** Animated "balance scale" component for matched vs unmatched.
+
+### Split Transaction Modal
+
+- **Modal Layout:** Clean layout with clear action hierarchy.
+- **Remainder Indicator:** Red/green state when split totals mismatch.
+- **Inputs:** Compact, aligned split line inputs.
 
 ### Reports
 
 - **Print Styles:** Ensure reports look perfect when printed to PDF or paper (hide nav, simplify colors).
 - **Interactive Tables:** Row highlighting and sort indicators.
+- **Export Buttons:** Styled actions for CSV/PDF exports.
 
 ---
 
 ## 5. User Experience (Micro-interactions)
 
-- **Keyboard Shortcuts Dialog:** A "Help" modal (triggered by `?`) showing all available shortcuts.
 - **Empty States:** Helpful illustrations and text when there are no transactions or accounts.
 - **Optimistic UI:** Instant feedback when marking reviewed or deleting (already partially in Phase 5, but needs visual polish).
+- **Toasts:** Success/error notifications for all CRUD and import/reconcile actions.
+- **Errors:** Clear inline and page-level error states.
+
+---
+
+## 6. Responsive & Performance
+
+- **Responsive Design:** Desktop-first with tablet support (mobile optional).
+- **Performance:** No layout thrashing or heavy reflows from UI polish.
 
 ---
 

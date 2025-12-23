@@ -9,30 +9,60 @@
 
 ## Overview
 
-Phase 6 addresses the two critical outputs of a bookkeeping system: verifying data accuracy (Reconciliation) and summarizing financial health (Reporting).
-
-**Reconciliation** creates a "lock" on historical data. By comparing the system's records against external bank statements, we ensure accuracy. Once reconciled, transactions are locked to prevent accidental editing.
-
-**Reporting** aggregates transaction data into usable insights. Crucially, it must accurately handle the **split transactions** created in Phase 5, ensuring that a single transaction split across "Groceries" and "Household" contributes correctly to both category totals in reports.
+Phase 6 delivers two critical bookkeeping outcomes: reconciliation (data accuracy) and reporting (tax-ready summaries). The reconciliation flow must be precise, repeatable, and capable of locking historical transactions. Reporting must decompose split transactions correctly and export results in formats users can share.
 
 **Key Principles:**
 
-- **Cent-Perfect Accuracy:** All calculations must be exact.
-- **Wizard-Based Workflow:** Simplify the reconciliation process into clear steps.
-- **Immutable History:** Finalizing a reconciliation locks the associated transactions.
-- **Split-Aware Aggregation:** Reports must decompose split transactions into their constituent parts.
-- **Pure Functional Logic:** Calculation engines must be strictly separated from UI for testing.
+- **Cent-Perfect Accuracy:** All calculations are integer cents and must be exact.
+- **Wizard-Based Workflow:** Reconciliation is a step-by-step flow with clear states.
+- **Immutable History:** Finalizing a reconciliation locks associated transactions.
+- **Split-Aware Aggregation:** Reports allocate split lines to their categories.
+- **Exportable Outputs:** Reports must be downloadable (CSV + PDF).
+- **Pure Functional Logic:** Core calculations are in isolated, testable functions.
 
 ---
 
 ## UI Implementation Constraint: "Function Over Form"
 
-**CRITICAL REQUIREMENT:** The UI for Phase 6 must be **superbasic and unstyled**.
+**CRITICAL REQUIREMENT:** The UI for Phase 6 must be superbasic and unstyled.
 
 - Use native HTML elements only (`<table>`, `<button>`, `<input>`, `<ul>`).
-- **NO Tailwind classes**, NO custom CSS, and NO component libraries (unless specifically for logic, like TanStack Table).
-- The goal is to verify the reconciliation math and reporting logic, not to create a finished user experience.
-- Aesthetic polish is strictly reserved for Phase 7.
+- **No Tailwind**, no custom CSS, no component libraries (except logic helpers).
+- The goal is validating reconciliation and reporting logic; visuals come in Phase 7.
+
+---
+
+## Conceptual Model
+
+### Reconciliation Lifecycle
+
+```text
+1. User selects account + statement date + statement balance
+   ↓
+2. System loads unreconciled transactions up to statement date
+   ↓
+3. User checks/unchecks transactions to match statement balance
+   ↓
+4. System calculates deposits/withdrawals and difference
+   ↓
+5. If balanced, user finalizes reconciliation
+   ↓
+6. System locks transactions and records reconciliation snapshot
+```
+
+### Reporting Pipeline
+
+```text
+1. User selects filters (date, accounts, category)
+   ↓
+2. System fetches transactions in range
+   ↓
+3. Split transactions are decomposed into lines
+   ↓
+4. Totals are aggregated by category (and optional groupings)
+   ↓
+5. Results displayed and exported (CSV/PDF)
+```
 
 ---
 
@@ -73,7 +103,7 @@ CREATE TABLE IF NOT EXISTS reconciliations (
 
 ### 2. RPC: `finalize_reconciliation`
 
-**File:** `supabase/schema.sql` (Add this function)
+**File:** `supabase/schema.sql`
 
 This function performs the atomic locking of a reconciliation period.
 
@@ -90,7 +120,7 @@ CREATE OR REPLACE FUNCTION finalize_reconciliation(
 DECLARE
   _difference bigint;
 BEGIN
-  -- Calculate difference just to be safe (trust but verify)
+  -- Calculate difference (trust but verify)
   _difference := _statement_balance - _calculated_balance;
 
   -- 1. Create Reconciliation Record
@@ -109,7 +139,6 @@ BEGIN
   );
 
   -- 2. Mark Transactions as Reconciled
-  -- Only update transactions that match IDs and belong to bookset (security)
   UPDATE transactions
   SET reconciled = true, "reconciledDate" = now()
   WHERE id = ANY(_transaction_ids)
@@ -124,6 +153,11 @@ END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
 
+**Notes:**
+
+- Use bigint cents throughout to avoid floating-point errors.
+- Transactions with `reconciled = true` must be read-only in the UI.
+
 ---
 
 ## Types & Interfaces
@@ -135,7 +169,7 @@ export interface Reconciliation {
   id: string;
   booksetId: string;
   accountId: string;
-  statementDate: string; // ISO Date
+  statementDate: string; // ISO date
   statementBalance: number; // cents
   openingBalance: number; // cents
   calculatedBalance: number; // cents
@@ -144,6 +178,12 @@ export interface Reconciliation {
   finalizedAt?: string;
   transactionCount: number;
   transactionIds: string[];
+}
+
+export interface ReconciliationInput {
+  accountId: string;
+  statementDate: string; // YYYY-MM-DD
+  statementBalance: number; // cents
 }
 
 export interface ReconciliationResult {
@@ -155,19 +195,25 @@ export interface ReconciliationResult {
   isBalanced: boolean;
 }
 
-export interface CategorySummary {
-  categoryId: string;
-  categoryName: string;
-  totalAmount: number; // In cents
-  transactionCount: number;
-  isIncome: boolean; // Based on category type or sign
-  children?: CategorySummary[];
-}
-
 export interface ReportFilter {
   startDate: string; // YYYY-MM-DD
   endDate: string; // YYYY-MM-DD
   accountIds?: string[];
+  categoryId?: string;
+}
+
+export interface CategorySummary {
+  categoryId: string;
+  categoryName: string;
+  totalAmount: number; // cents
+  transactionCount: number;
+  isIncome: boolean;
+}
+
+export interface ReportExportRow {
+  categoryName: string;
+  totalAmount: number;
+  transactionCount: number;
 }
 ```
 
@@ -179,17 +225,14 @@ export interface ReportFilter {
 
 **File:** `src/lib/reconciler.ts`
 
+**Dependencies:** None
+
+**Function: `calculateReconciliation(previousBalance, transactions, targetBalance)`**
+
 ```typescript
 import { Transaction } from '../types/database';
 import { ReconciliationResult } from '../types/reconcile';
 
-/**
- * Calculates the current reconciliation state.
- *
- * @param previousBalance - The starting balance (from last reconciliation or 0)
- * @param transactions - List of transactions currently selected by the user
- * @param targetBalance - The user-entered ending balance from their statement
- */
 export function calculateReconciliation(
   previousBalance: number,
   transactions: Transaction[],
@@ -206,7 +249,6 @@ export function calculateReconciliation(
     }
   }
 
-  // Exact integer math (cents)
   const calculatedEndingBalance = previousBalance + deposits + withdrawals;
   const difference = targetBalance - calculatedEndingBalance;
 
@@ -216,9 +258,24 @@ export function calculateReconciliation(
     totalWithdrawals: withdrawals,
     calculatedEndingBalance,
     difference,
-    // Must be exactly zero. No floating point tolerance needed for integers.
     isBalanced: difference === 0,
   };
+}
+```
+
+**Function: `sumTransactionAmountForReconcile(tx)`**
+
+- If transaction is split, sum split lines.
+- Otherwise, use `tx.amount`.
+
+```typescript
+import { Transaction } from '../types/database';
+
+export function sumTransactionAmountForReconcile(tx: Transaction): number {
+  if (tx.isSplit && tx.lines?.length) {
+    return tx.lines.reduce((sum, line) => sum + line.amount, 0);
+  }
+  return tx.amount;
 }
 ```
 
@@ -226,37 +283,32 @@ export function calculateReconciliation(
 
 **File:** `src/lib/reports.ts`
 
+**Function: `generateCategoryReport(transactions, categories)`**
+
+- Decompose split transactions into lines.
+- Aggregate totals by `categoryId`.
+
 ```typescript
-import { Transaction } from '../types/database';
-import { Category } from '../types/database';
+import { Transaction, Category } from '../types/database';
 import { CategorySummary } from '../types/reconcile';
 
-/**
- * Generates a flat summary of categories based on transactions.
- * CRITICAL: Decomposes split transactions into their lines.
- */
 export function generateCategoryReport(
   transactions: Transaction[],
   categories: Category[]
 ): CategorySummary[] {
   const summaryMap = new Map<string, { amount: number; count: number }>();
+  const categoryLookup = new Map(categories.map((c) => [c.id, c]));
 
-  // 1. Aggregation Phase
   for (const tx of transactions) {
     if (tx.isSplit && tx.lines) {
-      // Handle Split Lines
       for (const line of tx.lines) {
-        const catId = line.categoryId;
-        const current = summaryMap.get(catId) || { amount: 0, count: 0 };
-        summaryMap.set(catId, {
+        const current = summaryMap.get(line.categoryId) || { amount: 0, count: 0 };
+        summaryMap.set(line.categoryId, {
           amount: current.amount + line.amount,
           count: current.count + 1,
-          // Note: count increases per split line, which is technically correct for "activity"
         });
       }
     } else {
-      // Handle Single Transaction
-      // Fallback: If no lines array, use legacy/root category (though Phase 5 standardized lines)
       const catId = tx.lines?.[0]?.categoryId || 'uncategorized';
       const current = summaryMap.get(catId) || { amount: 0, count: 0 };
       summaryMap.set(catId, {
@@ -266,25 +318,62 @@ export function generateCategoryReport(
     }
   }
 
-  // 2. Mapping Phase (IDs to Names)
   const results: CategorySummary[] = [];
-
-  // Create a lookup for category names
-  const categoryLookup = new Map(categories.map((c) => [c.id, c]));
-
-  for (const [catId, data] of summaryMap.entries()) {
-    const category = categoryLookup.get(catId);
+  for (const [categoryId, data] of summaryMap.entries()) {
+    const category = categoryLookup.get(categoryId);
     results.push({
-      categoryId: catId,
+      categoryId,
       categoryName: category ? category.name : 'Unknown Category',
       totalAmount: data.amount,
       transactionCount: data.count,
-      isIncome: data.amount > 0, // Simple heuristic, better to use category type if available
+      isIncome: data.amount > 0,
     });
   }
 
-  // 3. Sort by Name
   return results.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+}
+```
+
+**Function: `filterTransactionsForReport(transactions, filter)`**
+
+- Date range is inclusive.
+- Optional account and category filters.
+
+```typescript
+import { Transaction } from '../types/database';
+import { ReportFilter } from '../types/reconcile';
+
+export function filterTransactionsForReport(
+  transactions: Transaction[],
+  filter: ReportFilter
+): Transaction[] {
+  return transactions.filter((tx) => {
+    if (tx.date < filter.startDate || tx.date > filter.endDate) return false;
+    if (filter.accountIds?.length && !filter.accountIds.includes(tx.accountId)) return false;
+    if (filter.categoryId) {
+      const lineCategoryId = tx.lines?.[0]?.categoryId;
+      if (!lineCategoryId || lineCategoryId !== filter.categoryId) return false;
+    }
+    return true;
+  });
+}
+```
+
+**Function: `exportReportToCsv(summary)`**
+
+```typescript
+import { CategorySummary, ReportExportRow } from '../types/reconcile';
+
+export function exportReportToCsv(summary: CategorySummary[]): string {
+  const rows: ReportExportRow[] = summary.map((row) => ({
+    categoryName: row.categoryName,
+    totalAmount: row.totalAmount,
+    transactionCount: row.transactionCount,
+  }));
+
+  const header = 'Category,TotalAmount,TransactionCount';
+  const lines = rows.map((r) => `${r.categoryName},${r.totalAmount},${r.transactionCount}`);
+  return [header, ...lines].join('\n');
 }
 ```
 
@@ -320,116 +409,141 @@ export async function finalizeReconciliationRPC(
 }
 ```
 
+### File: `src/lib/supabase/reports.ts`
+
+```typescript
+import { supabase } from './config';
+
+export async function fetchTransactionsForReport(
+  booksetId: string,
+  startDate: string,
+  endDate: string
+) {
+  return supabase
+    .from('transactions')
+    .select('*')
+    .eq('booksetId', booksetId)
+    .gte('date', startDate)
+    .lte('date', endDate)
+    .eq('isArchived', false);
+}
+```
+
 ---
 
 ## UI Components & Flow
 
 ### Page: `src/pages/ReconcilePage.tsx`
 
-**State Management:**
+**State:**
 
 - `step`: number (1, 2, 3)
-- `accountId`: string | null
-- `statementDate`: string
-- `statementBalance`: number (cents)
-- `selectedTransactionIds`: `Set<string>`
+- `input`: `ReconciliationInput`
 
-**Render:**
+**Flow:**
 
-```tsx
-<div className="reconcile-page">
-  <h1>Reconciliation</h1>
+- Step 1: Account + statement inputs
+- Step 2: Transaction selection and summary
+- Step 3: Success + reset
 
-  {step === 1 && (
-    <ReconcileSetup
-      accounts={accounts}
-      onNext={(data) => {
-        setAccountId(data.accountId);
-        setStatementDate(data.date);
-        setStatementBalance(data.balance);
-        setStep(2);
-      }}
-    />
-  )}
-
-  {step === 2 && (
-    <ReconcileWorkspace
-      accountId={accountId}
-      statementDate={statementDate}
-      statementBalance={statementBalance}
-      onBack={() => setStep(1)}
-      onFinish={() => setStep(3)}
-    />
-  )}
-
-  {step === 3 && <ReconcileSuccess onReset={() => window.location.reload()} />}
-</div>
-```
-
-### Component: `ReconcileWorkspace`
-
-**Location:** `src/components/reconcile/ReconcileWorkspace.tsx`
+### Component: `ReconcileSetup`
 
 **Props:**
 
-- `accountId`: string
-- `statementDate`: string
-- `statementBalance`: number
+- `accounts`: Account[]
+- `onNext(input: ReconciliationInput)`
+
+**Fields:**
+
+- Account dropdown
+- Statement date
+- Statement balance
+
+### Component: `ReconcileWorkspace`
+
+**Props:**
+
+- `accountId`, `statementDate`, `statementBalance`
 
 **Internal Logic:**
 
-1. Fetch `account` to get `openingBalance` (lastReconciledBalance).
-2. Fetch `transactions` where `accountId` matches AND `date <= statementDate` AND `reconciled == false`.
-3. Use `useMemo` to call `calculateReconciliation(...)` whenever selection changes.
+1. Fetch `account` for `openingBalance` (lastReconciledBalance).
+2. Fetch `transactions` where:
+   - `accountId` matches
+   - `date <= statementDate`
+   - `reconciled == false`
+3. Use `useMemo` to compute `calculateReconciliation(...)` on selection change.
+4. Highlight unchecked or unreconciled items when `difference != 0`.
 
-**Layout (Unstyled HTML Table):**
+### Page: `src/pages/ReportsPage.tsx`
+
+**State Management:**
+
+- `startDate`: string
+- `endDate`: string
+- `accountIds`: string[]
+- `categoryId`: string | null
+
+**Render (Unstyled HTML Controls):**
 
 ```tsx
 <div>
-  <div style={{ border: '1px solid black', padding: '10px' }}>
-    <h3>Summary</h3>
-    <p>Opening Balance: {formatCurrency(result.openingBalance)}</p>
-    <p>+ Deposits: {formatCurrency(result.totalDeposits)}</p>
-    <p>- Withdrawals: {formatCurrency(result.totalWithdrawals)}</p>
-    <hr />
-    <p>Calculated Ending: {formatCurrency(result.calculatedEndingBalance)}</p>
-    <p>Target Ending: {formatCurrency(props.statementBalance)}</p>
-    <h2 style={{ color: result.isBalanced ? 'green' : 'red' }}>
-      Difference: {formatCurrency(result.difference)}
-    </h2>
-    <button disabled={!result.isBalanced} onClick={handleFinalize}>
-      Finish Reconciliation
-    </button>
+  <h1>Reports</h1>
+  <div>
+    <label>
+      Start Date
+      <input type="date" value={startDate} onChange={...} />
+    </label>
+    <label>
+      End Date
+      <input type="date" value={endDate} onChange={...} />
+    </label>
+    <label>
+      Account
+      <select multiple value={accountIds} onChange={...}>
+        {accounts.map((account) => (
+          <option key={account.id} value={account.id}>
+            {account.name}
+          </option>
+        ))}
+      </select>
+    </label>
+    <label>
+      Category
+      <select value={categoryId ?? ''} onChange={...}>
+        <option value="">All</option>
+        {categories.map((category) => (
+          <option key={category.id} value={category.id}>
+            {category.name}
+          </option>
+        ))}
+      </select>
+    </label>
+    <button onClick={handleRunReport}>Run Report</button>
+  </div>
+
+  <div>
+    <button onClick={handleExportCsv}>Export CSV</button>
+    <button onClick={handleExportPdf}>Export PDF</button>
   </div>
 
   <table>
-    <thead>
-      <tr>
-        <th>Select</th>
-        <th>Date</th>
-        <th>Payee</th>
-        <th>Amount</th>
-      </tr>
-    </thead>
-    <tbody>
-      {transactions.map((tx) => (
-        <tr key={tx.id}>
-          <td>
-            <input
-              type="checkbox"
-              checked={selectedIds.has(tx.id)}
-              onChange={() => toggleId(tx.id)}
-            />
-          </td>
-          <td>{tx.date}</td>
-          <td>{tx.payee}</td>
-          <td>{formatCurrency(tx.amount)}</td>
-        </tr>
-      ))}
-    </tbody>
+    <thead>...</thead>
+    <tbody>...</tbody>
   </table>
 </div>
 ```
+
+---
+
+## Success Criteria
+
+- Reconciliation math is cent-perfect and balanced only when `difference === 0`.
+- User can finalize reconciliation and transactions are locked.
+- Locked transactions cannot be edited (UI prevents edits).
+- Reports correctly allocate split lines to categories.
+- Exports match on-screen filters and totals.
+- Business logic is testable without UI.
 
 ---
 
@@ -439,44 +553,36 @@ export async function finalizeReconciliationRPC(
 
 **File:** `src/lib/reconciler.test.ts`
 
-1. **Perfect Match:**
-   - Input: Opening 1000, 1 Deposit of 500, Target 1500.
-   - Expect: Diff 0, isBalanced true.
-2. **Missing Transaction:**
-   - Input: Opening 1000, Target 1500, No transactions selected.
-   - Expect: Diff 500, isBalanced false.
-3. **Wrong Amount:**
-   - Input: Target 1500, Calculated 1499.
-   - Expect: Diff 1, isBalanced false.
+1. Perfect match (difference 0).
+2. Missing transaction (difference non-zero).
+3. Off by 1 cent (difference 1).
+4. Split transaction sums to correct total.
 
 **File:** `src/lib/reports.test.ts`
 
-1. **Split Aggregation:**
-   - Create 1 transaction: $100 total. Split: $60 Food, $40 Home.
-   - Run `generateCategoryReport`.
-   - Expect: Result array has "Food" ($60) and "Home" ($40). Total $100.
-2. **Mixed Types:**
-   - 1 Income ($1000), 1 Expense (-$200).
-   - Expect: Correct totals in respective categories.
+1. Split aggregation ($100 split to $60/$40).
+2. Mixed income/expense totals.
+3. Filtered report only includes matching transactions.
+4. CSV export includes expected rows.
 
 ### Integration Tests
 
-1. **RPC Locking:**
-   - Call `finalize_reconciliation`.
-   - Verify in DB that `transactions` table has `reconciled = true` for the IDs.
-   - Verify `accounts` table `lastReconciledBalance` updated.
-   - Verify `reconciliations` table has a new row.
+1. RPC locking:
+   - Call `finalize_reconciliation` and verify transactions locked and account updated.
+2. Reports export:
+   - Run report, export CSV/PDF, verify filtered data only.
 
 ---
 
 ## Task Checklist
 
-1. [ ] **Database:** Run SQL to create `reconciliations` table (if missing) and `finalize_reconciliation` function.
-2. [ ] **Types:** Create `src/types/reconcile.ts`.
-3. [ ] **Logic:** Implement `src/lib/reconciler.ts` (Math).
-4. [ ] **Logic:** Implement `src/lib/reports.ts` (Split aggregation).
-5. [ ] **API:** Implement `src/lib/supabase/reconcile.ts`.
-6. [ ] **UI:** Create `ReconcilePage.tsx` with Step 1/2/3 state.
-7. [ ] **UI:** Create `ReconcileWorkspace.tsx` with selection logic.
-8. [ ] **UI:** Create `ReportsPage.tsx` (simple date picker + table dump).
-9. [ ] **Test:** Write and pass unit tests for math and reporting.
+1. **Database:** Ensure `reconciliations` table and `finalize_reconciliation` RPC exist.
+2. **Types:** Create `src/types/reconcile.ts`.
+3. **Logic:** Implement `src/lib/reconciler.ts`.
+4. **Logic:** Implement `src/lib/reports.ts` (filters + aggregation + export).
+5. **API:** Implement `src/lib/supabase/reconcile.ts` and `src/lib/supabase/reports.ts`.
+6. **UI:** Create `ReconcilePage.tsx` (Step 1/2/3 flow).
+7. **UI:** Build `ReconcileSetup` and `ReconcileWorkspace` components.
+8. **UI:** Create `ReportsPage.tsx` with filters and table.
+9. **Export:** Add CSV and PDF export handlers.
+10. **Test:** Add unit + integration tests for reconciliation and reporting.
