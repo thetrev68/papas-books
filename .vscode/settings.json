@@ -1,3 +1,7 @@
 {
-    "sarif-viewer.connectToGithubCodeScanning": "off"
+  "sarif-viewer.connectToGithubCodeScanning": "off",
+  "codeQL.cli.executablePath": "C:\\Tools\\codeql\\codeql.exe",
+  "codeQL.additionalPacks": [
+    "C:\\Tools\\codeql-packs"
+  ]
 }

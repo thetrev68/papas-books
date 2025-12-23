@@ -16,6 +16,7 @@
     "test": "vitest",
     "test:ui": "vitest --ui",
     "test:coverage": "vitest --coverage",
+    "codeql:scan": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/codeql-scan.ps1",
     "knip": "knip",
     "prepare": "husky install"
   },

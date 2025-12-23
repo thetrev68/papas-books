@@ -3,6 +3,8 @@ dist
 .vite
 .vite-cache
 coverage
+.codeql-db
+codeql-results.sarif
 
 # env files
 .env

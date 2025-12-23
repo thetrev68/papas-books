@@ -1,0 +1,17 @@
+{
+  "folders": [
+    {
+      "path": "."
+    },
+    {
+      "path": "C:\\Tools\\codeql-packs"
+    }
+  ],
+  "settings": {
+    "codeQL.cli.executablePath": "C:\\Tools\\codeql\\codeql.exe",
+    "codeQL.additionalPacks": [
+      "C:\\Tools\\codeql-packs"
+    ],
+    "sarif-viewer.connectToGithubCodeScanning": "off"
+  }
+}
