@@ -48,7 +48,7 @@ function extractMerchantName(description: string): string | null {
   // Remove common banking prefixes and transaction types
   const clean = description
     .replace(/^(POS|DEBIT|CHECK|ATM|ONLINE|WEB|ACH|CREDIT|CHARGE)\s+/i, '')
-    .replace(/\s+(PURCHASE|PAYMENT|WITHDRAWAL|DEPOSIT|TRANSFER|TRANSACTION)(\s|$)/i, ' ') // Remove transaction types
+    .replace(/(^|\s+)(PURCHASE|PAYMENT|WITHDRAWAL|DEPOSIT|TRANSFER|TRANSACTION)(\s|$)/i, ' ') // Remove transaction types
     .replace(/\s+(#\d+|[A-Z]{2}\d{2,}|REF|REFUND)$/i, '') // Remove reference numbers
     .trim();
 

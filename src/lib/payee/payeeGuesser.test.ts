@@ -44,7 +44,7 @@ describe('payeeGuesser', () => {
     it('extracts merchant name and suggests new payee with 60% confidence', () => {
       const result = guessPayee('POS PURCHASE COFFEE BEAN', mockPayees);
       expect(result.payee).toBeNull();
-      expect(result.suggestedName).toBe('PURCHASE COFFEE BEAN');
+      expect(result.suggestedName).toBe('COFFEE BEAN');
       expect(result.confidence).toBe(60);
     });
 
@@ -58,7 +58,7 @@ describe('payeeGuesser', () => {
     it('removes common suffixes when extracting merchant name', () => {
       const result = guessPayee('CHECK PAYMENT WALMART STORE', mockPayees);
       expect(result.payee).toBeNull();
-      expect(result.suggestedName).toBe('PAYMENT WALMART STORE');
+      expect(result.suggestedName).toBe('WALMART STORE');
       expect(result.confidence).toBe(60);
     });
 
@@ -72,7 +72,7 @@ describe('payeeGuesser', () => {
     it('handles empty payees list', () => {
       const result = guessPayee('POS PURCHASE STARBUCKS', []);
       expect(result.payee).toBeNull();
-      expect(result.suggestedName).toBe('PURCHASE STARBUCKS');
+      expect(result.suggestedName).toBe('STARBUCKS');
       expect(result.confidence).toBe(60);
     });
 
@@ -110,14 +110,14 @@ describe('payeeGuesser', () => {
     it('takes first 3 words as merchant name', () => {
       const result = guessPayee('POS PURCHASE VERY LONG MERCHANT NAME HERE', mockPayees);
       expect(result.payee).toBeNull();
-      expect(result.suggestedName).toBe('PURCHASE VERY LONG');
+      expect(result.suggestedName).toBe('VERY LONG MERCHANT');
       expect(result.confidence).toBe(60);
     });
 
     it('handles case insensitive matching', () => {
       const result = guessPayee('pos purchase amazon.com', mockPayees);
       expect(result.payee).toBeNull();
-      expect(result.suggestedName).toBe('purchase amazon.com');
+      expect(result.suggestedName).toBe('amazon.com');
       expect(result.confidence).toBe(60);
     });
   });
