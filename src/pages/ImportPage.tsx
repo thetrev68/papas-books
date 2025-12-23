@@ -5,6 +5,7 @@ import { MappingForm } from '../components/import/MappingForm';
 import { useAuth } from '../context/AuthContext';
 import { listImportBatches, undoImportBatch } from '../lib/supabase/import';
 import { ImportBatch } from '../types/database';
+import { useToast } from '../components/GlobalToastProvider';
 
 export default function ImportPage() {
   const {
@@ -21,6 +22,7 @@ export default function ImportPage() {
   } = useImportSession();
   const { accounts } = useAccounts();
   const { activeBookset } = useAuth();
+  const { showError } = useToast();
 
   // Recent Batches State
   const [batches, setBatches] = useState<ImportBatch[]>([]);
@@ -94,12 +96,18 @@ export default function ImportPage() {
             <input
               type="file"
               accept=".csv"
+              onClick={(e) => {
+                if (!state.selectedAccountId) {
+                  e.preventDefault();
+                  showError('Please select an account first');
+                }
+              }}
               onChange={(e) => {
                 if (e.target.files?.[0]) {
                   uploadFile(e.target.files[0]);
                 }
               }}
-              disabled={!state.selectedAccountId || isProcessing}
+              disabled={isProcessing}
               className="w-full p-4 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
             />
           </div>

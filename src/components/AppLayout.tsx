@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 
@@ -119,7 +118,7 @@ export default function AppLayout() {
         <div className="flex gap-2">
           {myBooksets.length > 0 && (
             <select
-              className="bg-brand-800 text-white text-sm rounded border-none p-1"
+              className="bg-white text-neutral-900 text-sm rounded border-none p-1"
               value={activeBookset?.id || ''}
               onChange={(e) => switchBookset(e.target.value)}
             >
@@ -147,7 +146,7 @@ export default function AppLayout() {
           <div className="mt-4">
             <label className="block text-brand-100 text-sm font-bold mb-1">Bookset</label>
             <select
-              className="w-full bg-brand-800 text-white p-2 rounded border border-brand-600 focus:outline-none focus:ring-2 focus:ring-white"
+              className="w-full bg-white text-neutral-900 p-2 rounded border border-brand-600 focus:outline-none focus:ring-2 focus:ring-brand-200"
               value={activeBookset?.id || ''}
               onChange={(e) => switchBookset(e.target.value)}
             >
