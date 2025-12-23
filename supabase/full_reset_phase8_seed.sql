@@ -1,0 +1,871 @@
+-- Enable UUID extension
+CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
+
+-- -----------------------------------------------------------------------------
+-- 0. Cleanup (Reset Schema)
+-- -----------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
+DROP TABLE IF EXISTS public.reconciliations CASCADE;
+DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TABLE IF EXISTS public.import_batches CASCADE;
+DROP TABLE IF EXISTS public.rules CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.accounts CASCADE;
+DROP TABLE IF EXISTS public.access_grants CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+DROP TABLE IF EXISTS public.booksets CASCADE;
+
+-- -----------------------------------------------------------------------------
+-- 1. Tables
+-- -----------------------------------------------------------------------------
+
+-- Table: users
+CREATE TABLE public.users (
+  id uuid REFERENCES auth.users(id) ON DELETE CASCADE PRIMARY KEY,
+  email text NOT NULL,
+  display_name text,
+  is_admin boolean DEFAULT false,
+  active_bookset_id uuid, -- Foreign key constraint added later
+  own_bookset_id uuid,    -- Foreign key constraint added later
+  preferences jsonb DEFAULT '{"defaultView": "dashboard", "autoRunRules": true, "autoMarkReviewed": true}'::jsonb,
+  last_active timestamp with time zone DEFAULT now(),
+  last_modified_by uuid REFERENCES auth.users(id),
+  created_at timestamp with time zone DEFAULT now()
+);
+
+-- Table: booksets
+CREATE TABLE public.booksets (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  owner_id uuid REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  business_type text CHECK (business_type IN ('personal', 'sole_proprietor', 'llc', 'corporation')),
+  tax_year int
+);
+
+-- Add circular foreign keys for users table
+ALTER TABLE public.users ADD CONSTRAINT fk_users_active_bookset FOREIGN KEY (active_bookset_id) REFERENCES public.booksets(id) ON DELETE SET NULL;
+ALTER TABLE public.users ADD CONSTRAINT fk_users_own_bookset FOREIGN KEY (own_bookset_id) REFERENCES public.booksets(id) ON DELETE SET NULL;
+
+-- Table: access_grants
+CREATE TABLE public.access_grants (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  user_id uuid REFERENCES public.users(id) ON DELETE CASCADE NOT NULL,
+  granted_by uuid REFERENCES public.users(id) NOT NULL,
+  role text CHECK (role IN ('owner', 'editor', 'viewer')) NOT NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  expires_at timestamp with time zone,
+  revoked_at timestamp with time zone,
+  revoked_by uuid REFERENCES public.users(id),
+  can_import boolean DEFAULT false,
+  can_reconcile boolean DEFAULT false
+);
+
+-- Table: accounts
+CREATE TABLE public.accounts (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  type text CHECK (type IN ('Asset', 'Liability')) NOT NULL,
+  opening_balance bigint DEFAULT 0, -- in cents
+  opening_balance_date timestamp with time zone DEFAULT now(),
+  csv_mapping jsonb,
+  last_reconciled_date timestamp with time zone,
+  last_reconciled_balance bigint,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  is_archived boolean DEFAULT false,
+  bank_connection_id text,
+  notes text,
+  color text,
+  institution_name text,
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id),
+  change_history jsonb
+);
+
+-- Table: categories
+CREATE TABLE public.categories (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  tax_line_item text,
+  is_tax_deductible boolean DEFAULT false,
+  parent_category_id uuid REFERENCES public.categories(id),
+  sort_order int DEFAULT 0,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  is_archived boolean DEFAULT false,
+  color text,
+  icon text,
+  budget_amount bigint,
+  budget_period text CHECK (budget_period IN ('monthly', 'quarterly', 'annual')),
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id)
+);
+
+-- Table: transactions
+CREATE TABLE public.transactions (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
+  date timestamp with time zone NOT NULL,
+  payee text NOT NULL,
+  original_description text NOT NULL,
+  amount bigint NOT NULL, -- in cents
+  is_split boolean DEFAULT false,
+  lines jsonb NOT NULL,
+  is_reviewed boolean DEFAULT false,
+  reconciled boolean DEFAULT false,
+  reconciled_date timestamp with time zone,
+  is_archived boolean DEFAULT false,
+  source_batch_id uuid, -- FK added later
+  import_date timestamp with time zone DEFAULT now(),
+  fingerprint text,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  attachments jsonb,
+  tags text[],
+  is_recurring boolean DEFAULT false,
+  recurring_group_id uuid,
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id),
+  change_history jsonb
+);
+
+-- Table: rules
+CREATE TABLE public.rules (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  keyword text NOT NULL,
+  match_type text CHECK (match_type IN ('contains', 'exact', 'startsWith', 'regex')) NOT NULL,
+  case_sensitive boolean DEFAULT false,
+  target_category_id uuid REFERENCES public.categories(id),
+  suggested_payee text,
+  priority int DEFAULT 0,
+  is_enabled boolean DEFAULT true,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  last_used_at timestamp with time zone,
+  use_count int DEFAULT 0,
+  conditions jsonb,
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id)
+);
+
+-- Table: reconciliations
+CREATE TABLE public.reconciliations (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
+  statement_date timestamp with time zone NOT NULL,
+  statement_balance bigint NOT NULL,
+  calculated_balance bigint NOT NULL,
+  difference bigint NOT NULL,
+  status text CHECK (status IN ('in_progress', 'balanced', 'unbalanced')) NOT NULL,
+  finalized_at timestamp with time zone,
+  transaction_count int DEFAULT 0,
+  transaction_ids text[],
+  created_at timestamp with time zone DEFAULT now(),
+  created_by uuid REFERENCES public.users(id),
+  notes text,
+  discrepancy_resolution text
+);
+
+-- Table: payees
+CREATE TABLE public.payees (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  aliases text[] DEFAULT '{}',
+  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id)
+);
+
+-- Table: import_batches
+CREATE TABLE public.import_batches (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
+  file_name text NOT NULL,
+  imported_at timestamp with time zone DEFAULT now(),
+  imported_by uuid REFERENCES public.users(id),
+  total_rows int DEFAULT 0,
+  imported_count int DEFAULT 0,
+  duplicate_count int DEFAULT 0,
+  error_count int DEFAULT 0,
+  is_undone boolean DEFAULT false,
+  undone_at timestamp with time zone,
+  undone_by uuid REFERENCES public.users(id),
+  csv_mapping_snapshot jsonb
+);
+
+-- Add transaction source_batch_id FK
+ALTER TABLE public.transactions ADD CONSTRAINT fk_transactions_batch FOREIGN KEY (source_batch_id) REFERENCES public.import_batches(id) ON DELETE SET NULL;
+
+-- -----------------------------------------------------------------------------
+-- 2. RLS Helper Functions
+-- -----------------------------------------------------------------------------
+
+-- Check if user owns this bookset
+CREATE OR REPLACE FUNCTION user_owns_bookset(bookset_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.booksets
+    WHERE id = bookset_id
+    AND owner_id = auth.uid()
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if user has access grant to this bookset
+CREATE OR REPLACE FUNCTION user_has_access_grant(bookset_id uuid, min_role text DEFAULT 'viewer')
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.access_grants
+    WHERE bookset_id = bookset_id
+    AND user_id = auth.uid()
+    AND revoked_at IS NULL
+    AND (expires_at IS NULL OR expires_at > now())
+    AND (
+      min_role = 'viewer' OR
+      (min_role = 'editor' AND role IN ('editor', 'owner')) OR
+      (min_role = 'owner' AND role = 'owner')
+    )
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if user can read this bookset
+CREATE OR REPLACE FUNCTION user_can_read_bookset(bookset_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN user_owns_bookset(bookset_id) OR user_has_access_grant(bookset_id, 'viewer');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if user can write to this bookset
+CREATE OR REPLACE FUNCTION user_can_write_bookset(bookset_id uuid)
+RETURNS boolean AS $$
+BEGIN
+  RETURN user_owns_bookset(bookset_id) OR user_has_access_grant(bookset_id, 'editor');
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Check if user is admin
+CREATE OR REPLACE FUNCTION user_is_admin()
+RETURNS boolean AS $$
+BEGIN
+  RETURN EXISTS (
+    SELECT 1 FROM public.users
+    WHERE id = auth.uid()
+    AND is_admin = true
+  );
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- -----------------------------------------------------------------------------
+-- 3. RLS Policies
+-- -----------------------------------------------------------------------------
+
+-- Users
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read own profile"
+  ON public.users FOR SELECT
+  USING (auth.uid() = id);
+
+CREATE POLICY "Users can create own profile"
+  ON public.users FOR INSERT
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Users can update own profile"
+  ON public.users FOR UPDATE
+  USING (auth.uid() = id)
+  WITH CHECK (auth.uid() = id);
+
+CREATE POLICY "Admins can manage users"
+  ON public.users FOR UPDATE
+  USING (user_is_admin())
+  WITH CHECK (user_is_admin());
+
+-- Booksets
+ALTER TABLE public.booksets ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read accessible booksets"
+  ON public.booksets FOR SELECT
+  USING (user_can_read_bookset(id));
+
+CREATE POLICY "Users can create own booksets"
+  ON public.booksets FOR INSERT
+  WITH CHECK (auth.uid() = owner_id);
+
+CREATE POLICY "Owners can update booksets"
+  ON public.booksets FOR UPDATE
+  USING (user_owns_bookset(id))
+  WITH CHECK (user_owns_bookset(id));
+
+-- Access Grants
+ALTER TABLE public.access_grants ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read grants for accessible booksets"
+  ON public.access_grants FOR SELECT
+  USING (user_can_read_bookset(bookset_id));
+
+CREATE POLICY "Owners can create grants"
+  ON public.access_grants FOR INSERT
+  WITH CHECK (user_owns_bookset(bookset_id));
+
+CREATE POLICY "Owners can update grants"
+  ON public.access_grants FOR UPDATE
+  USING (user_owns_bookset(bookset_id))
+  WITH CHECK (user_owns_bookset(bookset_id));
+
+-- Child Tables (Accounts, Categories, Rules, Payees, Import Batches)
+ALTER TABLE public.accounts ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.rules ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.payees ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
+
+-- Read policies
+CREATE POLICY "Users can read accounts" ON public.accounts FOR SELECT USING (user_can_read_bookset(bookset_id));
+CREATE POLICY "Users can read categories" ON public.categories FOR SELECT USING (user_can_read_bookset(bookset_id));
+CREATE POLICY "Users can read rules" ON public.rules FOR SELECT USING (user_can_read_bookset(bookset_id));
+CREATE POLICY "Users can read payees" ON public.payees FOR SELECT USING (user_can_read_bookset(bookset_id));
+CREATE POLICY "Users can read import_batches" ON public.import_batches FOR SELECT USING (user_can_read_bookset(bookset_id));
+
+-- Write policies
+CREATE POLICY "Editors can insert accounts" ON public.accounts FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can update accounts" ON public.accounts FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert categories" ON public.categories FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can update categories" ON public.categories FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert rules" ON public.rules FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can update rules" ON public.rules FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert payees" ON public.payees FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can update payees" ON public.payees FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert import_batches" ON public.import_batches FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can update import_batches" ON public.import_batches FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+
+-- Transactions
+ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read transactions"
+  ON public.transactions FOR SELECT
+  USING (user_can_read_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert transactions"
+  ON public.transactions FOR INSERT
+  WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can update unreconciled transactions"
+  ON public.transactions FOR UPDATE
+  USING (user_can_write_bookset(bookset_id) AND reconciled = false)
+  WITH CHECK (user_can_write_bookset(bookset_id) AND reconciled = false);
+
+-- Reconciliations
+ALTER TABLE public.reconciliations ENABLE ROW LEVEL SECURITY;
+
+CREATE POLICY "Users can read reconciliations"
+  ON public.reconciliations FOR SELECT
+  USING (user_can_read_bookset(bookset_id));
+
+CREATE POLICY "Editors can insert reconciliations"
+  ON public.reconciliations FOR INSERT
+  WITH CHECK (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Editors can update reconciliations"
+  ON public.reconciliations FOR UPDATE
+  USING (user_can_write_bookset(bookset_id))
+  WITH CHECK (user_can_write_bookset(bookset_id));
+
+-- -----------------------------------------------------------------------------
+-- 4. Triggers
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION set_audit_fields_on_create()
+RETURNS TRIGGER AS $$
+BEGIN
+  NEW.created_by = auth.uid();
+  NEW.created_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION prevent_audit_field_changes()
+RETURNS TRIGGER AS $$
+BEGIN
+  IF OLD.created_by != NEW.created_by OR OLD.created_at != NEW.created_at THEN
+    RAISE EXCEPTION 'Cannot modify created_by or created_at fields';
+  END IF;
+  NEW.last_modified_by = auth.uid();
+  NEW.updated_at = now();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+CREATE OR REPLACE FUNCTION protect_user_fields()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Prevent non-admins from changing is_admin
+  -- Only check if auth.uid() is present (real user request)
+  -- If auth.uid() is null (system/trigger), allow changes (like initial creation)
+  IF auth.uid() IS NOT NULL AND NEW.is_admin != OLD.is_admin AND NOT user_is_admin() THEN
+     RAISE EXCEPTION 'Only admins can change admin status';
+  END IF;
+  
+  -- Update last_modified_by
+  NEW.last_modified_by = auth.uid();
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
+
+-- Apply triggers
+CREATE TRIGGER users_protect_fields BEFORE UPDATE ON public.users FOR EACH ROW EXECUTE FUNCTION protect_user_fields();
+
+CREATE TRIGGER accounts_set_audit_on_create BEFORE INSERT ON public.accounts FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
+CREATE TRIGGER accounts_prevent_audit_changes BEFORE UPDATE ON public.accounts FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+
+CREATE TRIGGER categories_set_audit_on_create BEFORE INSERT ON public.categories FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
+CREATE TRIGGER categories_prevent_audit_changes BEFORE UPDATE ON public.categories FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+
+CREATE TRIGGER transactions_set_audit_on_create BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
+CREATE TRIGGER transactions_prevent_audit_changes BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+
+CREATE TRIGGER rules_set_audit_on_create BEFORE INSERT ON public.rules FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
+CREATE TRIGGER rules_prevent_audit_changes BEFORE UPDATE ON public.rules FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+
+CREATE TRIGGER payees_set_audit_on_create BEFORE INSERT ON public.payees FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
+CREATE TRIGGER payees_prevent_audit_changes BEFORE UPDATE ON public.payees FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+
+-- -----------------------------------------------------------------------------
+-- 5. User Creation Trigger (Sync Auth to Public Users)
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+  new_bookset_id uuid;
+BEGIN
+  -- 1. Insert into users table
+  INSERT INTO public.users (id, email, display_name)
+  VALUES (new.id, new.email, new.raw_user_meta_data->>'display_name');
+
+  -- 2. Create default bookset
+  INSERT INTO public.booksets (owner_id, name, business_type)
+  VALUES (new.id, COALESCE(new.raw_user_meta_data->>'display_name', 'My') || '''s Books', 'personal')
+  RETURNING id INTO new_bookset_id;
+
+  -- 3. Update user with bookset references
+  UPDATE public.users
+  SET active_bookset_id = new_bookset_id,
+      own_bookset_id = new_bookset_id
+  WHERE id = new.id;
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
+
+-- Trigger on auth.users
+CREATE OR REPLACE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
+
+-- -----------------------------------------------------------------------------
+-- Payee Alias Management Function
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION add_payee_alias(payee_id uuid, new_alias text)
+RETURNS void AS $$
+BEGIN
+  UPDATE payees
+  SET aliases = array_append(aliases, new_alias)
+  WHERE id = payee_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- -----------------------------------------------------------------------------
+-- 6. Phase 6: Reconciliation Updates
+-- -----------------------------------------------------------------------------
+
+CREATE OR REPLACE FUNCTION finalize_reconciliation(
+  _bookset_id uuid,
+  _account_id uuid,
+  _statement_balance bigint,
+  _statement_date timestamp with time zone,
+  _opening_balance bigint,
+  _calculated_balance bigint,
+  _transaction_ids uuid[]
+) RETURNS void AS $$
+DECLARE
+  _difference bigint;
+BEGIN
+  -- Calculate difference (trust but verify)
+  _difference := _statement_balance - _calculated_balance;
+
+  -- 1. Create Reconciliation Record
+  INSERT INTO reconciliations (
+    "bookset_id", "account_id",
+    "statement_balance", "statement_date",
+    "opening_balance", "calculated_balance",
+    "difference", "status", "finalized_at",
+    "transaction_count", "transaction_ids"
+  ) VALUES (
+    _bookset_id, _account_id,
+    _statement_balance, _statement_date,
+    _opening_balance, _calculated_balance,
+    _difference, 'balanced', now(),
+    array_length(_transaction_ids, 1), cast(_transaction_ids as text[])
+  );
+
+  -- 2. Mark Transactions as Reconciled
+  UPDATE transactions
+  SET reconciled = true, "reconciled_date" = now()
+  WHERE id = ANY(_transaction_ids)
+  AND "bookset_id" = _bookset_id;
+
+  -- 3. Update Account Last Reconciled State
+  UPDATE accounts
+  SET "last_reconciled_balance" = _statement_balance,
+      "last_reconciled_date" = _statement_date
+  WHERE id = _account_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- -----------------------------------------------------------------------------
+-- 7. Phase 8: Advanced Features Updates
+-- -----------------------------------------------------------------------------
+
+-- 7.1 RPC: grant_access_by_email
+CREATE OR REPLACE FUNCTION grant_access_by_email(
+  _bookset_id uuid,
+  _email text,
+  _role text
+) RETURNS jsonb AS $$
+DECLARE
+  _target_user_id uuid;
+  _grant_id uuid;
+BEGIN
+  -- Find user by email in public.users
+  SELECT id INTO _target_user_id FROM public.users WHERE email = _email;
+
+  IF _target_user_id IS NULL THEN
+    RETURN jsonb_build_object('success', false, 'message', 'User not found');
+  END IF;
+
+  -- Prevent self-granting (optional, but good practice)
+  IF _target_user_id = auth.uid() THEN
+    RETURN jsonb_build_object('success', false, 'message', 'Cannot grant access to yourself');
+  END IF;
+
+  -- Insert or update grant
+  INSERT INTO public.access_grants ("bookset_id", "user_id", "role", "granted_by")
+  VALUES (_bookset_id, _target_user_id, _role, auth.uid())
+  ON CONFLICT ("bookset_id", "user_id")
+  DO UPDATE SET
+    role = EXCLUDED.role,
+    revoked_at = NULL,
+    revoked_by = NULL
+  RETURNING id INTO _grant_id;
+
+  RETURN jsonb_build_object('success', true, 'grantId', _grant_id);
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- 7.2 Trigger: track_change_history
+CREATE OR REPLACE FUNCTION track_change_history()
+RETURNS TRIGGER AS $$
+DECLARE
+  _history_entry jsonb;
+BEGIN
+  -- Only track if something actually changed
+  IF OLD IS DISTINCT FROM NEW THEN
+    -- Construct history entry
+    -- We filter out 'change_history', 'updated_at', 'updated_by' to avoid noise/recursion
+    _history_entry := jsonb_build_object(
+      'timestamp', now(),
+      'userId', auth.uid(),
+      'changes', to_jsonb(NEW) - 'change_history' - 'updated_at' - 'last_modified_by'
+    );
+
+    -- Append to existing history or start new array
+    -- Note: 'change_history' column must exist on the table
+    NEW.change_history := coalesce(OLD.change_history, '[]'::jsonb) || _history_entry;
+  END IF;
+
+  -- Ensure standard audit fields are updated (though prevent_audit_field_changes might already do this,
+  -- we do it here to be safe and consistent with the history entry)
+  NEW.last_modified_by := auth.uid();
+  NEW.updated_at := now();
+
+  RETURN NEW;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- Apply trigger to tables
+DROP TRIGGER IF EXISTS tr_audit_transactions ON public.transactions;
+CREATE TRIGGER tr_audit_transactions
+  BEFORE UPDATE ON public.transactions
+  FOR EACH ROW
+  EXECUTE FUNCTION track_change_history();
+
+DROP TRIGGER IF EXISTS tr_audit_accounts ON public.accounts;
+CREATE TRIGGER tr_audit_accounts
+  BEFORE UPDATE ON public.accounts
+  FOR EACH ROW
+  EXECUTE FUNCTION track_change_history();
+
+DROP TRIGGER IF EXISTS tr_audit_rules ON public.rules;
+CREATE TRIGGER tr_audit_rules
+  BEFORE UPDATE ON public.rules
+  FOR EACH ROW
+  EXECUTE FUNCTION track_change_history();
+
+-- 7.3 RPC: undo_import_batch
+CREATE OR REPLACE FUNCTION undo_import_batch(_batch_id uuid)
+RETURNS void AS $$
+BEGIN
+  -- Check if any transaction in this batch is reconciled
+  IF EXISTS (
+    SELECT 1 FROM public.transactions
+    WHERE source_batch_id = _batch_id
+    AND reconciled = true
+  ) THEN
+    RAISE EXCEPTION 'Cannot undo batch containing reconciled transactions.';
+  END IF;
+
+  -- Soft delete transactions
+  UPDATE public.transactions
+  SET is_archived = true,
+      updated_at = now(),
+      last_modified_by = auth.uid()
+  WHERE source_batch_id = _batch_id;
+
+  -- Mark batch as undone
+  UPDATE public.import_batches
+  SET is_undone = true,
+      undone_at = now(),
+      undone_by = auth.uid()
+  WHERE id = _batch_id;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER;
+
+-- -----------------------------------------------------------------------------
+-- 8. Seed Default Categories
+-- -----------------------------------------------------------------------------
+
+DO $$
+DECLARE
+  -- REPLACE THIS WITH YOUR TARGET BOOKSET ID
+  target_bookset_id uuid := '1dcad2dc-6250-400f-ad92-9d083b13e240';
+
+  -- Variables for parent IDs
+  income_id uuid;
+  housing_id uuid;
+  utils_id uuid;
+  food_id uuid;
+  trans_id uuid;
+  health_id uuid;
+  pers_id uuid;
+  ent_id uuid;
+  fin_id uuid;
+  transfer_id uuid;
+BEGIN
+
+  -- 1. Income
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Income', target_bookset_id, 10, false) RETURNING id INTO income_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Wages & Salary', target_bookset_id, income_id, 1),
+    ('Interest & Dividends', target_bookset_id, income_id, 2),
+    ('Gifts Received', target_bookset_id, income_id, 3),
+    ('Refunds & Reimbursements', target_bookset_id, income_id, 4),
+    ('Other Income', target_bookset_id, income_id, 5);
+
+  -- 2. Housing
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Housing', target_bookset_id, 20, false) RETURNING id INTO housing_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order, is_tax_deductible) VALUES
+    ('Mortgage / Rent', target_bookset_id, housing_id, 1, false),
+    ('Property Tax', target_bookset_id, housing_id, 2, true),
+    ('Home Insurance', target_bookset_id, housing_id, 3, false),
+    ('Repairs & Maintenance', target_bookset_id, housing_id, 4, false),
+    ('HOA Fees', target_bookset_id, housing_id, 5, false),
+    ('Home Improvement', target_bookset_id, housing_id, 6, false);
+
+  -- 3. Utilities
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Utilities', target_bookset_id, 30, false) RETURNING id INTO utils_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Electricity', target_bookset_id, utils_id, 1),
+    ('Water & Sewer', target_bookset_id, utils_id, 2),
+    ('Natural Gas / Heating Oil', target_bookset_id, utils_id, 3),
+    ('Internet & Cable', target_bookset_id, utils_id, 4),
+    ('Phone', target_bookset_id, utils_id, 5),
+    ('Waste Disposal', target_bookset_id, utils_id, 6);
+
+  -- 4. Food
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Food', target_bookset_id, 40, false) RETURNING id INTO food_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Groceries', target_bookset_id, food_id, 1),
+    ('Dining Out', target_bookset_id, food_id, 2),
+    ('Alcohol / Bars', target_bookset_id, food_id, 3),
+    ('Coffee Shops', target_bookset_id, food_id, 4);
+
+  -- 5. Transportation
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Transportation', target_bookset_id, 50, false) RETURNING id INTO trans_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Fuel', target_bookset_id, trans_id, 1),
+    ('Car Insurance', target_bookset_id, trans_id, 2),
+    ('Car Maintenance', target_bookset_id, trans_id, 3),
+    ('Car Payment', target_bookset_id, trans_id, 4),
+    ('Public Transit', target_bookset_id, trans_id, 5),
+    ('Parking & Tolls', target_bookset_id, trans_id, 6),
+    ('Registration & Taxes', target_bookset_id, trans_id, 7);
+
+  -- 6. Health & Wellness
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Health & Wellness', target_bookset_id, 60, false) RETURNING id INTO health_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order, is_tax_deductible) VALUES
+    ('Medical / Doctor', target_bookset_id, health_id, 1, true),
+    ('Pharmacy', target_bookset_id, health_id, 2, true),
+    ('Health Insurance', target_bookset_id, health_id, 3, true),
+    ('Dental', target_bookset_id, health_id, 4, true),
+    ('Vision', target_bookset_id, health_id, 5, true),
+    ('Fitness / Gym', target_bookset_id, health_id, 6, false),
+    ('Sports', target_bookset_id, health_id, 7, false);
+
+  -- 7. Personal
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Personal', target_bookset_id, 70, false) RETURNING id INTO pers_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Clothing', target_bookset_id, pers_id, 1),
+    ('Personal Care', target_bookset_id, pers_id, 2),
+    ('Hair & Beauty', target_bookset_id, pers_id, 3),
+    ('Education', target_bookset_id, pers_id, 4),
+    ('Childcare', target_bookset_id, pers_id, 5),
+    ('Pet Care', target_bookset_id, pers_id, 6);
+
+  -- 8. Entertainment
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Entertainment', target_bookset_id, 80, false) RETURNING id INTO ent_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Subscriptions (Streaming)', target_bookset_id, ent_id, 1),
+    ('Events & Outings', target_bookset_id, ent_id, 2),
+    ('Hobbies', target_bookset_id, ent_id, 3),
+    ('Travel / Vacation', target_bookset_id, ent_id, 4),
+    ('Books & Games', target_bookset_id, ent_id, 5);
+
+  -- 9. Financial
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Financial', target_bookset_id, 90, false) RETURNING id INTO fin_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order, is_tax_deductible) VALUES
+    ('Life Insurance', target_bookset_id, fin_id, 1, false),
+    ('Fees & Charges', target_bookset_id, fin_id, 2, false),
+    ('Financial Service', target_bookset_id, fin_id, 3, false),
+    ('Taxes Paid', target_bookset_id, fin_id, 4, false),
+    ('Charitable Donations', target_bookset_id, fin_id, 5, true);
+
+  -- 10. Transfer
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible)
+  VALUES ('Transfer', target_bookset_id, 100, false) RETURNING id INTO transfer_id;
+
+  INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES
+    ('Credit Card Payment', target_bookset_id, transfer_id, 1),
+    ('Savings Transfer', target_bookset_id, transfer_id, 2),
+    ('Investment Transfer', target_bookset_id, transfer_id, 3);
+
+END $$;
+
+-- -----------------------------------------------------------------------------
+-- 9. Repair Users (Sync missing auth.users to public.users)
+-- -----------------------------------------------------------------------------
+
+DO $$
+DECLARE
+  missing_user RECORD;
+  new_bookset_id uuid;
+BEGIN
+  FOR missing_user IN
+    SELECT * FROM auth.users
+    WHERE id NOT IN (SELECT id FROM public.users)
+  LOOP
+    RAISE NOTICE 'Fixing user: % (%)', missing_user.id, missing_user.email;
+
+    -- 1. Insert into users table
+    INSERT INTO public.users (id, email, display_name)
+    VALUES (
+      missing_user.id,
+      missing_user.email,
+      COALESCE(missing_user.raw_user_meta_data->>'display_name', split_part(missing_user.email, '@', 1))
+    );
+
+    -- 2. Create default bookset
+    INSERT INTO public.booksets (owner_id, name, business_type)
+    VALUES (
+      missing_user.id,
+      COALESCE(missing_user.raw_user_meta_data->>'display_name', 'My') || '''s Books',
+      'personal'
+    )
+    RETURNING id INTO new_bookset_id;
+
+    -- 3. Update user with bookset references
+    UPDATE public.users
+    SET active_bookset_id = new_bookset_id,
+        own_bookset_id = new_bookset_id
+    WHERE id = missing_user.id;
+
+  END LOOP;
+END;
+
+-- Re-apply trigger just in case
+CREATE OR REPLACE FUNCTION public.handle_new_user()
+RETURNS trigger AS $$
+DECLARE
+  new_bookset_id uuid;
+BEGIN
+  INSERT INTO public.users (id, email, display_name)
+  VALUES (new.id, new.email, new.raw_user_meta_data->>'display_name');
+
+  INSERT INTO public.booksets (owner_id, name, business_type)
+  VALUES (new.id, COALESCE(new.raw_user_meta_data->>'display_name', 'My') || '''s Books', 'personal')
+  RETURNING id INTO new_bookset_id;
+
+  UPDATE public.users
+  SET active_bookset_id = new_bookset_id,
+      own_bookset_id = new_bookset_id
+  WHERE id = new.id;
+
+  RETURN new;
+END;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public, auth;
+
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+CREATE TRIGGER on_auth_user_created
+  AFTER INSERT ON auth.users
+  FOR EACH ROW
+  EXECUTE FUNCTION public.handle_new_user();
