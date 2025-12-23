@@ -1,19 +1,22 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useMemo, Fragment } from 'react';
 import {
   createColumnHelper,
   getCoreRowModel,
   getFilteredRowModel,
   getSortedRowModel,
+  getExpandedRowModel,
   useReactTable,
   flexRender,
   type SortingState,
   type ColumnFiltersState,
+  type ExpandedState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { Transaction } from '../../types/database';
-import InlineEditCell from './InlineEditCell';
+import type { Transaction, Category } from '../../types/database';
+import PayeeSelectCell from './PayeeSelectCell';
 import { useCategories } from '../../hooks/useCategories';
 import { useAccounts } from '../../hooks/useAccounts';
+import { usePayees } from '../../hooks/usePayees';
 
 interface WorkbenchTableProps {
   transactions: Transaction[];
@@ -24,6 +27,7 @@ interface WorkbenchTableProps {
   onUpdatePayee: (transactionId: string, newPayee: string) => void;
   onUpdateCategory: (transactionId: string, categoryId: string) => void;
   onCreateRule: (transaction: Transaction) => void;
+  onCreatePayee?: (name: string) => void;
 }
 
 function WorkbenchTable({
@@ -35,20 +39,68 @@ function WorkbenchTable({
   onUpdatePayee,
   onUpdateCategory,
   onCreateRule,
+  onCreatePayee,
 }: WorkbenchTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
   const [editingPayee, setEditingPayee] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<ExpandedState>({});
 
   const { categories } = useCategories();
   const { accounts } = useAccounts();
+  const { payees } = usePayees();
 
   const columnHelper = createColumnHelper<Transaction>();
+
+  // Helper to process categories
+  const sortedCategories = useMemo(() => {
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+    const getRoot = (cat: Category): Category => {
+      let current = cat;
+      const seen = new Set<string>();
+      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
+        if (seen.has(current.id)) break;
+        seen.add(current.id);
+        current = categoryMap.get(current.parent_category_id)!;
+      }
+      return current;
+    };
+
+    const getFullName = (cat: Category) => {
+      if (!cat.parent_category_id) return cat.name;
+      const parent = categoryMap.get(cat.parent_category_id);
+      return parent ? `${parent.name}: ${cat.name}` : cat.name;
+    };
+
+    return [...categories]
+      .sort((a, b) => {
+        const rootA = getRoot(a);
+        const rootB = getRoot(b);
+        // Assume "Income" is the name of the root category for income
+        const isIncomeA = rootA.name === 'Income';
+        const isIncomeB = rootB.name === 'Income';
+
+        if (isIncomeA && !isIncomeB) return -1;
+        if (!isIncomeA && isIncomeB) return 1;
+
+        return getFullName(a).localeCompare(getFullName(b));
+      })
+      .map((cat) => ({
+        ...cat,
+        displayName: getFullName(cat),
+      }));
+  }, [categories]);
 
   function getAccountName(accountId: string): string {
     const account = accounts.find((a) => a.id === accountId);
     return account ? account.name : `Account ${accountId}`;
+  }
+
+  function getCategoryName(categoryId: string): string {
+    const cat = sortedCategories.find((c) => c.id === categoryId);
+    return cat ? cat.displayName : 'Uncategorized';
   }
 
   const columns = [
@@ -64,12 +116,14 @@ function WorkbenchTable({
     columnHelper.accessor('payee', {
       header: 'Payee',
       cell: (info) => (
-        <InlineEditCell
-          value={info.getValue() || 'Unknown'}
+        <PayeeSelectCell
+          value={info.getValue()}
+          payees={payees}
           onSave={(newValue) => onUpdatePayee(info.row.original.id, newValue)}
           onCancel={() => setEditingPayee(null)}
           isEditing={editingPayee === info.row.original.id}
           setIsEditing={(editing) => setEditingPayee(editing ? info.row.original.id : null)}
+          onCreatePayee={onCreatePayee}
         />
       ),
     }),
@@ -85,14 +139,18 @@ function WorkbenchTable({
       ),
     }),
     columnHelper.accessor('amount', {
-      header: 'Amount',
+      header: () => <div className="text-right">Amount</div>,
       cell: (info) => {
         const amount = info.getValue();
-        const sign = amount >= 0 ? '+' : '';
+        const colorClass = amount >= 0 ? 'text-success-700' : 'text-neutral-900';
         return (
-          <span className={`font-bold ${amount >= 0 ? 'text-success-700' : 'text-neutral-900'}`}>
-            {sign}${(Math.abs(amount) / 100).toFixed(2)}
-          </span>
+          <div className={`font-bold text-right ${colorClass}`}>
+            $
+            {(Math.abs(amount) / 100).toLocaleString('en-US', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}
+          </div>
         );
       },
       sortingFn: 'basic',
@@ -106,7 +164,7 @@ function WorkbenchTable({
             <div>
               <button
                 onClick={row.getToggleExpandedHandler()}
-                className="text-brand-600 font-bold hover:underline"
+                className="text-brand-600 font-bold hover:underline flex items-center gap-1"
               >
                 {row.getIsExpanded() ? '▼' : '▶'} Split ({row.original.lines.length})
               </button>
@@ -122,9 +180,9 @@ function WorkbenchTable({
                 className="appearance-none w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
               >
                 <option value="">Uncategorized</option>
-                {categories.map((cat) => (
+                {sortedCategories.map((cat) => (
                   <option key={cat.id} value={cat.id}>
-                    {cat.name}
+                    {cat.displayName}
                   </option>
                 ))}
               </select>
@@ -236,13 +294,17 @@ function WorkbenchTable({
       sorting,
       columnFilters,
       globalFilter,
+      expanded,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
+    onExpandedChange: setExpanded,
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
+    getExpandedRowModel: getExpandedRowModel(),
+    getRowCanExpand: (row) => row.original.is_split,
   });
 
   // Virtualization
@@ -307,13 +369,53 @@ function WorkbenchTable({
             {items.map((virtualRow) => {
               const row = table.getRowModel().rows[virtualRow.index];
               return (
-                <tr key={row.id} className="hover:bg-brand-50 transition-colors group">
-                  {row.getVisibleCells().map((cell) => (
-                    <td key={cell.id} className="p-4 align-middle">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                  ))}
-                </tr>
+                <Fragment key={row.id}>
+                  <tr className="hover:bg-brand-50 transition-colors group">
+                    {row.getVisibleCells().map((cell) => (
+                      <td key={cell.id} className="p-4 align-middle">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                  {row.getIsExpanded() && (
+                    <tr className="bg-neutral-50 shadow-inner">
+                      <td colSpan={columns.length} className="p-4">
+                        <div className="ml-12 pl-4 border-l-4 border-brand-300">
+                          <h4 className="text-sm font-bold text-neutral-500 mb-2 uppercase tracking-wide">
+                            Split Details
+                          </h4>
+                          <div className="space-y-2">
+                            {row.original.lines.map((line, idx) => (
+                              <div
+                                key={idx}
+                                className="flex items-center gap-4 bg-white p-2 rounded-lg border border-neutral-200"
+                              >
+                                <span
+                                  className="font-bold text-brand-700 w-1/3 truncate"
+                                  title={getCategoryName(line.category_id)}
+                                >
+                                  {getCategoryName(line.category_id)}
+                                </span>
+                                <span
+                                  className={`font-mono font-medium w-32 text-right ${line.amount >= 0 ? 'text-success-700' : 'text-neutral-900'}`}
+                                >
+                                  {line.amount >= 0 ? '+' : ''}
+                                  {(Math.abs(line.amount) / 100).toLocaleString('en-US', {
+                                    minimumFractionDigits: 2,
+                                    maximumFractionDigits: 2,
+                                  })}
+                                </span>
+                                <span className="text-neutral-500 text-sm italic flex-1">
+                                  {line.memo || 'No memo'}
+                                </span>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  )}
+                </Fragment>
               );
             })}
             {paddingBottom > 0 && (
@@ -340,9 +442,13 @@ function WorkbenchTable({
                   {new Date(t.date).toLocaleDateString()}
                 </span>
                 <span
-                  className={`text-xl font-bold ${t.amount >= 0 ? 'text-success-700' : 'text-neutral-900'}`}
+                  className={`text-xl font-bold ${t.amount >= 0 ? 'text-success-700' : 'text-danger-700'}`}
                 >
-                  {t.amount >= 0 ? '+' : ''}${(Math.abs(t.amount) / 100).toFixed(2)}
+                  {t.amount >= 0 ? '+' : ''}$
+                  {(Math.abs(t.amount) / 100).toLocaleString('en-US', {
+                    minimumFractionDigits: 2,
+                    maximumFractionDigits: 2,
+                  })}
                 </span>
               </div>
               <div className="text-xl font-medium text-neutral-900 mb-3 truncate">
@@ -350,18 +456,24 @@ function WorkbenchTable({
               </div>
 
               <div className="mb-4">
-                <select
-                  value={currentCategoryId}
-                  onChange={(e) => onUpdateCategory(t.id, e.target.value)}
-                  className="w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold"
-                >
-                  <option value="">Uncategorized</option>
-                  {categories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.name}
-                    </option>
-                  ))}
-                </select>
+                {t.is_split ? (
+                  <div className="p-3 bg-brand-50 rounded-lg border border-brand-200 text-brand-800 font-bold">
+                    {t.lines.length} Split Lines
+                  </div>
+                ) : (
+                  <select
+                    value={currentCategoryId}
+                    onChange={(e) => onUpdateCategory(t.id, e.target.value)}
+                    className="w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold"
+                  >
+                    <option value="">Uncategorized</option>
+                    {sortedCategories.map((cat) => (
+                      <option key={cat.id} value={cat.id}>
+                        {cat.displayName}
+                      </option>
+                    ))}
+                  </select>
+                )}
               </div>
 
               <div className="flex gap-2">

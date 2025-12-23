@@ -8,12 +8,12 @@ import CreateTransactionModal from '../components/workbench/CreateTransactionMod
 import RuleBatchResultModal from '../components/workbench/RuleBatchResultModal';
 import SplitModal from '../components/workbench/SplitModal';
 import RuleFormModal from '../components/settings/RuleFormModal';
+import PayeeFormModal from '../components/settings/PayeeFormModal';
 import type { Transaction } from '../types/database';
 
 export default function WorkbenchPage() {
   const { activeBookset } = useAuth();
   const { applyRules, isApplying, result } = useApplyRules();
-  const [selectedTransactionIds, setSelectedTransactionIds] = useState<string[]>([]);
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -21,6 +21,7 @@ export default function WorkbenchPage() {
   const [editTransaction, setEditTransaction] = useState<Transaction | null>(null);
   const [splitTransaction, setSplitTransaction] = useState<Transaction | null>(null);
   const [ruleTransaction, setRuleTransaction] = useState<Transaction | null>(null);
+  const [newPayeeName, setNewPayeeName] = useState<string | null>(null);
 
   const { transactions, isLoading, filter, setFilter } = useWorkbenchData(activeBookset?.id || '');
   const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
@@ -40,19 +41,6 @@ export default function WorkbenchPage() {
     if (confirm(`Apply rules to ${ids.length} unreviewed transactions?`)) {
       await applyRules(ids);
       setShowResultModal(true);
-    }
-  }
-
-  async function handleRunRulesOnSelected() {
-    if (selectedTransactionIds.length === 0) {
-      alert('No transactions selected.');
-      return;
-    }
-
-    if (confirm(`Apply rules to ${selectedTransactionIds.length} selected transactions?`)) {
-      await applyRules(selectedTransactionIds);
-      setShowResultModal(true);
-      setSelectedTransactionIds([]); // Clear selection
     }
   }
 
@@ -120,6 +108,10 @@ export default function WorkbenchPage() {
     setSplitTransaction(null);
   };
 
+  const handleCreatePayee = (name: string) => {
+    setNewPayeeName(name);
+  };
+
   return (
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
       <h1 className="text-3xl font-bold mb-6 text-neutral-900">Transaction Workbench</h1>
@@ -139,13 +131,6 @@ export default function WorkbenchPage() {
             className="px-6 py-3 bg-white border-2 border-brand-600 text-brand-700 font-bold rounded-xl hover:bg-brand-50 disabled:opacity-50"
           >
             {isApplying ? 'Applying Rules...' : 'Run Rules on All Unreviewed'}
-          </button>
-          <button
-            onClick={handleRunRulesOnSelected}
-            disabled={isApplying || selectedTransactionIds.length === 0}
-            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 disabled:opacity-50"
-          >
-            Run Rules on Selected ({selectedTransactionIds.length})
           </button>
         </div>
 
@@ -189,6 +174,7 @@ export default function WorkbenchPage() {
             onUpdatePayee={handleUpdatePayee}
             onUpdateCategory={handleUpdateCategory}
             onCreateRule={handleCreateRule}
+            onCreatePayee={handleCreatePayee}
           />
         </div>
       )}
@@ -227,6 +213,10 @@ export default function WorkbenchPage() {
           }}
           onClose={() => setRuleTransaction(null)}
         />
+      )}
+
+      {newPayeeName && (
+        <PayeeFormModal initialName={newPayeeName} onClose={() => setNewPayeeName(null)} />
       )}
 
       {showResultModal && result && (

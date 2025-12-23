@@ -132,6 +132,17 @@ function CreateTransactionModal({
           </div>
         )}
 
+        {initialTransaction?.original_description && (
+          <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200">
+            <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-1">
+              Bank Description
+            </span>
+            <span className="text-neutral-700 font-mono text-sm break-all">
+              {initialTransaction.original_description}
+            </span>
+          </div>
+        )}
+
         <div className="flex flex-wrap gap-3 justify-end">
           <button
             onClick={handleSave}

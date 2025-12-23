@@ -7,6 +7,7 @@ import {
 } from '../../lib/supabase/reconcile';
 import { calculateReconciliation, sumTransactionAmountForReconcile } from '../../lib/reconciler';
 import { useAuth } from '../../context/AuthContext';
+import { useToast } from '../GlobalToastProvider';
 
 interface ReconcileWorkspaceProps {
   account: Account;
@@ -25,6 +26,7 @@ export default function ReconcileWorkspace({
 }: ReconcileWorkspaceProps) {
   const { activeBookset } = useAuth();
   const queryClient = useQueryClient();
+  const { showError } = useToast();
   const [checkedIds, setCheckedIds] = useState<Set<string>>(new Set());
 
   // Fetch candidate transactions
@@ -95,18 +97,34 @@ export default function ReconcileWorkspace({
     },
   });
 
+  const handleFinish = () => {
+    if (reconciliationState.difference !== 0) {
+      showError('Reconciliation requires $0 balance');
+      return;
+    }
+    finalizeMutation.mutate();
+  };
+
   if (isLoading) return <div>Loading transactions...</div>;
   if (error) return <div>Error loading transactions: {(error as Error).message}</div>;
 
   const formatMoney = (cents: number) =>
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 
+  // Format date mm/dd/yyyy
+  const [yyyy, mm, dd] = statementDate.split('-');
+  const formattedDate = `${mm}/${dd}/${yyyy}`;
+
   return (
     <div className="space-y-6">
       <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <div>
           <h3 className="text-2xl font-bold text-neutral-900">Reconciling: {account.name}</h3>
-          <p className="text-lg text-neutral-600 mt-2">Statement Date: {statementDate}</p>
+          <p className="text-lg text-neutral-600 mt-2">Statement Date: {formattedDate}</p>
+          <p className="text-lg text-neutral-600">
+            Statement Ending Balance:{' '}
+            <span className="font-bold">{formatMoney(statementBalance)}</span>
+          </p>
         </div>
         <div className="text-right space-y-2">
           <div className="text-lg text-neutral-600">
@@ -130,8 +148,8 @@ export default function ReconcileWorkspace({
           </div>
           <div className="flex flex-wrap gap-3 justify-end pt-2">
             <button
-              onClick={() => finalizeMutation.mutate()}
-              disabled={!reconciliationState.isBalanced || finalizeMutation.isPending}
+              onClick={handleFinish}
+              disabled={finalizeMutation.isPending}
               className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
               type="button"
             >
