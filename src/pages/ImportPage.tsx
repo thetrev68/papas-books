@@ -1,7 +1,11 @@
+import { useState, useEffect } from 'react';
 import AppNav from '../components/AppNav';
 import { useImportSession } from '../hooks/useImportSession';
 import { useAccounts } from '../hooks/useAccounts';
 import { MappingForm } from '../components/import/MappingForm';
+import { useAuth } from '../context/AuthContext';
+import { listImportBatches, undoImportBatch } from '../lib/supabase/import';
+import { ImportBatch } from '../types/database';
 
 export default function ImportPage() {
   const {
@@ -17,6 +21,47 @@ export default function ImportPage() {
     isProcessing,
   } = useImportSession();
   const { accounts } = useAccounts();
+  const { activeBookset } = useAuth();
+
+  // Recent Batches State
+  const [batches, setBatches] = useState<ImportBatch[]>([]);
+  const [loadingBatches, setLoadingBatches] = useState(false);
+
+  useEffect(() => {
+    if (activeBookset) {
+      loadBatches();
+    }
+  }, [activeBookset, state.importResult]); // Reload when import completes
+
+  async function loadBatches() {
+    if (!activeBookset) return;
+    setLoadingBatches(true);
+    try {
+      const data = await listImportBatches(activeBookset.id);
+      setBatches(data);
+    } catch (err) {
+      console.error('Failed to load batches:', err);
+    } finally {
+      setLoadingBatches(false);
+    }
+  }
+
+  async function handleUndo(batchId: string) {
+    if (
+      !confirm(
+        'Are you sure you want to undo this import? This will archive all transactions in the batch.'
+      )
+    )
+      return;
+    try {
+      await undoImportBatch(batchId);
+      loadBatches();
+      alert('Import undone successfully.');
+    } catch (err) {
+      console.error('Failed to undo batch:', err);
+      alert('Failed to undo batch: ' + (err instanceof Error ? err.message : String(err)));
+    }
+  }
 
   return (
     <div>
@@ -26,7 +71,7 @@ export default function ImportPage() {
 
         {/* Step 1: Account Selection & File Upload */}
         {state.step === 'upload' && (
-          <section className="bg-white p-6 rounded-lg shadow">
+          <section className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-semibold mb-4">1. Select Account & Upload CSV</h2>
 
             <div className="mb-4">
@@ -66,7 +111,7 @@ export default function ImportPage() {
 
         {/* Step 2: Mapping Configuration */}
         {state.step === 'mapping' && state.rawPreview && (
-          <section className="bg-white p-6 rounded-lg shadow">
+          <section className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-semibold mb-4">2. Configure CSV Mapping</h2>
 
             <div className="mb-4">
@@ -90,7 +135,7 @@ export default function ImportPage() {
 
         {/* Step 3: Review & Commit */}
         {state.step === 'review' && (
-          <section className="bg-white p-6 rounded-lg shadow">
+          <section className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-semibold mb-4">3. Review Transactions</h2>
 
             <div className="mb-4">
@@ -196,7 +241,7 @@ export default function ImportPage() {
 
         {/* Step 4: Importing */}
         {state.step === 'importing' && (
-          <section className="bg-white p-6 rounded-lg shadow">
+          <section className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-semibold mb-4">Importing...</h2>
             <div className="text-gray-600">
               Please wait while transactions are being saved to the database.
@@ -206,7 +251,7 @@ export default function ImportPage() {
 
         {/* Step 5: Complete */}
         {state.step === 'complete' && state.importResult && (
-          <section className="bg-white p-6 rounded-lg shadow">
+          <section className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-semibold mb-4 text-green-600">Import Complete!</h2>
             <div className="space-y-2">
               <p>Successfully imported {state.stats.new} transactions.</p>
@@ -239,7 +284,7 @@ export default function ImportPage() {
 
         {/* Error State */}
         {state.step === 'error' && (
-          <section className="bg-white p-6 rounded-lg shadow">
+          <section className="bg-white p-6 rounded-lg shadow mb-8">
             <h2 className="text-xl font-semibold mb-4 text-red-600">Error</h2>
             <div className="text-red-600 mb-4">{state.error}</div>
             <button
@@ -250,6 +295,59 @@ export default function ImportPage() {
             </button>
           </section>
         )}
+
+        {/* Recent Imports Section */}
+        <section className="bg-white p-6 rounded-lg shadow">
+          <h2 className="text-xl font-semibold mb-4">Recent Imports</h2>
+          {loadingBatches ? (
+            <p>Loading...</p>
+          ) : batches.length === 0 ? (
+            <p className="text-gray-500">No recent imports found.</p>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border">
+                <thead className="bg-gray-100">
+                  <tr>
+                    <th className="border p-2 text-left">Date</th>
+                    <th className="border p-2 text-left">File Name</th>
+                    <th className="border p-2 text-right">Count</th>
+                    <th className="border p-2 text-center">Status</th>
+                    <th className="border p-2 text-center">Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {batches.map((batch) => (
+                    <tr
+                      key={batch.id}
+                      className={batch.is_undone ? 'bg-gray-100 text-gray-500' : ''}
+                    >
+                      <td className="border p-2">{new Date(batch.imported_at).toLocaleString()}</td>
+                      <td className="border p-2">{batch.file_name}</td>
+                      <td className="border p-2 text-right">{batch.imported_count}</td>
+                      <td className="border p-2 text-center">
+                        {batch.is_undone ? (
+                          <span className="text-red-600 font-semibold">Undone</span>
+                        ) : (
+                          <span className="text-green-600">Active</span>
+                        )}
+                      </td>
+                      <td className="border p-2 text-center">
+                        {!batch.is_undone && (
+                          <button
+                            onClick={() => handleUndo(batch.id)}
+                            className="text-red-600 hover:underline"
+                          >
+                            Undo
+                          </button>
+                        )}
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </section>
       </div>
     </div>
   );

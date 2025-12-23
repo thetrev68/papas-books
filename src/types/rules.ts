@@ -1,5 +1,20 @@
-import { Rule } from './database';
-export type { Rule };
+import { Rule as DBRule } from './database';
+
+export interface RuleConditions {
+  amountMin?: number; // cents
+  amountMax?: number; // cents
+  dateRange?: {
+    startMonth?: number; // 1-12
+    endMonth?: number; // 1-12
+    startDay?: number; // 1-31
+    endDay?: number; // 1-31
+  };
+  descriptionRegex?: string;
+}
+
+export interface Rule extends Omit<DBRule, 'conditions'> {
+  conditions?: RuleConditions;
+}
 
 export type MatchType = 'contains' | 'exact' | 'startsWith' | 'regex';
 
@@ -12,6 +27,7 @@ export interface InsertRule {
   suggestedPayee?: string;
   priority: number;
   isEnabled: boolean;
+  conditions?: RuleConditions;
 }
 
 export type UpdateRule = Partial<Omit<InsertRule, 'booksetId'>>;

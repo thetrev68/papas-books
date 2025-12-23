@@ -126,3 +126,31 @@ export async function commitImportBatch(
     transactionIds: txnData?.map((t) => t.id) || [],
   };
 }
+
+/**
+ * Undoes an import batch.
+ *
+ * Calls the RPC 'undo_import_batch'.
+ *
+ * @param batchId - UUID of the batch to undo
+ */
+export async function undoImportBatch(batchId: string): Promise<void> {
+  const { error } = await supabase.rpc('undo_import_batch', { _batch_id: batchId });
+  if (error) throw error;
+}
+
+/**
+ * Lists import batches for a bookset.
+ */
+export async function listImportBatches(booksetId: string): Promise<ImportBatch[]> {
+  const { data, error } = await supabase
+    .from('import_batches')
+    .select('*')
+    .eq('bookset_id', booksetId)
+    .order('imported_at', { ascending: false })
+    .limit(20);
+
+  if (error) throw error;
+
+  return data || [];
+}

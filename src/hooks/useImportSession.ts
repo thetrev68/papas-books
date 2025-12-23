@@ -17,7 +17,7 @@ import { fetchPayees, createPayee } from '../lib/supabase/payees';
 import { guessPayee } from '../lib/payee/payeeGuesser';
 import { supabase } from '../lib/supabase/config';
 import type { CsvMapping } from '../types/import';
-import type { RuleBatchResult } from '../types/rules';
+import type { RuleBatchResult, Rule } from '../types/rules';
 import type { Transaction } from '../types/database';
 
 type ImportStep = 'upload' | 'mapping' | 'review' | 'importing' | 'complete' | 'error';
@@ -284,7 +284,7 @@ export function useImportSession(): UseImportSessionResult {
 
         if (newTransactions && rules.length > 0) {
           // Apply rules
-          ruleResult = await applyRulesToBatch(newTransactions as Transaction[], rules, {
+          ruleResult = await applyRulesToBatch(newTransactions as Transaction[], rules as Rule[], {
             setReviewedFlag: true,
           });
         }

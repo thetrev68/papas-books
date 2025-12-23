@@ -54,6 +54,7 @@ export interface Account {
   is_archived: boolean;
   created_by: string;
   last_modified_by: string;
+  change_history?: unknown; // JSONB
 }
 
 export interface Category {
@@ -109,6 +110,7 @@ export interface Transaction {
   // Audit trail (set by triggers)
   created_by: string; // uuid, foreign key to users.id
   last_modified_by: string; // uuid, foreign key to users.id
+  change_history?: unknown; // JSONB
 }
 
 export interface ImportBatch {
@@ -172,4 +174,6 @@ export interface Rule {
   // Audit trail
   created_by: string;
   last_modified_by: string;
+  change_history?: unknown; // JSONB
+  conditions?: unknown; // JSONB
 }

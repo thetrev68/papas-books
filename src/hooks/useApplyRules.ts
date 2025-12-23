@@ -4,7 +4,7 @@ import { useRules } from './useRules';
 import { applyRulesToBatch } from '../lib/rules/applicator';
 import { supabase } from '../lib/supabase/config';
 import { Transaction } from '../types/database';
-import { RuleBatchResult } from '../types/rules';
+import { Rule, RuleBatchResult } from '../types/rules';
 
 /**
  * Hook for applying rules to transactions.
@@ -33,7 +33,7 @@ export function useApplyRules() {
       if (!transactions) throw new Error('No transactions found');
 
       // Apply rules
-      const batchResult = await applyRulesToBatch(transactions as Transaction[], rules, {
+      const batchResult = await applyRulesToBatch(transactions as Transaction[], rules as Rule[], {
         overrideReviewed: false,
         setReviewedFlag: true, // Mark as reviewed after applying rule
       });

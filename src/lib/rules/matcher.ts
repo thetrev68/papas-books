@@ -1,5 +1,5 @@
-import { Rule } from '../../types/database';
-import { RuleMatch } from '../../types/rules';
+import { Transaction } from '../../types/database';
+import { RuleMatch, Rule as AppRule } from '../../types/rules';
 
 export interface MatchOptions {
   caseSensitive?: boolean; // Override rule's caseSensitive flag (for testing)
@@ -23,19 +23,9 @@ export function normalizeText(text: string, caseSensitive: boolean): string {
 }
 
 /**
- * Tests if a transaction description matches a rule.
- *
- * Supports four match types:
- * - 'contains': Keyword appears anywhere in description
- * - 'exact': Description equals keyword exactly
- * - 'startsWith': Description begins with keyword
- * - 'regex': Keyword is a regular expression pattern
- *
- * @param description - Transaction's originalDescription
- * @param rule - Rule to test against
- * @returns True if rule matches
+ * Tests if a description matches the basic keyword/regex criteria of a rule.
  */
-export function matchesRule(description: string, rule: Rule): boolean {
+function basicMatch(description: string, rule: AppRule): boolean {
   // Normalize both description and keyword
   const normalizedDescription = normalizeText(description, rule.case_sensitive);
   const normalizedKeyword = normalizeText(rule.keyword, rule.case_sensitive);
@@ -67,22 +57,70 @@ export function matchesRule(description: string, rule: Rule): boolean {
 }
 
 /**
- * Finds all rules that match a description.
+ * Tests if a transaction matches a rule, including advanced conditions.
+ *
+ * @param description - Transaction's originalDescription
+ * @param amount - Transaction amount in cents
+ * @param date - Transaction date object
+ * @param rule - Rule to test against
+ * @returns True if rule matches
+ */
+export function matchesRule(
+  description: string,
+  amount: number,
+  date: Date,
+  rule: AppRule
+): boolean {
+  if (!basicMatch(description, rule)) return false;
+
+  if (rule.conditions) {
+    const { amountMin, amountMax, dateRange, descriptionRegex } = rule.conditions;
+    const absAmount = Math.abs(amount);
+
+    if (amountMin !== undefined && absAmount < amountMin) return false;
+    if (amountMax !== undefined && absAmount > amountMax) return false;
+
+    if (descriptionRegex) {
+      try {
+        const regex = new RegExp(descriptionRegex, 'i');
+        if (!regex.test(description)) return false;
+      } catch {
+        console.warn('Invalid regex in rule', rule.id);
+        return false;
+      }
+    }
+
+    if (dateRange) {
+      const month = date.getMonth() + 1;
+      const day = date.getDate();
+      if (dateRange.startMonth && month < dateRange.startMonth) return false;
+      if (dateRange.endMonth && month > dateRange.endMonth) return false;
+      if (dateRange.startDay && day < dateRange.startDay) return false;
+      if (dateRange.endDay && day > dateRange.endDay) return false;
+    }
+  }
+
+  return true;
+}
+
+/**
+ * Finds all rules that match a transaction.
  *
  * Filters out:
  * - Disabled rules (isEnabled = false)
- * - Rules that don't match the description
+ * - Rules that don't match the transaction
  *
  * Returns:
  * - Sorted by priority (highest first)
  * - Includes confidence score (100 for all matches in Phase 4)
  *
- * @param description - Transaction's originalDescription
+ * @param transaction - Transaction to test
  * @param rules - Array of all rules
  * @returns Array of matching rules, sorted by priority
  */
-export function findMatchingRules(description: string, rules: Rule[]): RuleMatch[] {
+export function findMatchingRules(transaction: Transaction, rules: AppRule[]): RuleMatch[] {
   const matches: RuleMatch[] = [];
+  const date = new Date(transaction.date);
 
   for (const rule of rules) {
     // Skip disabled rules
@@ -91,11 +129,11 @@ export function findMatchingRules(description: string, rules: Rule[]): RuleMatch
     }
 
     // Test if rule matches
-    if (matchesRule(description, rule)) {
+    if (matchesRule(transaction.original_description, transaction.amount, date, rule)) {
       matches.push({
         rule,
-        matchedText: rule.keyword, // Simplified for Phase 4
-        confidence: 100, // All matches are 100% confidence in Phase 4
+        matchedText: rule.keyword, // Simplified
+        confidence: 100, // All matches are 100% confidence
       });
     }
   }
@@ -118,7 +156,7 @@ export function findMatchingRules(description: string, rules: Rule[]): RuleMatch
  * @param matches - Array of matching rules (sorted by priority)
  * @returns The winning rule, or null
  */
-export function selectBestRule(matches: RuleMatch[]): Rule | null {
+export function selectBestRule(matches: RuleMatch[]): AppRule | null {
   if (matches.length === 0) {
     return null;
   }

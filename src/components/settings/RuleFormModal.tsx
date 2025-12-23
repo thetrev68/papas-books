@@ -4,7 +4,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { useCreateRule, useUpdateRule } from '../../hooks/useRules';
 import { insertRuleSchema, validateRegex } from '../../lib/validation/rules';
 import { Rule } from '../../types/database';
-import { MatchType } from '../../types/rules';
+import { MatchType, RuleConditions } from '../../types/rules';
 
 interface RuleFormModalProps {
   rule: Rule | null; // null = creating, non-null = editing
@@ -21,7 +21,10 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
   const { updateRule, isLoading: isUpdating } = useUpdateRule();
   const { categories } = useCategories();
 
-  // Initialize form data with mapping from snake_case (DB) to camelCase (Form)
+  // Parse existing conditions
+  const existingConditions = (rule?.conditions as RuleConditions) || {};
+
+  // Initialize form data
   const [formData, setFormData] = useState({
     keyword: rule?.keyword || initialValues?.keyword || '',
     matchType: rule?.match_type || 'contains',
@@ -30,7 +33,24 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
     suggestedPayee: rule?.suggested_payee || initialValues?.suggestedPayee || '',
     priority: rule?.priority ?? 50,
     isEnabled: rule?.is_enabled ?? true,
+    // Advanced Conditions
+    amountMin: existingConditions.amountMin?.toString() || '',
+    amountMax: existingConditions.amountMax?.toString() || '',
+    descriptionRegex: existingConditions.descriptionRegex || '',
+    startMonth: existingConditions.dateRange?.startMonth?.toString() || '',
+    endMonth: existingConditions.dateRange?.endMonth?.toString() || '',
+    startDay: existingConditions.dateRange?.startDay?.toString() || '',
+    endDay: existingConditions.dateRange?.endDay?.toString() || '',
   });
+
+  const [showAdvanced, setShowAdvanced] = useState(
+    !!(
+      existingConditions.amountMin ||
+      existingConditions.amountMax ||
+      existingConditions.descriptionRegex ||
+      existingConditions.dateRange
+    )
+  );
 
   const [errors, setErrors] = useState<Record<string, string>>({});
 
@@ -46,6 +66,29 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
       }
     }
 
+    // Validate description regex if provided
+    if (formData.descriptionRegex) {
+      const regexValidation = validateRegex(formData.descriptionRegex);
+      if (!regexValidation.valid) {
+        setErrors({ descriptionRegex: regexValidation.error! });
+        return;
+      }
+    }
+
+    // Build conditions object
+    const conditions: RuleConditions = {};
+    if (formData.amountMin) conditions.amountMin = parseInt(formData.amountMin);
+    if (formData.amountMax) conditions.amountMax = parseInt(formData.amountMax);
+    if (formData.descriptionRegex) conditions.descriptionRegex = formData.descriptionRegex;
+
+    if (formData.startMonth || formData.endMonth || formData.startDay || formData.endDay) {
+      conditions.dateRange = {};
+      if (formData.startMonth) conditions.dateRange.startMonth = parseInt(formData.startMonth);
+      if (formData.endMonth) conditions.dateRange.endMonth = parseInt(formData.endMonth);
+      if (formData.startDay) conditions.dateRange.startDay = parseInt(formData.startDay);
+      if (formData.endDay) conditions.dateRange.endDay = parseInt(formData.endDay);
+    }
+
     // Validate with Zod
     const validation = insertRuleSchema.safeParse({
       booksetId: activeBookset!.id,
@@ -56,6 +99,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
       suggestedPayee: formData.suggestedPayee || undefined,
       priority: formData.priority,
       isEnabled: formData.isEnabled,
+      conditions: Object.keys(conditions).length > 0 ? conditions : undefined,
     });
 
     if (!validation.success) {
@@ -76,8 +120,6 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
       .then(() => onClose())
       .catch((err) => {
         console.error('Failed to save rule:', err);
-        // Ideally show error to user, but for now we just log it
-        // as the mutation hook exposes error state we could use in parent or here if we used hook differently
       });
   }
 
@@ -112,6 +154,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           onSubmit={handleSubmit}
           style={{ display: 'flex', flexDirection: 'column', gap: '15px' }}
         >
+          {/* ... Basic Fields ... */}
           <div>
             <label style={{ display: 'block', marginBottom: '5px' }}>Keyword:</label>
             <input
@@ -195,10 +238,109 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
               }
               style={{ width: '100%', padding: '8px' }}
             />
-            {errors.priority && (
-              <div style={{ color: 'red', fontSize: '0.8em' }}>{errors.priority}</div>
-            )}
           </div>
+
+          {/* Advanced Conditions Toggle */}
+          <div>
+            <button
+              type="button"
+              onClick={() => setShowAdvanced(!showAdvanced)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'blue',
+                cursor: 'pointer',
+                padding: 0,
+              }}
+            >
+              {showAdvanced ? 'Hide Advanced Conditions' : 'Show Advanced Conditions'}
+            </button>
+          </div>
+
+          {showAdvanced && (
+            <div
+              style={{
+                background: '#f9f9f9',
+                padding: '10px',
+                borderRadius: '4px',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '10px',
+              }}
+            >
+              <div>
+                <label className="block text-sm font-medium">Amount Range (cents):</label>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="number"
+                    placeholder="Min"
+                    value={formData.amountMin}
+                    onChange={(e) => setFormData({ ...formData, amountMin: e.target.value })}
+                    style={{ width: '50%', padding: '6px' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="Max"
+                    value={formData.amountMax}
+                    onChange={(e) => setFormData({ ...formData, amountMax: e.target.value })}
+                    style={{ width: '50%', padding: '6px' }}
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">
+                  Description Regex (AND condition):
+                </label>
+                <input
+                  type="text"
+                  placeholder="/pattern/i"
+                  value={formData.descriptionRegex}
+                  onChange={(e) => setFormData({ ...formData, descriptionRegex: e.target.value })}
+                  style={{ width: '100%', padding: '6px' }}
+                />
+                {errors.descriptionRegex && (
+                  <div style={{ color: 'red', fontSize: '0.8em' }}>{errors.descriptionRegex}</div>
+                )}
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium">Date Range:</label>
+                <div style={{ display: 'flex', gap: '10px', marginBottom: '5px' }}>
+                  <input
+                    type="number"
+                    placeholder="Start Month (1-12)"
+                    value={formData.startMonth}
+                    onChange={(e) => setFormData({ ...formData, startMonth: e.target.value })}
+                    style={{ width: '50%', padding: '6px' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="End Month (1-12)"
+                    value={formData.endMonth}
+                    onChange={(e) => setFormData({ ...formData, endMonth: e.target.value })}
+                    style={{ width: '50%', padding: '6px' }}
+                  />
+                </div>
+                <div style={{ display: 'flex', gap: '10px' }}>
+                  <input
+                    type="number"
+                    placeholder="Start Day (1-31)"
+                    value={formData.startDay}
+                    onChange={(e) => setFormData({ ...formData, startDay: e.target.value })}
+                    style={{ width: '50%', padding: '6px' }}
+                  />
+                  <input
+                    type="number"
+                    placeholder="End Day (1-31)"
+                    value={formData.endDay}
+                    onChange={(e) => setFormData({ ...formData, endDay: e.target.value })}
+                    style={{ width: '50%', padding: '6px' }}
+                  />
+                </div>
+              </div>
+            </div>
+          )}
 
           <div>
             <label style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

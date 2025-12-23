@@ -134,7 +134,7 @@ export async function applyRulesToTransaction(
   options?: ApplyRuleOptions
 ): Promise<RuleApplicationResult> {
   // Find matching rules
-  const matches = findMatchingRules(transaction.original_description, rules);
+  const matches = findMatchingRules(transaction, rules);
 
   // Select best rule
   const bestRule = selectBestRule(matches);
