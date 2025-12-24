@@ -33,12 +33,16 @@ BOOKSET_ID=abc123 ACCOUNT_ID=def456 TOTAL_TRANSACTIONS=10000 npx tsx scripts/see
 
 **Environment Variables:**
 
+The script automatically loads environment variables from `.env.local` in the project root.
+
 - `VITE_SUPABASE_URL`: Supabase project URL (required)
 - `VITE_SUPABASE_ANON_KEY`: Supabase anon key (required)
 - `SUPABASE_SERVICE_KEY`: Service role key (optional, faster inserts)
 - `BOOKSET_ID`: Target bookset UUID (alternative to CLI arg)
 - `ACCOUNT_ID`: Target account UUID (alternative to CLI arg)
 - `TOTAL_TRANSACTIONS`: Number to generate (alternative to CLI arg)
+
+**Note:** If you already have a `.env.local` file with your Supabase credentials, the script will automatically use them.
 
 **Features:**
 

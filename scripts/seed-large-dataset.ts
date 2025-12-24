@@ -1,5 +1,9 @@
+import { config } from 'dotenv';
 import { createClient } from '@supabase/supabase-js';
 import { createHash } from 'crypto';
+
+// Load environment variables from .env.local
+config({ path: '.env.local' });
 
 const supabaseUrl = process.env.VITE_SUPABASE_URL;
 const supabaseKey = process.env.SUPABASE_SERVICE_KEY || process.env.VITE_SUPABASE_ANON_KEY;

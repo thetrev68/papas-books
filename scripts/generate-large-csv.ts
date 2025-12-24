@@ -1,5 +1,9 @@
+import { config } from 'dotenv';
 import { writeFileSync } from 'fs';
 import { join } from 'path';
+
+// Load environment variables from .env.local (for consistency with other scripts)
+config({ path: '.env.local' });
 
 /**
  * Generates a large CSV file for import testing
