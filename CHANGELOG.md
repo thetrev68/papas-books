@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.6](https://github.com/thetrev68/papas-books/compare/v0.1.5...v0.1.6) (2025-12-24)
+
+### Features
+
+- add network retry logic to query client (Task 1.7) ([fc912a6](https://github.com/thetrev68/papas-books/commit/fc912a6fbfd1c50c09b6c70902f63d6436f0c55c))
+- enable email verification flow (Task 1.5) ([e15e953](https://github.com/thetrev68/papas-books/commit/e15e953d029df75377857d80e7b9f7c9bc430634))
+- implement CSV input validation and sanitization (Task 1.3) ([295de85](https://github.com/thetrev68/papas-books/commit/295de8528f7e3edc9d5882b9de757fee3db0a2f2))
+- implement split transaction foreign key validation (Task 1.4) ([0b9baa9](https://github.com/thetrev68/papas-books/commit/0b9baa9013cf1a7cd29322dd7245c04c016bcb9c))
+- **security:** implement global error boundary and comprehensive Supabase error handling ([c976ecf](https://github.com/thetrev68/papas-books/commit/c976ecf5c50dc4bbcd602f5f2e4d0977fd90919f))
+
 ## [0.1.5](https://github.com/thetrev68/papas-books/compare/v0.1.4...v0.1.5) (2025-12-24)
 
 ### Bug Fixes
