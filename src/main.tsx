@@ -17,6 +17,7 @@ import ImportPage from './pages/ImportPage';
 import WorkbenchPage from './pages/WorkbenchPage';
 import ReconcilePage from './pages/ReconcilePage';
 import ReportsPage from './pages/ReportsPage';
+import ConfirmEmailPage from './pages/ConfirmEmailPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { queryClient } from './lib/queryClient';
 
@@ -36,6 +37,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                 <Route path="/login" element={<LoginPage />} />
                 <Route path="/signup" element={<SignupPage />} />
                 <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
 
                 <Route path="/app" element={<ProtectedRoute />}>
                   <Route path="dashboard" element={<DashboardPage />} />
