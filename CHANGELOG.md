@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.4](https://github.com/thetrev68/papas-books/compare/v0.1.3...v0.1.4) (2025-12-24)
+
+### Bug Fixes
+
+- ensure changelog fixes are staged for release commit ([fd9130a](https://github.com/thetrev68/papas-books/commit/fd9130a63436f2aa998620520c065d4284a29b06))
+
 ## 0.1.3 (2025-12-24)
 
 ### Features
