@@ -359,7 +359,7 @@ describe('sanitizeText', () => {
 
 ---
 
-### Task 1.4: Add Split Transaction Foreign Key Validation 🔴 CRITICAL
+### Task 1.4: Add Split Transaction Foreign Key Validation ✅ COMPLETE
 
 **Priority:** CRITICAL
 **Estimated Time:** 4 hours
@@ -367,10 +367,10 @@ describe('sanitizeText', () => {
 
 **Acceptance Criteria:**
 
-- [ ] Validate category_id exists before saving split
-- [ ] Show error if category was deleted
-- [ ] Prevent saving invalid splits
-- [ ] Add database constraint if possible
+- [x] Validate category_id exists before saving split
+- [x] Show error if category was deleted
+- [x] Prevent saving invalid splits
+- [x] Add database constraint if possible
 
 **Files to Modify:**
 

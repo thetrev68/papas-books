@@ -1,6 +1,7 @@
 import { supabase } from './config';
 import type { Transaction } from '../../types/database';
 import { handleSupabaseError, DatabaseError } from '../errors';
+import { validateSplitLines } from '../validation/splits';
 
 /**
  * Fetch transactions for workbench (with filtering)
@@ -56,6 +57,14 @@ export async function createTransaction(transaction: Transaction): Promise<Trans
  */
 export async function updateTransaction(transaction: Transaction): Promise<Transaction> {
   try {
+    // Validate split lines if present
+    if (transaction.is_split && transaction.lines.length > 0) {
+      const validation = await validateSplitLines(transaction.lines, transaction.bookset_id);
+      if (!validation.valid) {
+        throw new DatabaseError(`Invalid split lines: ${validation.errors.join('; ')}`);
+      }
+    }
+
     const { data, error } = await supabase
       .from('transactions')
       .update({

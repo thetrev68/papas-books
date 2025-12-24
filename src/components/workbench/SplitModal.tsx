@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import type { Transaction } from '../../types/database';
 import { calculateSplitRemainder, validateSplitTransaction } from '../../lib/splitCalculator';
+import { validateSplitLines } from '../../lib/validation/splits';
 import { useCategories } from '../../hooks/useCategories';
 import Modal from '../ui/Modal';
 
@@ -13,6 +14,7 @@ interface SplitModalProps {
 function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
   const [lines, setLines] = useState(transaction.lines || []);
   const [newLine, setNewLine] = useState({ categoryId: '', amount: 0, memo: '' });
+  const [validationError, setValidationError] = useState<string | null>(null);
   const { categories } = useCategories();
 
   const remainder = calculateSplitRemainder({ ...transaction, lines });
@@ -30,11 +32,13 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
         },
       ]);
       setNewLine({ categoryId: '', amount: 0, memo: '' });
+      setValidationError(null); // Clear error on change
     }
   };
 
   const removeLine = (index: number) => {
     setLines(lines.filter((_, i) => i !== index));
+    setValidationError(null); // Clear error on change
   };
 
   const updateLine = (
@@ -49,12 +53,22 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
       updatedLines[index] = { ...updatedLines[index], [field]: value };
     }
     setLines(updatedLines);
+    setValidationError(null); // Clear error on change
   };
 
-  const handleSave = () => {
-    if (isValid) {
-      onSave({ ...transaction, is_split: true, lines });
+  const handleSave = async () => {
+    // Client-side math check
+    if (!isValid) return;
+
+    // Async DB validation
+    const result = await validateSplitLines(lines, transaction.bookset_id);
+
+    if (!result.valid) {
+      setValidationError(result.errors.join('; '));
+      return;
     }
+
+    onSave({ ...transaction, is_split: true, lines });
   };
 
   return (
@@ -177,6 +191,12 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
             </div>
           )}
         </div>
+
+        {validationError && (
+          <div className="p-4 rounded-xl border bg-danger-50 border-danger-200 text-danger-700 text-sm font-medium">
+            Error: {validationError}
+          </div>
+        )}
 
         <div className="flex flex-wrap gap-3 justify-end">
           <button
