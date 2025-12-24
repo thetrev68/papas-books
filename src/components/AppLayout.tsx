@@ -1,10 +1,31 @@
 import { Link, useLocation, Outlet, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
+import { useState, useEffect } from 'react';
+import PWAInstallPrompt from './PWAInstallPrompt';
+
+interface NavigatorWithStandalone extends Navigator {
+  standalone?: boolean;
+}
 
 export default function AppLayout() {
   const { user, activeBookset, myBooksets, switchBookset, signOut } = useAuth();
   const location = useLocation();
   const navigate = useNavigate();
+
+  // Detect if app is installed as PWA
+  const [isInstalled, setIsInstalled] = useState(false);
+
+  useEffect(() => {
+    // Check if app is running in standalone mode (installed as PWA)
+    const checkInstalled = () => {
+      const isPWA =
+        window.matchMedia('(display-mode: standalone)').matches ||
+        (window.navigator as NavigatorWithStandalone).standalone === true;
+      setIsInstalled(isPWA);
+    };
+
+    checkInstalled();
+  }, []);
 
   const handleSignOut = async () => {
     try {
@@ -112,8 +133,10 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-neutral-50 text-neutral-800 font-sans">
-      {/* Mobile Header */}
-      <div className="bg-brand-700 text-white p-4 flex justify-between items-center md:hidden shadow-lg sticky top-0 z-20">
+      {/* Mobile Header - UPDATED with safe area support */}
+      <div
+        className={`bg-brand-700 text-white p-4 flex justify-between items-center md:hidden shadow-lg sticky top-0 z-20 ${isInstalled ? 'pt-safe' : ''}`}
+      >
         <h1 className="text-xl font-bold">Papa&apos;s Books</h1>
         <div className="flex gap-2">
           {myBooksets.length > 0 && (
@@ -135,7 +158,7 @@ export default function AppLayout() {
         </div>
       </div>
 
-      {/* Desktop Sidebar */}
+      {/* Desktop Sidebar - UPDATED with version display */}
       <nav className="hidden md:flex flex-col w-72 bg-white border-r border-neutral-200 h-screen sticky top-0 overflow-y-auto">
         <div className="p-6 bg-brand-700 text-white">
           <h1 className="text-2xl font-bold">Papa&apos;s Books</h1>
@@ -194,6 +217,13 @@ export default function AppLayout() {
             </svg>
             Sign Out
           </button>
+
+          {/* Version display */}
+          <div className="mt-2 text-center">
+            <p className="text-xs text-neutral-400">
+              v{import.meta.env.VITE_APP_VERSION || '0.1.0'}
+            </p>
+          </div>
         </div>
       </nav>
 
@@ -202,16 +232,15 @@ export default function AppLayout() {
         <Outlet />
       </main>
 
-      {/* Mobile Bottom Nav */}
+      {/* Mobile Bottom Nav - UPDATED with safe area support */}
       <nav className="md:hidden sticky bottom-0 bg-white border-t border-neutral-200 flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
         {navLinks.slice(0, 5).map((link) => {
-          // Limit to 5 for mobile spacing
           const active = isActive(link.path);
           return (
             <Link
               key={link.path}
               to={link.path}
-              className={`flex flex-col items-center p-2 ${active ? 'text-brand-600' : 'text-neutral-400'}`}
+              className={`flex flex-col items-center p-2 touch-target ${active ? 'text-brand-600' : 'text-neutral-400'}`}
             >
               <div className="scale-75 origin-bottom">{link.icon}</div>
               <span className="text-xs font-bold mt-1">{link.name}</span>
@@ -219,6 +248,9 @@ export default function AppLayout() {
           );
         })}
       </nav>
+
+      {/* PWA Install Prompt */}
+      <PWAInstallPrompt />
     </div>
   );
 }

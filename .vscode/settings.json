@@ -3,5 +3,6 @@
   "codeQL.cli.executablePath": "C:\\Tools\\codeql\\codeql.exe",
   "codeQL.additionalPacks": [
     "C:\\Tools\\codeql-packs"
-  ]
+  ],
+  "css.lint.unknownAtRules": "ignore"
 }

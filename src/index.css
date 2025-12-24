@@ -7,5 +7,80 @@
     @apply font-sans text-neutral-800 antialiased bg-neutral-50;
     font-size: 18px;
     line-height: 1.75rem;
+
+    /* Ensure proper viewport height on mobile */
+    min-height: 100vh;
+    min-height: 100dvh; /* Dynamic viewport height for mobile browsers */
   }
+}
+
+/* Safe area utilities for devices with notches */
+@layer utilities {
+  .pb-safe {
+    padding-bottom: max(env(safe-area-inset-bottom), 0.5rem);
+  }
+
+  .pt-safe {
+    padding-top: max(env(safe-area-inset-top), 0.5rem);
+  }
+
+  .pl-safe {
+    padding-left: max(env(safe-area-inset-left), 1rem);
+  }
+
+  .pr-safe {
+    padding-right: max(env(safe-area-inset-right), 1rem);
+  }
+}
+
+/* Prevent zoom on form inputs (iOS Safari) */
+input[type='text'],
+input[type='email'],
+input[type='password'],
+input[type='number'],
+input[type='date'],
+textarea,
+select {
+  font-size: 16px; /* Prevents iOS zoom on focus */
+}
+
+/* Improve touch targets - minimum 44x44px for accessibility */
+.touch-target {
+  min-height: 44px;
+  min-width: 44px;
+}
+
+/* PWA-specific styles */
+#root {
+  height: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+}
+
+/* Smooth scrolling for better UX */
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Hide scrollbar on mobile but keep functionality */
+@media (max-width: 768px) {
+  ::-webkit-scrollbar {
+    display: none;
+  }
+
+  * {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+}
+
+/* Remove default input styling on mobile */
+input,
+select,
+textarea {
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
 }
