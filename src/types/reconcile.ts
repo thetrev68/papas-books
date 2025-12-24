@@ -18,6 +18,8 @@ export interface ReportFilter {
   endDate: string; // YYYY-MM-DD
   accountIds?: string[];
   categoryId?: string;
+  page?: number;
+  pageSize?: number;
 }
 
 export interface CategorySummary {

@@ -24,13 +24,19 @@ export default function ReportsPage() {
   const [reportData, setReportData] = useState<CategorySummary[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [page, setPage] = useState(1);
+  const [totalTransactions, setTotalTransactions] = useState(0);
+  const pageSize = 1000;
 
-  const handleRunReport = async () => {
+  const handleRunReport = async (resetPage = true) => {
     if (!activeBookset) return;
+    if (resetPage) {
+      setPage(1);
+    }
     setIsLoading(true);
     setError(null);
     try {
-      // 1. Fetch transactions in date range
+      // 1. Fetch transactions in date range (paginated)
       const rawTransactions = await fetchTransactionsForReport(
         activeBookset.id,
         startDate,
@@ -53,6 +59,7 @@ export default function ReportsPage() {
       // 3. Aggregate
       const summary = generateCategoryReport(filteredTransactions, categories);
       setReportData(summary);
+      setTotalTransactions(filteredTransactions.length);
     } catch (err) {
       setError((err as Error).message);
     } finally {
@@ -86,6 +93,13 @@ export default function ReportsPage() {
   };
 
   const formatMoney = (cents: number) => (cents / 100).toFixed(2);
+
+  const totalPages = Math.ceil(totalTransactions / pageSize);
+
+  const handlePageChange = (newPage: number) => {
+    setPage(newPage);
+    handleRunReport(false);
+  };
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -208,6 +222,34 @@ export default function ReportsPage() {
               </tbody>
             </table>
           </div>
+
+          {totalTransactions > pageSize && (
+            <div className="p-4 bg-neutral-50 border-t border-neutral-200 flex items-center justify-between">
+              <div className="text-sm text-neutral-600">
+                Showing {(page - 1) * pageSize + 1} to{' '}
+                {Math.min(page * pageSize, totalTransactions)} of {totalTransactions} transactions
+              </div>
+              <div className="flex gap-2">
+                <button
+                  onClick={() => handlePageChange(Math.max(1, page - 1))}
+                  disabled={page === 1}
+                  className="px-3 py-1 border border-neutral-300 rounded bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 font-bold text-neutral-700"
+                >
+                  Previous
+                </button>
+                <span className="px-3 py-1 text-neutral-700 font-bold">
+                  Page {page} of {totalPages}
+                </span>
+                <button
+                  onClick={() => handlePageChange(Math.min(totalPages, page + 1))}
+                  disabled={page === totalPages}
+                  className="px-3 py-1 border border-neutral-300 rounded bg-white disabled:opacity-50 disabled:cursor-not-allowed hover:bg-neutral-50 font-bold text-neutral-700"
+                >
+                  Next
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>
