@@ -8,8 +8,12 @@ export const MAX_MEMO_LENGTH = 1000;
 export function sanitizeText(text: string, maxLength: number): string {
   if (!text || typeof text !== 'string') return '';
 
-  // Remove HTML tags
-  let cleaned = text.replace(/<[^>]*>/g, '');
+  // Remove script/style blocks entirely before stripping tags
+  let cleaned = text.replace(/<script[^>]*>[\s\S]*?<\/script>/gi, '');
+  cleaned = cleaned.replace(/<style[^>]*>[\s\S]*?<\/style>/gi, '');
+
+  // Remove remaining HTML tags
+  cleaned = cleaned.replace(/<[^>]*>/g, '');
 
   // Remove control characters (except newlines/tabs)
   // \x00-\x08: Null, Start of Heading, Start of Text, End of Text, End of Transmission, Enquiry, Acknowledge, Bell, Backspace

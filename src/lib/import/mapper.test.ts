@@ -182,6 +182,23 @@ describe('mapRowToTransaction', () => {
     expect(result.errors).toContain('Invalid amount: "bad"');
   });
 
+  it('should return errors for missing mapped column', () => {
+    const row = { Date: '1/15/2024', Description: 'Test' };
+    const mapping: CsvMapping = {
+      dateColumn: 'Date',
+      amountColumn: 'Amount',
+      descriptionColumn: 'Description',
+      dateFormat: 'MM/dd/yyyy' as DateFormat,
+      hasHeaderRow: true,
+      amountMode: 'signed' as AmountMode,
+    };
+
+    const result = mapRowToTransaction(row, mapping, 0);
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain('Missing column "Amount" in CSV row');
+  });
+
   it('should return errors for missing description', () => {
     const row = { Date: '1/15/2024', Amount: '$100', Description: '' };
     const mapping: CsvMapping = {

@@ -1,6 +1,7 @@
 import { parse, isValid as isValidDate } from 'date-fns';
 import { CsvMapping } from '../../types/import';
 import { sanitizeText, MAX_DESCRIPTION_LENGTH } from '../validation/import';
+import { validateMappedTransaction, validateRawCsvRow } from '../validation/import-schema';
 
 export interface StagedTransaction {
   // Valid fields (only present if parsing succeeded)
@@ -98,54 +99,74 @@ export function mapRowToTransaction(
   let amount: number | undefined;
   let description: string | undefined;
 
+  const rawValidation = validateRawCsvRow(row, mapping);
+  if (!rawValidation.success) {
+    errors.push(...rawValidation.error.issues.map((issue) => issue.message));
+  }
+
+  const shouldParse = errors.length === 0;
+
   // Extract raw values from row
   const rawDate = row[mapping.dateColumn];
   const rawDescription = row[mapping.descriptionColumn];
 
   // Parse date
-  const parsedDate = parseDate(rawDate, mapping.dateFormat);
-  if (!parsedDate) {
-    errors.push(`Invalid date: "${rawDate}" (expected format: ${mapping.dateFormat})`);
-  } else {
-    date = parsedDate;
+  if (shouldParse) {
+    const parsedDate = parseDate(rawDate, mapping.dateFormat);
+    if (!parsedDate) {
+      errors.push(`Invalid date: "${rawDate}" (expected format: ${mapping.dateFormat})`);
+    } else {
+      date = parsedDate;
+    }
   }
 
   // Parse amount (depends on amountMode)
-  if (mapping.amountMode === 'signed') {
-    const rawAmount = row[mapping.amountColumn];
-    const parsedAmount = cleanCurrency(rawAmount);
+  if (shouldParse) {
+    if (mapping.amountMode === 'signed') {
+      const rawAmount = row[mapping.amountColumn];
+      const parsedAmount = cleanCurrency(rawAmount);
 
-    if (parsedAmount === null) {
-      errors.push(`Invalid amount: "${rawAmount}"`);
-    } else {
-      amount = parsedAmount;
-    }
-  } else if (mapping.amountMode === 'separate') {
-    // Separate debit/credit columns
-    const rawInflow = mapping.inflowColumn ? row[mapping.inflowColumn] : '';
-    const rawOutflow = mapping.outflowColumn ? row[mapping.outflowColumn] : '';
+      if (parsedAmount === null) {
+        errors.push(`Invalid amount: "${rawAmount}"`);
+      } else {
+        amount = parsedAmount;
+      }
+    } else if (mapping.amountMode === 'separate') {
+      // Separate debit/credit columns
+      const rawInflow = mapping.inflowColumn ? row[mapping.inflowColumn] : '';
+      const rawOutflow = mapping.outflowColumn ? row[mapping.outflowColumn] : '';
 
-    const inflow = cleanCurrency(rawInflow);
-    const outflow = cleanCurrency(rawOutflow);
+      const inflow = cleanCurrency(rawInflow);
+      const outflow = cleanCurrency(rawOutflow);
 
-    // Logic: Use inflow as positive, outflow as negative
-    if (inflow !== null && inflow !== 0) {
-      amount = inflow;
-    } else if (outflow !== null && outflow !== 0) {
-      amount = -Math.abs(outflow); // Ensure negative
-    } else {
-      errors.push('Missing amount in both inflow and outflow columns');
+      // Logic: Use inflow as positive, outflow as negative
+      if (inflow !== null && inflow !== 0) {
+        amount = inflow;
+      } else if (outflow !== null && outflow !== 0) {
+        amount = -Math.abs(outflow); // Ensure negative
+      } else {
+        errors.push('Missing amount in both inflow and outflow columns');
+      }
     }
   }
 
   // Extract description (with sanitization)
-  if (rawDescription && typeof rawDescription === 'string') {
-    description = sanitizeText(rawDescription, MAX_DESCRIPTION_LENGTH);
-    if (!description) {
-      errors.push('Description is empty after sanitization');
+  if (shouldParse) {
+    if (rawDescription && typeof rawDescription === 'string') {
+      description = sanitizeText(rawDescription, MAX_DESCRIPTION_LENGTH);
+      if (!description) {
+        errors.push('Description is empty after sanitization');
+      }
+    } else {
+      errors.push('Missing description');
     }
-  } else {
-    errors.push('Missing description');
+  }
+
+  if (shouldParse && date && amount !== undefined && description) {
+    const mappedValidation = validateMappedTransaction({ date, amount, description });
+    if (!mappedValidation.success) {
+      errors.push(...mappedValidation.error.issues.map((issue) => issue.message));
+    }
   }
 
   return {

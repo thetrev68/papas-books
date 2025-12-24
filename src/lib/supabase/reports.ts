@@ -12,6 +12,10 @@ export interface ReportFilters {
   pageSize?: number;
 }
 
+/**
+ * @deprecated Use fetchReportTransactions instead. This function is limited to 1000 rows
+ * and does not support pagination, which causes incomplete reports for large datasets.
+ */
 export async function fetchTransactionsForReport(
   booksetId: string,
   startDate: string,
