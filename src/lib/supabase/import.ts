@@ -1,5 +1,6 @@
 import { supabase } from './config';
 import { Transaction, ImportBatch } from '../../types/database';
+import { handleSupabaseError, DatabaseError } from '../errors';
 
 /**
  * Fetches all transaction fingerprints for an account.
@@ -10,21 +11,28 @@ import { Transaction, ImportBatch } from '../../types/database';
  * @returns Map<fingerprint, transactionId>
  */
 export async function fetchExistingFingerprints(accountId: string): Promise<Map<string, string>> {
-  const { data, error } = await supabase
-    .from('transactions')
-    .select('id, fingerprint')
-    .eq('account_id', accountId)
-    .not('fingerprint', 'is', null); // Exclude transactions without fingerprints
+  try {
+    const { data, error } = await supabase
+      .from('transactions')
+      .select('id, fingerprint')
+      .eq('account_id', accountId)
+      .not('fingerprint', 'is', null); // Exclude transactions without fingerprints
 
-  if (error) throw error;
+    if (error) {
+      handleSupabaseError(error);
+    }
 
-  // Build Map for O(1) lookups
-  const fingerprintMap = new Map<string, string>();
-  data?.forEach((txn) => {
-    fingerprintMap.set(txn.fingerprint, txn.id);
-  });
+    // Build Map for O(1) lookups
+    const fingerprintMap = new Map<string, string>();
+    data?.forEach((txn) => {
+      fingerprintMap.set(txn.fingerprint, txn.id);
+    });
 
-  return fingerprintMap;
+    return fingerprintMap;
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to fetch fingerprints', undefined, error);
+  }
 }
 
 /**
@@ -38,22 +46,29 @@ export async function fetchExistingTransactions(
   accountId: string,
   dateRange?: { start: string; end: string }
 ): Promise<Transaction[]> {
-  let query = supabase
-    .from('transactions')
-    .select('*')
-    .eq('account_id', accountId)
-    .order('date', { ascending: false });
+  try {
+    let query = supabase
+      .from('transactions')
+      .select('*')
+      .eq('account_id', accountId)
+      .order('date', { ascending: false });
 
-  // Apply date range filter if provided
-  if (dateRange) {
-    query = query.gte('date', dateRange.start).lte('date', dateRange.end);
+    // Apply date range filter if provided
+    if (dateRange) {
+      query = query.gte('date', dateRange.start).lte('date', dateRange.end);
+    }
+
+    const { data, error } = await query;
+
+    if (error) {
+      handleSupabaseError(error);
+    }
+
+    return data || [];
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to fetch transactions', undefined, error);
   }
-
-  const { data, error } = await query;
-
-  if (error) throw error;
-
-  return data || [];
 }
 
 /**
@@ -76,55 +91,60 @@ export async function commitImportBatch(
     'id' | 'created_by' | 'last_modified_by' | 'created_at' | 'updated_at'
   >[]
 ): Promise<{ batchId: string; transactionIds: string[] }> {
-  // Step 1: Create import batch
-  const { data: batchData, error: batchError } = await supabase
-    .from('import_batches')
-    .insert({
-      bookset_id: batch.bookset_id,
-      account_id: batch.account_id,
-      file_name: batch.file_name,
-      imported_at: new Date().toISOString(),
-      total_rows: batch.total_rows,
-      imported_count: batch.imported_count,
-      duplicate_count: batch.duplicate_count,
-      error_count: batch.error_count,
-      csv_mapping_snapshot: batch.csv_mapping_snapshot,
-      is_undone: false,
-    })
-    .select()
-    .single();
+  try {
+    // Step 1: Create import batch
+    const { data: batchData, error: batchError } = await supabase
+      .from('import_batches')
+      .insert({
+        bookset_id: batch.bookset_id,
+        account_id: batch.account_id,
+        file_name: batch.file_name,
+        imported_at: new Date().toISOString(),
+        total_rows: batch.total_rows,
+        imported_count: batch.imported_count,
+        duplicate_count: batch.duplicate_count,
+        error_count: batch.error_count,
+        csv_mapping_snapshot: batch.csv_mapping_snapshot,
+        is_undone: false,
+      })
+      .select()
+      .single();
 
-  if (batchError) throw batchError;
+    if (batchError) {
+      handleSupabaseError(batchError);
+    }
 
-  const batchId = batchData.id;
+    const batchId = batchData.id;
 
-  // Step 2: Add batch ID to transactions
-  const transactionsWithBatch = transactions.map((txn) => ({
-    ...txn,
-    source_batch_id: batchId,
-    import_date: new Date().toISOString(),
-    is_reviewed: false,
-    is_split: false,
-    reconciled: false,
-    lines: [{ category_id: null, amount: txn.amount, memo: null }], // Default single-line
-  }));
+    // Step 2: Add batch ID to transactions
+    const transactionsWithBatch = transactions.map((txn) => ({
+      ...txn,
+      source_batch_id: batchId,
+      import_date: new Date().toISOString(),
+      is_reviewed: false,
+      is_split: false,
+      reconciled: false,
+      lines: [{ category_id: null, amount: txn.amount, memo: null }], // Default single-line
+    }));
 
-  // Step 3: Bulk insert transactions
-  const { data: txnData, error: txnError } = await supabase
-    .from('transactions')
-    .insert(transactionsWithBatch)
-    .select('id');
+    // Step 3: Bulk insert transactions
+    const { data: txnData, error: txnError } = await supabase
+      .from('transactions')
+      .insert(transactionsWithBatch)
+      .select('id');
 
-  if (txnError) {
-    // Log error but don't fail (batch record exists)
-    console.error('Failed to insert transactions:', txnError);
-    throw txnError;
+    if (txnError) {
+      handleSupabaseError(txnError);
+    }
+
+    return {
+      batchId,
+      transactionIds: txnData?.map((t) => t.id) || [],
+    };
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to commit import batch', undefined, error);
   }
-
-  return {
-    batchId,
-    transactionIds: txnData?.map((t) => t.id) || [],
-  };
 }
 
 /**
@@ -135,22 +155,36 @@ export async function commitImportBatch(
  * @param batchId - UUID of the batch to undo
  */
 export async function undoImportBatch(batchId: string): Promise<void> {
-  const { error } = await supabase.rpc('undo_import_batch', { _batch_id: batchId });
-  if (error) throw error;
+  try {
+    const { error } = await supabase.rpc('undo_import_batch', { _batch_id: batchId });
+    if (error) {
+      handleSupabaseError(error);
+    }
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to undo import batch', undefined, error);
+  }
 }
 
 /**
  * Lists import batches for a bookset.
  */
 export async function listImportBatches(booksetId: string): Promise<ImportBatch[]> {
-  const { data, error } = await supabase
-    .from('import_batches')
-    .select('*')
-    .eq('bookset_id', booksetId)
-    .order('imported_at', { ascending: false })
-    .limit(20);
+  try {
+    const { data, error } = await supabase
+      .from('import_batches')
+      .select('*')
+      .eq('bookset_id', booksetId)
+      .order('imported_at', { ascending: false })
+      .limit(20);
 
-  if (error) throw error;
+    if (error) {
+      handleSupabaseError(error);
+    }
 
-  return data || [];
+    return data || [];
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to list import batches', undefined, error);
+  }
 }

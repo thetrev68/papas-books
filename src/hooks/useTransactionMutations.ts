@@ -7,14 +7,23 @@ import {
 } from '../lib/supabase/transactions';
 import type { Transaction } from '../types/database';
 import type { BulkOperation } from '../lib/transactionOperations';
+import { useToast } from '../components/GlobalToastProvider';
+import { DatabaseError } from '../lib/errors';
 
 export function useTransactionMutations() {
   const queryClient = useQueryClient();
+  const { showError, showSuccess } = useToast();
 
   const createTransactionMutation = useMutation({
     mutationFn: (transaction: Transaction) => createTransaction(transaction),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      showSuccess('Transaction created');
+    },
+    onError: (error) => {
+      const message =
+        error instanceof DatabaseError ? error.message : 'Failed to create transaction';
+      showError(message);
     },
   });
 
@@ -28,10 +37,16 @@ export function useTransactionMutations() {
       });
       return { previousTransactions };
     },
-    onError: (_err, _newTransaction, context) => {
+    onError: (error, _newTransaction, context) => {
       if (context?.previousTransactions) {
         queryClient.setQueryData(['transactions'], context.previousTransactions);
       }
+      const message =
+        error instanceof DatabaseError ? error.message : 'Failed to update transaction';
+      showError(message);
+    },
+    onSuccess: () => {
+      showSuccess('Transaction updated');
     },
     onSettled: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
@@ -42,6 +57,12 @@ export function useTransactionMutations() {
     mutationFn: (transactionId: string) => deleteTransaction(transactionId),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      showSuccess('Transaction deleted');
+    },
+    onError: (error) => {
+      const message =
+        error instanceof DatabaseError ? error.message : 'Failed to delete transaction';
+      showError(message);
     },
   });
 
@@ -59,6 +80,12 @@ export function useTransactionMutations() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      showSuccess('Transactions updated');
+    },
+    onError: (error) => {
+      const message =
+        error instanceof DatabaseError ? error.message : 'Failed to update transactions';
+      showError(message);
     },
   });
 

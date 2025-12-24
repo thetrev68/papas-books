@@ -2,6 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { fetchRules, createRule, updateRule, deleteRule } from '../lib/supabase/rules';
 import { UpdateRule } from '../types/rules';
+import { useToast } from '../components/GlobalToastProvider';
+import { DatabaseError } from '../lib/errors';
 
 /**
  * Fetches all rules for the active bookset.
@@ -39,11 +41,17 @@ export function useRules() {
 export function useCreateRule() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: createRule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', activeBookset?.id] });
+      showSuccess('Rule created');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to create rule';
+      showError(message);
     },
   });
 
@@ -62,11 +70,17 @@ export function useCreateRule() {
 export function useUpdateRule() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateRule }) => updateRule(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', activeBookset?.id] });
+      showSuccess('Rule updated');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to update rule';
+      showError(message);
     },
   });
 
@@ -85,11 +99,17 @@ export function useUpdateRule() {
 export function useDeleteRule() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: deleteRule,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['rules', activeBookset?.id] });
+      showSuccess('Rule deleted');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to delete rule';
+      showError(message);
     },
   });
 

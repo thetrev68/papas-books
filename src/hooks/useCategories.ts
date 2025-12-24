@@ -9,6 +9,8 @@ import {
   deleteCategory,
 } from '../lib/supabase/categories';
 import type { UpdateCategory } from '../lib/validation/categories';
+import { useToast } from '../components/GlobalToastProvider';
+import { DatabaseError } from '../lib/errors';
 
 export function useCategories() {
   const { activeBookset } = useAuth();
@@ -54,11 +56,17 @@ export function useCategories() {
 export function useCreateCategory() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: createCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', activeBookset?.id] });
+      showSuccess('Category created');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to create category';
+      showError(message);
     },
   });
 
@@ -73,12 +81,18 @@ export function useCreateCategory() {
 export function useUpdateCategory() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateCategory }) =>
       updateCategory(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', activeBookset?.id] });
+      showSuccess('Category updated');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to update category';
+      showError(message);
     },
   });
 
@@ -94,11 +108,17 @@ export function useUpdateCategory() {
 export function useDeleteCategory() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: deleteCategory,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['categories', activeBookset?.id] });
+      showSuccess('Category deleted');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to delete category';
+      showError(message);
     },
   });
 

@@ -1,60 +1,90 @@
 import { supabase } from './config';
 import type { Category } from '../../types/database';
 import type { InsertCategory, UpdateCategory } from '../validation/categories';
+import { handleSupabaseError, DatabaseError } from '../errors';
 
 export async function fetchCategories(booksetId: string): Promise<Category[]> {
-  const { data, error } = await supabase
-    .from('categories')
-    .select('*')
-    .eq('bookset_id', booksetId)
-    .eq('is_archived', false)
-    .order('sort_order', { ascending: true });
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .eq('bookset_id', booksetId)
+      .eq('is_archived', false)
+      .order('sort_order', { ascending: true });
 
-  if (error) throw error;
-  return data || [];
+    if (error) {
+      handleSupabaseError(error);
+    }
+    return data || [];
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to fetch categories', undefined, error);
+  }
 }
 
 export async function createCategory(category: InsertCategory): Promise<Category> {
-  const { data, error } = await supabase
-    .from('categories')
-    .insert({
-      bookset_id: category.booksetId,
-      name: category.name,
-      is_tax_deductible: category.isTaxDeductible ?? false,
-      tax_line_item: category.taxLineItem ?? null,
-      parent_category_id: category.parentCategoryId ?? null,
-      sort_order: category.sortOrder ?? 0,
-      is_archived: false,
-    })
-    .select()
-    .single();
+  try {
+    const { data, error } = await supabase
+      .from('categories')
+      .insert({
+        bookset_id: category.booksetId,
+        name: category.name,
+        is_tax_deductible: category.isTaxDeductible ?? false,
+        tax_line_item: category.taxLineItem ?? null,
+        parent_category_id: category.parentCategoryId ?? null,
+        sort_order: category.sortOrder ?? 0,
+        is_archived: false,
+      })
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      handleSupabaseError(error);
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to create category', undefined, error);
+  }
 }
 
 export async function updateCategory(id: string, updates: UpdateCategory): Promise<Category> {
-  const dbUpdates: Record<string, unknown> = {};
-  if (updates.name !== undefined) dbUpdates.name = updates.name;
-  if (updates.isTaxDeductible !== undefined) dbUpdates.is_tax_deductible = updates.isTaxDeductible;
-  if (updates.taxLineItem !== undefined) dbUpdates.tax_line_item = updates.taxLineItem;
-  if (updates.parentCategoryId !== undefined)
-    dbUpdates.parent_category_id = updates.parentCategoryId;
-  if (updates.sortOrder !== undefined) dbUpdates.sort_order = updates.sortOrder;
+  try {
+    const dbUpdates: Record<string, unknown> = {};
+    if (updates.name !== undefined) dbUpdates.name = updates.name;
+    if (updates.isTaxDeductible !== undefined)
+      dbUpdates.is_tax_deductible = updates.isTaxDeductible;
+    if (updates.taxLineItem !== undefined) dbUpdates.tax_line_item = updates.taxLineItem;
+    if (updates.parentCategoryId !== undefined)
+      dbUpdates.parent_category_id = updates.parentCategoryId;
+    if (updates.sortOrder !== undefined) dbUpdates.sort_order = updates.sortOrder;
 
-  const { data, error } = await supabase
-    .from('categories')
-    .update(dbUpdates)
-    .eq('id', id)
-    .select()
-    .single();
+    const { data, error } = await supabase
+      .from('categories')
+      .update(dbUpdates)
+      .eq('id', id)
+      .select()
+      .single();
 
-  if (error) throw error;
-  return data;
+    if (error) {
+      handleSupabaseError(error);
+    }
+    return data;
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to update category', undefined, error);
+  }
 }
 
 export async function deleteCategory(id: string): Promise<void> {
-  const { error } = await supabase.from('categories').update({ is_archived: true }).eq('id', id);
+  try {
+    const { error } = await supabase.from('categories').update({ is_archived: true }).eq('id', id);
 
-  if (error) throw error;
+    if (error) {
+      handleSupabaseError(error);
+    }
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to delete category', undefined, error);
+  }
 }

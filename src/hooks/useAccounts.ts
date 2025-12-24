@@ -9,6 +9,8 @@ import {
   deleteAccount,
 } from '../lib/supabase/accounts';
 import type { UpdateAccount } from '../lib/validation/accounts';
+import { useToast } from '../components/GlobalToastProvider';
+import { DatabaseError } from '../lib/errors';
 
 export function useAccounts() {
   const { activeBookset } = useAuth();
@@ -54,11 +56,17 @@ export function useAccounts() {
 export function useCreateAccount() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: createAccount,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts', activeBookset?.id] });
+      showSuccess('Account created');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to create account';
+      showError(message);
     },
   });
 
@@ -73,12 +81,18 @@ export function useCreateAccount() {
 export function useUpdateAccount() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateAccount }) =>
       updateAccount(id, updates),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts', activeBookset?.id] });
+      showSuccess('Account updated');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to update account';
+      showError(message);
     },
   });
 
@@ -94,11 +108,17 @@ export function useUpdateAccount() {
 export function useDeleteAccount() {
   const queryClient = useQueryClient();
   const { activeBookset } = useAuth();
+  const { showError, showSuccess } = useToast();
 
   const mutation = useMutation({
     mutationFn: deleteAccount,
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['accounts', activeBookset?.id] });
+      showSuccess('Account deleted');
+    },
+    onError: (error) => {
+      const message = error instanceof DatabaseError ? error.message : 'Failed to delete account';
+      showError(message);
     },
   });
 

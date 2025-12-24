@@ -17,39 +17,42 @@ import ImportPage from './pages/ImportPage';
 import WorkbenchPage from './pages/WorkbenchPage';
 import ReconcilePage from './pages/ReconcilePage';
 import ReportsPage from './pages/ReportsPage';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { queryClient } from './lib/queryClient';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
-      <BrowserRouter
-        future={{
-          v7_startTransition: true,
-          v7_relativeSplatPath: true,
-        }}
-      >
-        <GlobalToastProvider>
-          <AuthProvider>
-            <Routes>
-              <Route path="/login" element={<LoginPage />} />
-              <Route path="/signup" element={<SignupPage />} />
-              <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+      <ErrorBoundary>
+        <BrowserRouter
+          future={{
+            v7_startTransition: true,
+            v7_relativeSplatPath: true,
+          }}
+        >
+          <GlobalToastProvider>
+            <AuthProvider>
+              <Routes>
+                <Route path="/login" element={<LoginPage />} />
+                <Route path="/signup" element={<SignupPage />} />
+                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
 
-              <Route path="/app" element={<ProtectedRoute />}>
-                <Route path="dashboard" element={<DashboardPage />} />
-                <Route path="settings" element={<SettingsPage />} />
-                <Route path="import" element={<ImportPage />} />
-                <Route path="workbench" element={<WorkbenchPage />} />
-                <Route path="reconcile" element={<ReconcilePage />} />
-                <Route path="reports" element={<ReportsPage />} />
-                <Route path="" element={<Navigate to="dashboard" replace />} />
-              </Route>
+                <Route path="/app" element={<ProtectedRoute />}>
+                  <Route path="dashboard" element={<DashboardPage />} />
+                  <Route path="settings" element={<SettingsPage />} />
+                  <Route path="import" element={<ImportPage />} />
+                  <Route path="workbench" element={<WorkbenchPage />} />
+                  <Route path="reconcile" element={<ReconcilePage />} />
+                  <Route path="reports" element={<ReportsPage />} />
+                  <Route path="" element={<Navigate to="dashboard" replace />} />
+                </Route>
 
-              <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
-            </Routes>
-          </AuthProvider>
-        </GlobalToastProvider>
-      </BrowserRouter>
+                <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+              </Routes>
+            </AuthProvider>
+          </GlobalToastProvider>
+        </BrowserRouter>
+      </ErrorBoundary>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>
   </React.StrictMode>
