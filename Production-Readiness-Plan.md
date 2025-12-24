@@ -578,7 +578,7 @@ docs/rls-test-results.md
 
 ---
 
-### Task 1.7: Add Network Retry Logic to React Query 🔴 CRITICAL
+### Task 1.7: Add Network Retry Logic to React Query ✅ COMPLETE
 
 **Priority:** CRITICAL
 **Estimated Time:** 2 hours
@@ -586,10 +586,10 @@ docs/rls-test-results.md
 
 **Acceptance Criteria:**
 
-- [ ] Failed queries retry 3 times with exponential backoff
-- [ ] Mutations don't auto-retry (prevent duplicate writes)
-- [ ] User sees loading state during retries
-- [ ] Network error toast only shows after final retry fails
+- [x] Failed queries retry 3 times with exponential backoff
+- [x] Mutations don't auto-retry (prevent duplicate writes)
+- [x] User sees loading state during retries
+- [x] Network error toast only shows after final retry fails
 
 **Files to Modify:**
 
