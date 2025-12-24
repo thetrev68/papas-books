@@ -11,12 +11,6 @@ export const insertRuleSchema = z.object({
   isEnabled: z.boolean(),
 });
 
-export type InsertRuleValidated = z.infer<typeof insertRuleSchema>;
-
-export const updateRuleSchema = insertRuleSchema.partial().omit({ booksetId: true });
-
-export type UpdateRuleValidated = z.infer<typeof updateRuleSchema>;
-
 // Additional validation: Test regex patterns
 export function validateRegex(pattern: string): { valid: boolean; error?: string } {
   try {

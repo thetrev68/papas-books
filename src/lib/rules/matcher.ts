@@ -1,10 +1,6 @@
 import { Transaction } from '../../types/database';
 import { RuleMatch, Rule as AppRule } from '../../types/rules';
 
-export interface MatchOptions {
-  caseSensitive?: boolean; // Override rule's caseSensitive flag (for testing)
-}
-
 /**
  * Normalizes text for matching.
  *
@@ -17,7 +13,7 @@ export interface MatchOptions {
  * @param caseSensitive - Whether to preserve case
  * @returns Normalized string
  */
-export function normalizeText(text: string, caseSensitive: boolean): string {
+function normalizeText(text: string, caseSensitive: boolean): string {
   const normalized = text.trim().replace(/\s+/g, ' ');
   return caseSensitive ? normalized : normalized.toLowerCase();
 }

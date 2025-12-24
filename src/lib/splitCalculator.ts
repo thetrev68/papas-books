@@ -44,17 +44,6 @@ export function calculateSplitRemainder(transaction: Transaction): number {
 }
 
 /**
- * Creates default split transaction from single category
- */
-export function createSplitFromSingle(transaction: Transaction, categoryId: string): Transaction {
-  return {
-    ...transaction,
-    is_split: true,
-    lines: [{ category_id: categoryId, amount: transaction.amount, memo: '' }],
-  };
-}
-
-/**
  * Validates split line amount (can be positive or negative)
  */
 export function validateSplitLineAmount(amount: number): FieldValidation {

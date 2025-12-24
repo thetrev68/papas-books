@@ -14,7 +14,7 @@ export interface ParseOptions {
 }
 
 // Constants for validation
-export const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 export const MAX_ROWS = 50000; // 50,000 rows
 
 /**

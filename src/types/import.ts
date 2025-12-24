@@ -19,6 +19,3 @@ export interface CsvMapping {
   inflowColumn?: string; // "Credit", "Deposit" (positive amounts)
   outflowColumn?: string; // "Debit", "Withdrawal" (negative amounts)
 }
-
-export type InsertCsvMapping = CsvMapping;
-export type UpdateCsvMapping = Partial<CsvMapping>;

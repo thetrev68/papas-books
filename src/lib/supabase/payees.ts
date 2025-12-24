@@ -33,19 +33,6 @@ export async function createPayee(payee: InsertPayee): Promise<Payee> {
 }
 
 /**
- * Update payee aliases by adding a new alias
- */
-export async function updatePayeeAliases(payeeId: string, newAlias: string): Promise<void> {
-  // Use the PostgreSQL function to add alias
-  const { error } = await supabase.rpc('add_payee_alias', {
-    payee_id: payeeId,
-    new_alias: newAlias,
-  });
-
-  if (error) throw error;
-}
-
-/**
  * Update payee details
  */
 export async function updatePayee(payeeId: string, updates: Partial<Payee>): Promise<Payee> {

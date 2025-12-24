@@ -25,20 +25,6 @@ export interface Bookset {
   tax_year?: number;
 }
 
-export interface AccessGrant {
-  id: string;
-  bookset_id: string;
-  user_id: string;
-  granted_by: string;
-  role: 'owner' | 'editor' | 'viewer';
-  created_at: string;
-  expires_at?: string;
-  revoked_at?: string;
-  revoked_by?: string;
-  can_import: boolean;
-  can_reconcile: boolean;
-}
-
 export interface Account {
   id: string;
   bookset_id: string;

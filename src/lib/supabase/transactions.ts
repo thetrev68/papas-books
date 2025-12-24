@@ -85,18 +85,6 @@ export async function bulkUpdateReviewed(
 }
 
 /**
- * Bulk delete transactions
- */
-export async function bulkDeleteTransactions(transactionIds: string[]): Promise<void> {
-  const { error } = await supabase
-    .from('transactions')
-    .update({ is_archived: true, updated_at: new Date().toISOString() })
-    .in('id', transactionIds);
-
-  if (error) throw error;
-}
-
-/**
  * Generate fingerprint for duplicate detection
  */
 async function generateFingerprint(date: string, amount: number, payee: string): Promise<string> {

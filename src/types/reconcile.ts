@@ -1,18 +1,3 @@
-export interface Reconciliation {
-  id: string;
-  booksetId: string;
-  accountId: string;
-  statementDate: string; // ISO date
-  statementBalance: number; // cents
-  openingBalance: number; // cents
-  calculatedBalance: number; // cents
-  difference: number; // cents
-  status: 'in_progress' | 'balanced' | 'unbalanced';
-  finalizedAt?: string;
-  transactionCount: number;
-  transactionIds: string[];
-}
-
 export interface ReconciliationInput {
   accountId: string;
   statementDate: string; // YYYY-MM-DD

@@ -1,6 +1,17 @@
 {
-  "entry": ["src/main.tsx"],
-  "ignore": ["src/**/*.test.{ts,tsx}"],
+  "entry": ["src/main.tsx", "postcss.config.js", "tailwind.config.js"],
+  "ignore": [
+    "src/**/*.test.{ts,tsx}",
+    "src/types/audit.ts",
+    "src/components/audit/**",
+    "src/components/workbench/CreateRuleFromTransactionButton.tsx",
+    "src/components/workbench/InlineEditCell.tsx",
+    "src/components/workbench/KeyboardHandler.tsx",
+    "src/lib/audit/**",
+    "src/lib/data/defaultCategories.ts",
+    "src/lib/validation/import.ts",
+    "src/lib/transactionOperations.ts"
+  ],
   "project": ["src/**/*.{ts,tsx}"],
   "ignoreDependencies": [
     "@testing-library/jest-dom",
@@ -9,11 +20,13 @@
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser",
     "@vitest/coverage-v8",
-    "autoprefixer",
     "eslint-config-prettier",
     "eslint-plugin-react-hooks",
-    "eslint-plugin-react-refresh",
-    "postcss",
-    "tailwindcss"
-  ]
+    "eslint-plugin-react-refresh"
+  ],
+  "ignoreExportsUsedInFile": {
+    "interface": true,
+    "type": true
+  },
+  "ignoreBinaries": ["powershell"]
 }

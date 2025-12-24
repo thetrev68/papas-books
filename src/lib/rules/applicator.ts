@@ -22,7 +22,7 @@ export interface ApplyRuleOptions {
  * @param options - Optional configuration
  * @returns Result with success/failure status
  */
-export async function applyRuleToTransaction(
+async function applyRuleToTransaction(
   transaction: Transaction,
   rule: Rule,
   options: ApplyRuleOptions = {}
@@ -128,7 +128,7 @@ export async function applyRuleToTransaction(
  * @param options - Optional configuration
  * @returns Result with success/failure status
  */
-export async function applyRulesToTransaction(
+async function applyRulesToTransaction(
   transaction: Transaction,
   rules: Rule[],
   options?: ApplyRuleOptions

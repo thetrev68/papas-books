@@ -22,19 +22,6 @@ export async function finalizeReconciliationRPC(
   if (error) throw error;
 }
 
-export async function fetchLastReconciliation(accountId: string) {
-  const { data, error } = await supabase
-    .from('reconciliations')
-    .select('*')
-    .eq('account_id', accountId)
-    .order('statement_date', { ascending: false })
-    .limit(1)
-    .single();
-
-  if (error && error.code !== 'PGRST116') throw error; // PGRST116 is "no rows returned"
-  return data;
-}
-
 export async function fetchUnreconciledTransactions(accountId: string, statementDate: string) {
   const { data, error } = await supabase
     .from('transactions')

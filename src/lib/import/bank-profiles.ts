@@ -1,6 +1,6 @@
 import type { CsvMapping } from '../../types/import';
 
-export const BANK_PROFILES: Record<string, CsvMapping> = {
+const BANK_PROFILES: Record<string, CsvMapping> = {
   CHASE_CHECKING: {
     dateColumn: 'Posting Date',
     amountColumn: 'Amount',
