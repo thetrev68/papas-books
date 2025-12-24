@@ -1,7 +1,7 @@
 {
   "name": "papas-books",
   "private": true,
-  "version": "0.1.1",
+  "version": "0.1.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -22,7 +22,8 @@
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",
     "release:major": "standard-version --release-as major",
-    "release:patch": "standard-version --release-as patch"
+    "release:patch": "standard-version --release-as patch",
+    "test:release": "node scripts/test-release.js"
   },
   "dependencies": {
     "@supabase/supabase-js": "^2.39.8",

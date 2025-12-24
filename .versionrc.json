@@ -14,5 +14,9 @@
   "issueUrlFormat": "{{host}}/{{owner}}/{{repository}}/issues/{{id}}",
   "userUrlFormat": "{{host}}/{{user}}",
   "releaseCommitMessageFormat": "chore(release): {{currentTag}}",
-  "issuePrefixes": ["#"]
+  "issuePrefixes": ["#"],
+  "header": "# Changelog\n\nAll notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.\n",
+  "scripts": {
+    "postchangelog": "node scripts/fix-changelog.js && markdownlint --fix CHANGELOG.md"
+  }
 }
