@@ -2,15 +2,8 @@
   "entry": ["src/main.tsx", "postcss.config.js", "tailwind.config.js"],
   "ignore": [
     "src/**/*.test.{ts,tsx}",
-    "src/types/audit.ts",
     "src/components/audit/**",
-    "src/components/workbench/CreateRuleFromTransactionButton.tsx",
-    "src/components/workbench/InlineEditCell.tsx",
-    "src/components/workbench/KeyboardHandler.tsx",
-    "src/lib/audit/**",
-    "src/lib/data/defaultCategories.ts",
-    "src/lib/validation/import.ts",
-    "src/lib/transactionOperations.ts"
+    "src/lib/audit/**"
   ],
   "project": ["src/**/*.{ts,tsx}"],
   "ignoreDependencies": [

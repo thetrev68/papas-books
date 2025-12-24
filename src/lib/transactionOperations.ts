@@ -1,7 +1,12 @@
 import type { Transaction } from '../types/database';
 
+export interface BulkOperation {
+  type: 'markReviewed' | 'markUnreviewed' | 'applyRules';
+  transactionIds: string[];
+}
+
 /**
- * Creates a new manual transaction
+ * Creates a new manual transaction object (not persisted to DB)
  */
 export function createManualTransaction(
   accountId: string,
@@ -10,50 +15,35 @@ export function createManualTransaction(
   amount: number,
   categoryId?: string
 ): Transaction {
-  const lines = categoryId ? [{ category_id: categoryId, amount, memo: '' }] : [];
+  const now = new Date().toISOString();
 
   return {
     id: crypto.randomUUID(),
     bookset_id: '', // Will be set by caller
     account_id: accountId,
     date,
+    import_date: now,
     payee,
-    original_description: payee, // For manual transactions
+    original_description: payee,
     amount,
-    is_split: !!categoryId && lines.length === 1,
-    lines,
+    is_split: !!categoryId,
+    lines: categoryId
+      ? [
+          {
+            category_id: categoryId,
+            amount: amount,
+            memo: '',
+          },
+        ]
+      : [],
     is_reviewed: false,
     reconciled: false,
     is_archived: false,
-    source_batch_id: null,
-    fingerprint: '', // Will be generated
-    import_date: new Date().toISOString(),
-    created_at: new Date().toISOString(),
-    updated_at: new Date().toISOString(),
+    created_at: now,
+    updated_at: now,
     created_by: '', // Will be set by caller
     last_modified_by: '', // Will be set by caller
+    source_batch_id: null,
+    fingerprint: '', // Will be generated
   };
-}
-
-/**
- * Deletes a transaction (soft delete via isArchived flag)
- */
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function deleteTransaction(_transactionId: string): Promise<void> {
-  // Implementation in supabase/transactions.ts
-  throw new Error('Not implemented - use supabase/transactions.ts');
-}
-
-/**
- * Bulk operations on transactions
- */
-export interface BulkOperation {
-  type: 'markReviewed' | 'markUnreviewed' | 'applyRules';
-  transactionIds: string[];
-}
-
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-export function performBulkOperation(_operation: BulkOperation): Promise<void> {
-  // Implementation in supabase/transactions.ts
-  throw new Error('Not implemented - use supabase/transactions.ts');
 }
