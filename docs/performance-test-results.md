@@ -57,15 +57,15 @@ as specified in Task 2.4 of the Production Readiness Plan.
 
 | Metric                  | Target | Actual | Status |
 | ----------------------- | ------ | ------ | ------ |
-| Initial page load       | < 2s   | _TBD_  | ⏳     |
-| First transaction shown | < 2s   | _TBD_  | ⏳     |
+| Initial page load       | < 2s   | 0.19s  | ✅     |
+| First transaction shown | < 2s   | 0.19s  | ✅     |
 | All data rendered       | < 3s   | _TBD_  | ⏳     |
 
 **Notes:**
 
 - _Record any observations about loading behavior_
-- _Note if virtualization is working correctly_
-- _Check for console errors or warnings_
+- Virtualization is working correctly (about 50 records at a time)
+- Console is clean - no errors or warnings
 
 ---
 
@@ -149,6 +149,12 @@ as specified in Task 2.4 of the Production Readiness Plan.
 
 **Objective:** Verify reports generate in < 5 seconds with large dataset
 
+**⚠️ ISSUE FOUND:** Reports page is using `fetchTransactionsForReport()` which doesn't implement
+pagination properly. It hits Supabase's default 1000-row limit, showing only 999 transactions
+instead of all 10,053. Task 2.3 added pagination infrastructure but didn't complete the integration.
+
+**See Issue Details Below** for resolution prompt.
+
 ### Test Procedure
 
 1. Navigate to Reports page
@@ -162,18 +168,28 @@ as specified in Task 2.4 of the Production Readiness Plan.
 
 ### Results
 
-| Report Type         | Target | Actual | Status |
-| ------------------- | ------ | ------ | ------ |
-| All transactions    | < 5s   | _TBD_  | ⏳     |
-| Category summary    | < 5s   | _TBD_  | ⏳     |
-| 1-month report      | < 3s   | _TBD_  | ⏳     |
-| Full year report    | < 5s   | _TBD_  | ⏳     |
-| Pagination response | < 1s   | _TBD_  | ⏳     |
+| Report Type         | Target | Actual          | Status |
+| ------------------- | ------ | --------------- | ------ |
+| All transactions    | < 5s   | Fast (< 1s)     | ⚠️     |
+| Category summary    | < 5s   | Fast (< 1s)     | ⚠️     |
+| 1-month report      | < 3s   | Fast (< 1s)     | ⚠️     |
+| Full year report    | < 5s   | Fast (< 1s)     | ⚠️     |
+| Pagination response | < 1s   | Not implemented | ❌     |
+
+**Current Behavior:**
+
+- Reports show 999 transactions (Supabase default 1000-row limit)
+- Database contains 10,053 transactions
+- Performance is excellent because limited dataset is loaded
+- **Issue:** No pagination controls visible, user cannot access remaining 9,000+ transactions
 
 **Notes:**
 
-- _Check if pagination is working correctly_
-- _Verify page size limit (1000 transactions per page)_
+- ⚠️ Reports are fast but incomplete - only showing first 1000 rows
+- ❌ Pagination was partially implemented in Task 2.3 but not wired up to UI
+- `fetchReportTransactions()` exists with pagination support
+- `ReportsPage.tsx` still uses old `fetchTransactionsForReport()` without pagination
+- Need to complete Task 2.3 implementation
 
 ---
 
@@ -360,5 +376,64 @@ as specified in Task 2.4 of the Production Readiness Plan.
 
 ---
 
-**Document Version:** 1.0
+## Issue Found During Testing
+
+### Reports Pagination Not Fully Implemented (Task 2.3 Incomplete)
+
+**Severity:** Medium (affects data visibility, not performance)
+
+**Current Behavior:**
+
+- Reports page shows only 999 transactions (Supabase default 1000-row limit)
+- Database contains 10,053 transactions
+- No pagination controls visible to access remaining data
+- Users cannot view all transactions in reports
+
+**Root Cause:**
+
+Task 2.3 added pagination infrastructure but didn't complete the integration:
+
+- ✅ `fetchReportTransactions()` function created with pagination support in [src/lib/supabase/reports.ts](../src/lib/supabase/reports.ts)
+- ❌ [src/pages/ReportsPage.tsx](../src/pages/ReportsPage.tsx) still uses old `fetchTransactionsForReport()` without pagination
+- ❌ Pagination controls exist in UI but aren't functional
+
+**Files Affected:**
+
+- `src/pages/ReportsPage.tsx` (line 40) - Using wrong function
+- `src/lib/supabase/reports.ts` - Has both old and new functions
+
+**Resolution Prompt for Claude:**
+
+```text
+I need you to complete Task 2.3 implementation for Reports pagination.
+
+**Current Issue:**
+The Reports page shows only 999 transactions instead of all 10,053 because it's
+using the old `fetchTransactionsForReport()` function without pagination support.
+
+**What needs to be done:**
+1. Update ReportsPage.tsx to use `fetchReportTransactions()` instead of
+   `fetchTransactionsForReport()`
+2. Wire up the existing pagination controls to actually work
+3. Ensure the total count displays correctly
+4. Test that users can navigate through all pages of results
+5. Remove or deprecate the old `fetchTransactionsForReport()` function
+
+**Acceptance Criteria:**
+- Reports show correct total count (10,053 transactions)
+- Pagination controls are visible and functional
+- Page size is 1000 transactions per page
+- User can navigate to any page
+- Performance remains fast (< 1s per page load)
+
+**Files to modify:**
+- src/pages/ReportsPage.tsx
+- src/lib/supabase/reports.ts (optional cleanup)
+
+Please implement this fix and test with the 10k+ transaction dataset.
+```
+
+---
+
+**Document Version:** 1.1
 **Last Updated:** 2025-12-24
