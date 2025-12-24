@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.5](https://github.com/thetrev68/papas-books/compare/v0.1.4...v0.1.5) (2025-12-24)
+
+### Bug Fixes
+
+- correct git staging sequence in changelog automation ([54338ee](https://github.com/thetrev68/papas-books/commit/54338eeb677923198c81fcd1c7f3d9f6608c1ba5))
+
 ## [0.1.4](https://github.com/thetrev68/papas-books/compare/v0.1.3...v0.1.4) (2025-12-24)
 
 ### Bug Fixes
