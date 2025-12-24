@@ -232,6 +232,27 @@ describe('mapRowToTransaction', () => {
     expect(result.rawRow).toEqual(row);
     expect(result.rowIndex).toBe(5);
   });
+
+  it('should sanitize description', () => {
+    const row = {
+      Date: '1/15/2024',
+      Amount: '$100',
+      Description: '<b>Test</b> <script>alert(1)</script>',
+    };
+    const mapping: CsvMapping = {
+      dateColumn: 'Date',
+      amountColumn: 'Amount',
+      descriptionColumn: 'Description',
+      dateFormat: 'MM/dd/yyyy' as DateFormat,
+      hasHeaderRow: true,
+      amountMode: 'signed' as AmountMode,
+    };
+
+    const result = mapRowToTransaction(row, mapping, 0);
+
+    expect(result.isValid).toBe(true);
+    expect(result.description).toBe('Test');
+  });
 });
 
 describe('mapRowsToTransactions', () => {

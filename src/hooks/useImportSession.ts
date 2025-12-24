@@ -16,6 +16,7 @@ import { applyRulesToBatch } from '../lib/rules/applicator';
 import { fetchPayees, createPayee } from '../lib/supabase/payees';
 import { guessPayee } from '../lib/payee/payeeGuesser';
 import { supabase } from '../lib/supabase/config';
+import { MAX_PAYEE_LENGTH } from '../lib/validation/import';
 import type { CsvMapping } from '../types/import';
 import type { RuleBatchResult, Rule } from '../types/rules';
 import type { Transaction } from '../types/database';
@@ -236,7 +237,7 @@ export function useImportSession(): UseImportSessionResult {
         account_id: state.selectedAccountId!,
         date: t.date!,
         amount: t.amount!,
-        payee: t.description!,
+        payee: t.description!.slice(0, MAX_PAYEE_LENGTH),
         original_description: t.description!,
         fingerprint: t.fingerprint,
         source_batch_id: null, // Will be set by commitImportBatch

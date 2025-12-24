@@ -1,5 +1,6 @@
 import { parse, isValid as isValidDate } from 'date-fns';
 import { CsvMapping } from '../../types/import';
+import { sanitizeText, MAX_DESCRIPTION_LENGTH } from '../validation/import';
 
 export interface StagedTransaction {
   // Valid fields (only present if parsing succeeded)
@@ -137,9 +138,12 @@ export function mapRowToTransaction(
     }
   }
 
-  // Extract description (no parsing needed)
+  // Extract description (with sanitization)
   if (rawDescription && typeof rawDescription === 'string') {
-    description = rawDescription.trim();
+    description = sanitizeText(rawDescription, MAX_DESCRIPTION_LENGTH);
+    if (!description) {
+      errors.push('Description is empty after sanitization');
+    }
   } else {
     errors.push('Missing description');
   }
