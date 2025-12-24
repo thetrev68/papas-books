@@ -12,7 +12,6 @@
  * Usage: Automatically invoked by standard-version via .versionrc.json
  */
 import { readFileSync, writeFileSync } from 'fs';
-import { execSync } from 'child_process';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
 
@@ -30,7 +29,4 @@ content = content.replace(/^### (\[?\d+\.\d+\.\d+)/gm, '## $1');
 // Write back
 writeFileSync(changelogPath, content, 'utf8');
 
-// Stage the fixed changelog so standard-version includes it in the release commit
-execSync('git add CHANGELOG.md', { stdio: 'inherit' });
-
-console.log('✓ Fixed changelog heading levels and staged changes');
+console.log('✓ Fixed changelog heading levels');
