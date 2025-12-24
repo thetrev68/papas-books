@@ -73,7 +73,7 @@ async function seedLargeDataset() {
   // Verify bookset and account exist
   const { data: bookset, error: booksetError } = await supabase
     .from('booksets')
-    .select('id, name')
+    .select('id, name, owner_id')
     .eq('id', booksetId)
     .single();
 
@@ -95,6 +95,16 @@ async function seedLargeDataset() {
 
   console.log(`✅ Verified bookset: "${bookset.name}"`);
   console.log(`✅ Verified account: "${account.name}"\n`);
+
+  // Get the bookset owner ID to set as created_by
+  const { data: owner } = await supabase
+    .from('users')
+    .select('id')
+    .eq('id', bookset.owner_id)
+    .single();
+
+  const ownerId = owner?.id || bookset.owner_id;
+  console.log(`👤 Setting created_by to bookset owner: ${ownerId}\n`);
 
   // Merchant names for realistic data
   const merchants = [
@@ -162,6 +172,8 @@ async function seedLargeDataset() {
         reconciled: false,
         is_archived: false,
         lines: [],
+        created_by: ownerId,
+        last_modified_by: ownerId,
       });
     }
 
