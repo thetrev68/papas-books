@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.12](https://github.com/thetrev68/papas-books/compare/v0.1.11...v0.1.12) (2025-12-25)
+
+### Features
+
+- **audit:** implement change_history tracking for all entities (Task 3.1) ([e37c4b7](https://github.com/thetrev68/papas-books/commit/e37c4b76a71fb8d558046aba8e09112efd521f93))
+
 ## [0.1.11](https://github.com/thetrev68/papas-books/compare/v0.1.10...v0.1.11) (2025-12-25)
 
 ### Features
