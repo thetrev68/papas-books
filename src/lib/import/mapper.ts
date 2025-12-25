@@ -1,6 +1,6 @@
 import { parse, isValid as isValidDate } from 'date-fns';
 import { CsvMapping } from '../../types/import';
-import { sanitizeText, MAX_DESCRIPTION_LENGTH } from '../validation/import';
+import { sanitizeText, MAX_DESCRIPTION_LENGTH, validateCsvRow } from '../validation/import';
 import { validateMappedTransaction, validateRawCsvRow } from '../validation/import-schema';
 
 export interface StagedTransaction {
@@ -104,11 +104,32 @@ export function mapRowToTransaction(
     errors.push(...rawValidation.error.issues.map((issue) => issue.message));
   }
 
+  // Basic field-level validation of raw strings
+  const rawDate = row[mapping.dateColumn] || '';
+  const rawDescription = row[mapping.descriptionColumn] || '';
+  const rawAmount =
+    mapping.amountMode === 'signed'
+      ? row[mapping.amountColumn] || ''
+      : row[mapping.inflowColumn || ''] || row[mapping.outflowColumn || ''] || '';
+
+  const csvValidation = validateCsvRow({
+    date: rawDate,
+    amount: rawAmount,
+    description: rawDescription,
+  });
+
+  if (!csvValidation.success) {
+    csvValidation.error.issues.forEach((issue) => {
+      if (!errors.includes(issue.message)) {
+        errors.push(issue.message);
+      }
+    });
+  }
+
   const shouldParse = errors.length === 0;
 
   // Extract raw values from row
-  const rawDate = row[mapping.dateColumn];
-  const rawDescription = row[mapping.descriptionColumn];
+  // (rawDate and rawDescription already extracted above)
 
   // Parse date
   if (shouldParse) {

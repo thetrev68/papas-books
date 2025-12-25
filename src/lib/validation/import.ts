@@ -1,5 +1,8 @@
+import { z } from 'zod';
+
 export const MAX_DESCRIPTION_LENGTH = 500;
 export const MAX_PAYEE_LENGTH = 200;
+export const MAX_MEMO_LENGTH = 1000;
 
 // Sanitize HTML and dangerous characters
 export function sanitizeText(text: string, maxLength: number): string {
@@ -29,4 +32,19 @@ export function sanitizeText(text: string, maxLength: number): string {
   }
 
   return cleaned;
+}
+
+// Validate CSV row data
+export const csvRowSchema = z.object({
+  date: z.string().min(1, 'Date is required'),
+  amount: z.string().min(1, 'Amount is required'),
+  description: z
+    .string()
+    .max(MAX_DESCRIPTION_LENGTH, `Description too long (max ${MAX_DESCRIPTION_LENGTH} chars)`),
+});
+
+export function validateCsvRow(
+  row: Record<string, string>
+): z.SafeParseReturnType<unknown, z.infer<typeof csvRowSchema>> {
+  return csvRowSchema.safeParse(row);
 }

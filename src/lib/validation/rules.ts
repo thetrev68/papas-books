@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { MAX_PAYEE_LENGTH } from './import';
 
 export const insertRuleSchema = z.object({
   booksetId: z.string().uuid(),
@@ -6,7 +7,7 @@ export const insertRuleSchema = z.object({
   matchType: z.enum(['contains', 'exact', 'startsWith', 'regex']),
   caseSensitive: z.boolean(),
   targetCategoryId: z.string().uuid('Category is required'),
-  suggestedPayee: z.string().max(200).optional(),
+  suggestedPayee: z.string().max(MAX_PAYEE_LENGTH).optional(),
   priority: z.number().int().min(1).max(100),
   isEnabled: z.boolean(),
 });

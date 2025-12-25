@@ -1,5 +1,6 @@
 import { SplitLine } from '../../types/database';
 import { supabase } from '../supabase/config';
+import { MAX_MEMO_LENGTH } from './import';
 
 export async function validateSplitLines(
   lines: SplitLine[],
@@ -36,6 +37,10 @@ export async function validateSplitLines(
 
     if (line.amount === 0) {
       errors.push(`Split line ${index + 1}: Amount cannot be zero`);
+    }
+
+    if (line.memo && line.memo.length > MAX_MEMO_LENGTH) {
+      errors.push(`Split line ${index + 1}: Memo too long (max ${MAX_MEMO_LENGTH} chars)`);
     }
   });
 
