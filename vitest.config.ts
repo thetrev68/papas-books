@@ -11,5 +11,19 @@ export default defineConfig({
       VITE_SUPABASE_URL: 'https://example.supabase.co',
       VITE_SUPABASE_ANON_KEY: 'test-anon-key',
     },
+    coverage: {
+      provider: 'v8',
+      reporter: ['text', 'json', 'json-summary', 'html'],
+      exclude: [
+        'node_modules/**',
+        'e2e/**',
+        '**/*.test.ts',
+        '**/*.test.tsx',
+        '**/*.spec.ts',
+        '**/*.spec.tsx',
+        '**/types/**',
+        '**/*.d.ts',
+      ],
+    },
   },
 });
