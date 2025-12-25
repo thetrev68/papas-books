@@ -11,34 +11,47 @@ export interface BeforeInstallPromptEvent extends Event {
   prompt(): Promise<void>;
 }
 
-// Register the service worker
-const updateSW = registerSW({
-  onNeedRefresh() {
-    // Log update availability - integrate with toast system if needed
-    console.log('New version available! Please refresh the page.');
+// Only register service worker in production
+if (import.meta.env.PROD) {
+  // Register the service worker
+  const updateSW = registerSW({
+    onNeedRefresh() {
+      // Log update availability - integrate with toast system if needed
+      console.log('New version available! Please refresh the page.');
 
-    // Optional: Show browser notification if permission granted
-    if ('Notification' in window && Notification.permission === 'granted') {
-      new Notification("Papa's Books Update", {
-        body: 'A new version is available. Refresh to update.',
-        icon: '/android-chrome-192x192.png',
-        badge: '/favicon-32x32.png',
-      });
-    }
-  },
-  onOfflineReady() {
-    console.log('App is ready to work offline!');
-  },
-  onRegisterError(error) {
-    console.error('Service worker registration failed:', error);
-  },
-});
-
-// Check for updates on visibility change (more efficient than interval)
-if ('serviceWorker' in navigator) {
-  document.addEventListener('visibilitychange', () => {
-    if (!document.hidden) {
-      updateSW(true);
-    }
+      // Optional: Show browser notification if permission granted
+      if ('Notification' in window && Notification.permission === 'granted') {
+        new Notification("Papa's Books Update", {
+          body: 'A new version is available. Refresh to update.',
+          icon: '/android-chrome-192x192.png',
+          badge: '/favicon-32x32.png',
+        });
+      }
+    },
+    onOfflineReady() {
+      console.log('App is ready to work offline!');
+    },
+    onRegisterError(error) {
+      console.error('Service worker registration failed:', error);
+    },
   });
+
+  // Check for updates on visibility change (more efficient than interval)
+  if ('serviceWorker' in navigator) {
+    document.addEventListener('visibilitychange', () => {
+      if (!document.hidden) {
+        updateSW(true);
+      }
+    });
+  }
+} else {
+  // In development, unregister any existing service workers
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.getRegistrations().then((registrations) => {
+      for (const registration of registrations) {
+        registration.unregister();
+        console.log('Unregistered service worker for development');
+      }
+    });
+  }
 }

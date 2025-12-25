@@ -8,6 +8,7 @@ import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from './context/AuthContext';
 import { GlobalToastProvider } from './components/GlobalToastProvider';
 import ProtectedRoute from './components/ProtectedRoute';
+import RootRedirect from './components/RootRedirect';
 import LoginPage from './pages/LoginPage';
 import SignupPage from './pages/SignupPage';
 import ForgotPasswordPage from './pages/ForgotPasswordPage';
@@ -49,7 +50,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   <Route path="" element={<Navigate to="dashboard" replace />} />
                 </Route>
 
-                <Route path="/" element={<Navigate to="/app/dashboard" replace />} />
+                <Route path="/" element={<RootRedirect />} />
               </Routes>
             </AuthProvider>
           </GlobalToastProvider>

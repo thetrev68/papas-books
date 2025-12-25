@@ -119,6 +119,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      console.log('Auth state change event:', _event, 'has session:', !!session?.user);
       setSupabaseUser(session?.user ?? null);
       if (session?.user) {
         setLoading(true);
@@ -128,16 +129,23 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           // Small initial delay to allow trigger to complete
           await new Promise((resolve) => setTimeout(resolve, 500));
           await runFetchUserData(session.user.id);
-        } else {
-          if (_event === 'INITIAL_SESSION' && initialSessionHandledRef.current) {
+          setLoading(false);
+        } else if (_event === 'INITIAL_SESSION') {
+          if (initialSessionHandledRef.current) {
             setLoading(false);
             return;
           }
           initialSessionHandledRef.current = true;
           await runFetchUserData(session.user.id);
+          setLoading(false);
+        } else {
+          // Other events (USER_UPDATED, etc)
+          await runFetchUserData(session.user.id);
+          setLoading(false);
         }
-        setLoading(false);
       } else {
+        // User signed out or session expired
+        console.log('No session - clearing user state');
         setUser(null);
         setActiveBookset(null);
         setMyBooksets([]);
@@ -171,8 +179,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signOut = async () => {
+    console.log('signOut called');
     const { error } = await supabase.auth.signOut();
-    if (error) throw error;
+    if (error) {
+      console.error('Sign out error:', error);
+      throw error;
+    }
+    console.log('Sign out successful');
+
+    // Manually clear state immediately (don't wait for auth state change event)
+    // This ensures the UI updates even if the event listener doesn't fire
+    setUser(null);
+    setActiveBookset(null);
+    setMyBooksets([]);
+    setSupabaseUser(null);
+    setLoading(false);
+    console.log('User state cleared');
   };
 
   const resetPassword = async (email: string) => {

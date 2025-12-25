@@ -11,7 +11,7 @@ const pwaConfig = {
   registerType: 'autoUpdate' as const,
   includeAssets: ['favicon.ico', 'apple-touch-icon.png', 'favicon-16x16.png', 'favicon-32x32.png'],
   devOptions: {
-    enabled: true,
+    enabled: false, // Disable PWA in dev mode to avoid glob pattern warnings
   },
   manifest: {
     name: "Papa's Books",

@@ -30,9 +30,12 @@ export default function AppLayout() {
   const handleSignOut = async () => {
     try {
       await signOut();
-      navigate('/login');
+      // Don't navigate here - let the auth state change in AuthContext handle it
+      // This prevents race conditions where we navigate before state clears
     } catch (error) {
       console.error('Error signing out:', error);
+      // Only navigate on error to show error message
+      navigate('/login');
     }
   };
 
