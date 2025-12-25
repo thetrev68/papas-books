@@ -88,7 +88,11 @@ export async function createRule(rule: InsertRule): Promise<Rule> {
  * @param updates - Partial rule data
  * @returns Updated rule
  */
-export async function updateRule(id: string, updates: UpdateRule): Promise<Rule> {
+export async function updateRule(
+  id: string,
+  updates: UpdateRule,
+  options?: { skipVersionCheck?: boolean }
+): Promise<Rule> {
   try {
     const dbUpdates: Record<string, unknown> = {};
 
@@ -106,16 +110,34 @@ export async function updateRule(id: string, updates: UpdateRule): Promise<Rule>
     if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
     if (updates.isEnabled !== undefined) dbUpdates.is_enabled = updates.isEnabled;
 
-    const { data, error } = await supabase
-      .from('rules')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .single();
+    let query = supabase.from('rules').update(dbUpdates).eq('id', id);
+
+    // Optimistic locking: only update if updated_at hasn't changed
+    if (!options?.skipVersionCheck && updates.updatedAt) {
+      query = query.eq('updated_at', updates.updatedAt);
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
+      // Check if no rows were updated (version conflict)
+      if (error.code === 'PGRST116') {
+        throw new DatabaseError(
+          'This rule was modified by another user. Please reload and try again.',
+          'CONCURRENT_EDIT',
+          error
+        );
+      }
       handleSupabaseError(error);
     }
+
+    if (!data) {
+      throw new DatabaseError(
+        'This rule was modified by another user. Please reload and try again.',
+        'CONCURRENT_EDIT'
+      );
+    }
+
     return data;
   } catch (error) {
     if (error instanceof DatabaseError) throw error;

@@ -11,6 +11,11 @@ export const insertCategorySchema = z.object({
 
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
 
-export const updateCategorySchema = insertCategorySchema.partial().omit({ booksetId: true });
+export const updateCategorySchema = insertCategorySchema
+  .partial()
+  .omit({ booksetId: true })
+  .extend({
+    updatedAt: z.string().optional(), // For optimistic locking
+  });
 
 export type UpdateCategory = z.infer<typeof updateCategorySchema>;

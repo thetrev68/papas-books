@@ -48,7 +48,11 @@ export async function createCategory(category: InsertCategory): Promise<Category
   }
 }
 
-export async function updateCategory(id: string, updates: UpdateCategory): Promise<Category> {
+export async function updateCategory(
+  id: string,
+  updates: UpdateCategory,
+  options?: { skipVersionCheck?: boolean }
+): Promise<Category> {
   try {
     const dbUpdates: Record<string, unknown> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -59,16 +63,34 @@ export async function updateCategory(id: string, updates: UpdateCategory): Promi
       dbUpdates.parent_category_id = updates.parentCategoryId;
     if (updates.sortOrder !== undefined) dbUpdates.sort_order = updates.sortOrder;
 
-    const { data, error } = await supabase
-      .from('categories')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .single();
+    let query = supabase.from('categories').update(dbUpdates).eq('id', id);
+
+    // Optimistic locking: only update if updated_at hasn't changed
+    if (!options?.skipVersionCheck && updates.updatedAt) {
+      query = query.eq('updated_at', updates.updatedAt);
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
+      // Check if no rows were updated (version conflict)
+      if (error.code === 'PGRST116') {
+        throw new DatabaseError(
+          'This category was modified by another user. Please reload and try again.',
+          'CONCURRENT_EDIT',
+          error
+        );
+      }
       handleSupabaseError(error);
     }
+
+    if (!data) {
+      throw new DatabaseError(
+        'This category was modified by another user. Please reload and try again.',
+        'CONCURRENT_EDIT'
+      );
+    }
+
     return data;
   } catch (error) {
     if (error instanceof DatabaseError) throw error;

@@ -10,6 +10,8 @@ export const insertAccountSchema = z.object({
 
 export type InsertAccount = z.infer<typeof insertAccountSchema>;
 
-export const updateAccountSchema = insertAccountSchema.partial().omit({ booksetId: true });
+export const updateAccountSchema = insertAccountSchema.partial().omit({ booksetId: true }).extend({
+  updatedAt: z.string().optional(), // For optimistic locking
+});
 
 export type UpdateAccount = z.infer<typeof updateAccountSchema>;

@@ -55,7 +55,10 @@ export async function createTransaction(transaction: Transaction): Promise<Trans
 /**
  * Update a single transaction
  */
-export async function updateTransaction(transaction: Transaction): Promise<Transaction> {
+export async function updateTransaction(
+  transaction: Transaction,
+  options?: { skipVersionCheck?: boolean }
+): Promise<Transaction> {
   try {
     // Validate split lines if present
     if (transaction.is_split && transaction.lines.length > 0) {
@@ -65,22 +68,43 @@ export async function updateTransaction(transaction: Transaction): Promise<Trans
       }
     }
 
-    const { data, error } = await supabase
+    let query = supabase
       .from('transactions')
       .update({
         payee: transaction.payee,
         is_reviewed: transaction.is_reviewed,
         is_split: transaction.is_split,
         lines: transaction.lines,
-        updated_at: new Date().toISOString(),
       })
-      .eq('id', transaction.id)
-      .select()
-      .single();
+      .eq('id', transaction.id);
+
+    // Optimistic locking: only update if updated_at hasn't changed
+    // This prevents overwriting another user's concurrent edits
+    if (!options?.skipVersionCheck && transaction.updated_at) {
+      query = query.eq('updated_at', transaction.updated_at);
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
+      // Check if no rows were updated (version conflict)
+      if (error.code === 'PGRST116') {
+        throw new DatabaseError(
+          'This transaction was modified by another user. Please reload and try again.',
+          'CONCURRENT_EDIT',
+          error
+        );
+      }
       handleSupabaseError(error);
     }
+
+    if (!data) {
+      throw new DatabaseError(
+        'This transaction was modified by another user. Please reload and try again.',
+        'CONCURRENT_EDIT'
+      );
+    }
+
     return data;
   } catch (error) {
     if (error instanceof DatabaseError) throw error;

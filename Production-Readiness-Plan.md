@@ -17,7 +17,7 @@ This plan outlines **21 specific tasks** organized into 3 weekly sprints, priori
 **Risk Assessment:**
 
 - 🔴 **CRITICAL (0/7 tasks remaining)**: Must complete before production launch - data integrity/security issues ✅ COMPLETE
-- 🟡 **HIGH (2/7 tasks remaining)**: Should complete before launch - performance/reliability issues
+- 🟡 **HIGH (1/7 tasks remaining)**: Should complete before launch - performance/reliability issues
 - 🟢 **MEDIUM (7/7 tasks remaining)**: Can address post-launch - UX improvements
 
 ---
@@ -1231,7 +1231,7 @@ export function useUpdateTransaction(booksetId: string) {
 
 ---
 
-### Task 2.6: Implement Concurrent Edit Detection 🟡 HIGH
+### Task 2.6: Implement Concurrent Edit Detection ✅ COMPLETE
 
 **Priority:** HIGH
 **Estimated Time:** 8 hours
@@ -1239,10 +1239,10 @@ export function useUpdateTransaction(booksetId: string) {
 
 **Acceptance Criteria:**
 
-- [ ] Optimistic locking using `updated_at` timestamp
-- [ ] Warning shown if record was modified by another user
-- [ ] User can choose to overwrite or reload
-- [ ] Works for transactions, accounts, categories, rules
+- [x] Optimistic locking using `updated_at` timestamp
+- [x] Warning shown if record was modified by another user
+- [x] User can choose to overwrite or reload
+- [x] Works for transactions, accounts, categories, rules
 
 **Files to Modify:**
 

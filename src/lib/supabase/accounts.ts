@@ -50,7 +50,11 @@ export async function createAccount(account: InsertAccount): Promise<Account> {
   }
 }
 
-export async function updateAccount(id: string, updates: UpdateAccount): Promise<Account> {
+export async function updateAccount(
+  id: string,
+  updates: UpdateAccount,
+  options?: { skipVersionCheck?: boolean }
+): Promise<Account> {
   try {
     const dbUpdates: Record<string, unknown> = {};
     if (updates.name !== undefined) dbUpdates.name = updates.name;
@@ -59,16 +63,34 @@ export async function updateAccount(id: string, updates: UpdateAccount): Promise
     if (updates.openingBalanceDate !== undefined)
       dbUpdates.opening_balance_date = updates.openingBalanceDate;
 
-    const { data, error } = await supabase
-      .from('accounts')
-      .update(dbUpdates)
-      .eq('id', id)
-      .select()
-      .single();
+    let query = supabase.from('accounts').update(dbUpdates).eq('id', id);
+
+    // Optimistic locking: only update if updated_at hasn't changed
+    if (!options?.skipVersionCheck && updates.updatedAt) {
+      query = query.eq('updated_at', updates.updatedAt);
+    }
+
+    const { data, error } = await query.select().single();
 
     if (error) {
+      // Check if no rows were updated (version conflict)
+      if (error.code === 'PGRST116') {
+        throw new DatabaseError(
+          'This account was modified by another user. Please reload and try again.',
+          'CONCURRENT_EDIT',
+          error
+        );
+      }
       handleSupabaseError(error);
     }
+
+    if (!data) {
+      throw new DatabaseError(
+        'This account was modified by another user. Please reload and try again.',
+        'CONCURRENT_EDIT'
+      );
+    }
+
     return data;
   } catch (error) {
     if (error instanceof DatabaseError) throw error;

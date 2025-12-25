@@ -30,7 +30,9 @@ export interface InsertRule {
   conditions?: RuleConditions;
 }
 
-export type UpdateRule = Partial<Omit<InsertRule, 'booksetId'>>;
+export type UpdateRule = Partial<Omit<InsertRule, 'booksetId'>> & {
+  updatedAt?: string; // For optimistic locking
+};
 
 export interface RuleMatch {
   rule: Rule;
