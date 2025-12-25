@@ -1,9 +1,11 @@
 import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCreateCategory, useUpdateCategory, useCategories } from '../../hooks/useCategories';
+import { useOptimisticLocking } from '../../hooks/useOptimisticLocking';
 import { insertCategorySchema } from '../../lib/validation/categories';
 import type { Category } from '../../types/database';
 import Modal from '../ui/Modal';
+import { VersionConflictModal } from '../common/VersionConflictModal';
 
 interface CategoryFormModalProps {
   category: Category | null;
@@ -15,6 +17,10 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
   const { categories } = useCategories();
   const { createCategoryAsync, isLoading: isCreating } = useCreateCategory();
   const { updateCategoryAsync, isLoading: isUpdating } = useUpdateCategory();
+
+  // Optimistic locking for concurrent edit detection
+  const { conflictData, checkForConflict, resolveConflict, hasConflict, clearConflict } =
+    useOptimisticLocking<Category>(['categories', activeBookset?.id || '']);
 
   const [formData, setFormData] = useState({
     name: category?.name || '',
@@ -73,6 +79,20 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
 
     try {
       if (category) {
+        // Build updated category object
+        const updatedCategory: Category = {
+          ...category,
+          name: validation.data.name,
+          is_tax_deductible: validation.data.isTaxDeductible,
+          tax_line_item: validation.data.taxLineItem ?? null,
+          parent_category_id: validation.data.parentCategoryId ?? null,
+          sort_order: validation.data.sortOrder ?? category.sort_order,
+        };
+
+        // Check for concurrent edits
+        const hasConflict = await checkForConflict(category, updatedCategory);
+        if (hasConflict) return; // Show conflict modal
+
         await updateCategoryAsync(category.id, {
           name: validation.data.name,
           isTaxDeductible: validation.data.isTaxDeductible,
@@ -89,101 +109,146 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
     }
   }
 
+  const handleConflictResolve = async (strategy: 'overwrite' | 'reload') => {
+    const resolvedRecord = resolveConflict(strategy);
+    if (strategy === 'overwrite' && resolvedRecord && category) {
+      // User chose to keep their changes - force the update
+      try {
+        await updateCategoryAsync(category.id, {
+          name: resolvedRecord.name,
+          isTaxDeductible: resolvedRecord.is_tax_deductible,
+          taxLineItem: resolvedRecord.tax_line_item || undefined,
+          parentCategoryId: resolvedRecord.parent_category_id,
+          sortOrder: resolvedRecord.sort_order,
+        });
+        onClose();
+      } catch (error) {
+        setErrors({ form: error instanceof Error ? error.message : 'An error occurred' });
+      }
+    } else if (strategy === 'reload' && conflictData) {
+      // User chose to reload - update form with server version
+      const serverRecord = conflictData.serverRecord;
+      setFormData({
+        name: serverRecord.name,
+        isTaxDeductible: serverRecord.is_tax_deductible,
+        taxLineItem: serverRecord.tax_line_item || '',
+        parentCategoryId: serverRecord.parent_category_id || '',
+        sortOrder: serverRecord.sort_order,
+      });
+    }
+  };
+
   return (
-    <Modal title={category ? 'Edit Category' : 'Create Category'} onClose={onClose}>
-      <form onSubmit={handleSubmit} className="space-y-4">
-        <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
-          <input
-            type="text"
-            value={formData.name}
-            onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
-          />
-          {errors.name && <div className="text-danger-700 mt-1 text-sm">{errors.name}</div>}
-        </div>
+    <>
+      <Modal title={category ? 'Edit Category' : 'Create Category'} onClose={onClose}>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
+            <input
+              type="text"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            />
+            {errors.name && <div className="text-danger-700 mt-1 text-sm">{errors.name}</div>}
+          </div>
 
-        <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
-          <input
-            type="checkbox"
-            checked={formData.isTaxDeductible}
-            onChange={(e) => setFormData({ ...formData, isTaxDeductible: e.target.checked })}
-            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
-          />
-          <span className="text-lg font-medium text-neutral-900">Tax Deductible</span>
-        </label>
-
-        <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">
-            Tax Line Item (optional)
+          <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
+            <input
+              type="checkbox"
+              checked={formData.isTaxDeductible}
+              onChange={(e) => setFormData({ ...formData, isTaxDeductible: e.target.checked })}
+              className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+            />
+            <span className="text-lg font-medium text-neutral-900">Tax Deductible</span>
           </label>
-          <input
-            type="text"
-            value={formData.taxLineItem}
-            onChange={(e) => setFormData({ ...formData, taxLineItem: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
-            placeholder="e.g., Schedule C - Line 7"
-          />
-          {errors.taxLineItem && (
-            <div className="text-danger-700 mt-1 text-sm">{errors.taxLineItem}</div>
-          )}
-        </div>
 
-        <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">
-            Parent Category (optional)
-          </label>
-          <select
-            value={formData.parentCategoryId}
-            onChange={(e) => setFormData({ ...formData, parentCategoryId: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
-          >
-            <option value="">None (top-level)</option>
-            {categories
-              .filter((c) => c.id !== category?.id)
-              .map((c) => (
-                <option key={c.id} value={c.id}>
-                  {c.name}
-                </option>
-              ))}
-          </select>
-          {errors.parentCategoryId && (
-            <div className="text-danger-700 mt-1 text-sm">{errors.parentCategoryId}</div>
-          )}
-        </div>
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">
+              Tax Line Item (optional)
+            </label>
+            <input
+              type="text"
+              value={formData.taxLineItem}
+              onChange={(e) => setFormData({ ...formData, taxLineItem: e.target.value })}
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              placeholder="e.g., Schedule C - Line 7"
+            />
+            {errors.taxLineItem && (
+              <div className="text-danger-700 mt-1 text-sm">{errors.taxLineItem}</div>
+            )}
+          </div>
 
-        <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Sort Order</label>
-          <input
-            type="number"
-            value={formData.sortOrder}
-            onChange={(e) => setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
-          />
-          {errors.sortOrder && (
-            <div className="text-danger-700 mt-1 text-sm">{errors.sortOrder}</div>
-          )}
-        </div>
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">
+              Parent Category (optional)
+            </label>
+            <select
+              value={formData.parentCategoryId}
+              onChange={(e) => setFormData({ ...formData, parentCategoryId: e.target.value })}
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            >
+              <option value="">None (top-level)</option>
+              {categories
+                .filter((c) => c.id !== category?.id)
+                .map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.name}
+                  </option>
+                ))}
+            </select>
+            {errors.parentCategoryId && (
+              <div className="text-danger-700 mt-1 text-sm">{errors.parentCategoryId}</div>
+            )}
+          </div>
 
-        {errors.form && <div className="text-danger-700 text-sm">{errors.form}</div>}
+          <div>
+            <label className="block text-sm font-bold text-neutral-500 mb-1">Sort Order</label>
+            <input
+              type="number"
+              value={formData.sortOrder}
+              onChange={(e) =>
+                setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })
+              }
+              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            />
+            {errors.sortOrder && (
+              <div className="text-danger-700 mt-1 text-sm">{errors.sortOrder}</div>
+            )}
+          </div>
 
-        <div className="flex flex-wrap gap-3 justify-end">
-          <button
-            type="submit"
-            disabled={isCreating || isUpdating}
-            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
-          >
-            {isCreating || isUpdating ? 'Saving...' : 'Save'}
-          </button>
-          <button
-            type="button"
-            onClick={onClose}
-            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
-          >
-            Cancel
-          </button>
-        </div>
-      </form>
-    </Modal>
+          {errors.form && <div className="text-danger-700 text-sm">{errors.form}</div>}
+
+          <div className="flex flex-wrap gap-3 justify-end">
+            <button
+              type="submit"
+              disabled={isCreating || isUpdating}
+              className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+            >
+              {isCreating || isUpdating ? 'Saving...' : 'Save'}
+            </button>
+            <button
+              type="button"
+              onClick={onClose}
+              className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            >
+              Cancel
+            </button>
+          </div>
+        </form>
+      </Modal>
+
+      {hasConflict && conflictData && (
+        <VersionConflictModal
+          isOpen={hasConflict}
+          entityType="category"
+          entityName={conflictData.updatedRecord.name}
+          yourChanges={conflictData.updatedRecord}
+          theirChanges={conflictData.serverRecord}
+          onResolve={handleConflictResolve}
+          onClose={() => clearConflict()}
+        />
+      )}
+    </>
   );
 }

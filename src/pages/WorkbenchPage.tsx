@@ -3,12 +3,14 @@ import { useAuth } from '../context/AuthContext';
 import { useApplyRules } from '../hooks/useApplyRules';
 import { useWorkbenchData } from '../hooks/useWorkbenchData';
 import { useTransactionMutations } from '../hooks/useTransactionMutations';
+import { useOptimisticLocking } from '../hooks/useOptimisticLocking';
 import WorkbenchTable from '../components/workbench/WorkbenchTable';
 import CreateTransactionModal from '../components/workbench/CreateTransactionModal';
 import RuleBatchResultModal from '../components/workbench/RuleBatchResultModal';
 import SplitModal from '../components/workbench/SplitModal';
 import RuleFormModal from '../components/settings/RuleFormModal';
 import PayeeFormModal from '../components/settings/PayeeFormModal';
+import { VersionConflictModal } from '../components/common/VersionConflictModal';
 import type { Transaction } from '../types/database';
 
 export default function WorkbenchPage() {
@@ -25,6 +27,10 @@ export default function WorkbenchPage() {
 
   const { transactions, isLoading, filter, setFilter } = useWorkbenchData(activeBookset?.id || '');
   const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
+
+  // Optimistic locking for concurrent edit detection
+  const { conflictData, checkForConflict, resolveConflict, hasConflict, clearConflict } =
+    useOptimisticLocking<Transaction>(['transactions', activeBookset?.id || '']);
 
   async function handleRunRulesOnAll() {
     if (!transactions) return;
@@ -67,30 +73,39 @@ export default function WorkbenchPage() {
     }
   };
 
-  const handleReview = (transaction: Transaction) => {
-    updateTransaction({ ...transaction, is_reviewed: !transaction.is_reviewed });
+  const handleReview = async (transaction: Transaction) => {
+    const updatedTransaction = { ...transaction, is_reviewed: !transaction.is_reviewed };
+    const hasConflict = await checkForConflict(transaction, updatedTransaction);
+    if (hasConflict) return; // Show conflict modal
+    updateTransaction(updatedTransaction);
   };
 
-  const handleUpdatePayee = (transactionId: string, newPayee: string) => {
+  const handleUpdatePayee = async (transactionId: string, newPayee: string) => {
     const transaction = transactions.find((t) => t.id === transactionId);
-    if (transaction) {
-      updateTransaction({ ...transaction, payee: newPayee });
-    }
+    if (!transaction) return;
+
+    const updatedTransaction = { ...transaction, payee: newPayee };
+    const hasConflict = await checkForConflict(transaction, updatedTransaction);
+    if (hasConflict) return; // Show conflict modal
+    updateTransaction(updatedTransaction);
   };
 
-  const handleUpdateCategory = (transactionId: string, categoryId: string) => {
+  const handleUpdateCategory = async (transactionId: string, categoryId: string) => {
     const transaction = transactions.find((t) => t.id === transactionId);
-    if (transaction) {
-      updateTransaction({
-        ...transaction,
-        lines: [
-          {
-            ...transaction.lines[0],
-            category_id: categoryId,
-          },
-        ],
-      });
-    }
+    if (!transaction) return;
+
+    const updatedTransaction = {
+      ...transaction,
+      lines: [
+        {
+          ...transaction.lines[0],
+          category_id: categoryId,
+        },
+      ],
+    };
+    const hasConflict = await checkForConflict(transaction, updatedTransaction);
+    if (hasConflict) return; // Show conflict modal
+    updateTransaction(updatedTransaction);
   };
 
   const handleCreateTransaction = (transaction: Transaction) => {
@@ -98,14 +113,29 @@ export default function WorkbenchPage() {
     setShowCreateModal(false);
   };
 
-  const handleSaveEdit = (transaction: Transaction) => {
+  const handleSaveEdit = async (transaction: Transaction) => {
+    if (!editTransaction) return;
+    const hasConflict = await checkForConflict(editTransaction, transaction);
+    if (hasConflict) return; // Show conflict modal
     updateTransaction(transaction);
     setEditTransaction(null);
   };
 
-  const handleSaveSplit = (transaction: Transaction) => {
+  const handleSaveSplit = async (transaction: Transaction) => {
+    if (!splitTransaction) return;
+    const hasConflict = await checkForConflict(splitTransaction, transaction);
+    if (hasConflict) return; // Show conflict modal
     updateTransaction(transaction);
     setSplitTransaction(null);
+  };
+
+  const handleConflictResolve = (strategy: 'overwrite' | 'reload') => {
+    const resolvedRecord = resolveConflict(strategy);
+    if (strategy === 'overwrite' && resolvedRecord) {
+      // User chose to keep their changes - force the update
+      updateTransaction(resolvedRecord);
+    }
+    // If reload, just clear the conflict (user discards their changes)
   };
 
   const handleCreatePayee = (name: string) => {
@@ -221,6 +251,18 @@ export default function WorkbenchPage() {
 
       {showResultModal && result && (
         <RuleBatchResultModal result={result} onClose={() => setShowResultModal(false)} />
+      )}
+
+      {hasConflict && conflictData && (
+        <VersionConflictModal
+          isOpen={hasConflict}
+          entityType="transaction"
+          entityName={conflictData.updatedRecord.payee || 'Untitled Transaction'}
+          yourChanges={conflictData.updatedRecord}
+          theirChanges={conflictData.serverRecord}
+          onResolve={handleConflictResolve}
+          onClose={() => clearConflict()}
+        />
       )}
     </div>
   );
