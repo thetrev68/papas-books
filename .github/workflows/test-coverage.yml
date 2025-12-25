@@ -1,0 +1,91 @@
+name: Test Coverage
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  coverage:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js 20.x
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20.x
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run tests with coverage
+        run: npm run test:coverage -- --run
+        env:
+          VITE_SUPABASE_URL: ${{ secrets.VITE_SUPABASE_URL }}
+          VITE_SUPABASE_ANON_KEY: ${{ secrets.VITE_SUPABASE_ANON_KEY }}
+
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v4
+        with:
+          files: ./coverage/coverage-final.json
+          fail_ci_if_error: false
+          token: ${{ secrets.CODECOV_TOKEN }}
+          flags: unittests
+          name: codecov-umbrella
+
+      - name: Generate coverage summary
+        run: |
+          echo "## Test Coverage Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -f coverage/coverage-summary.json ]; then
+            node -e "
+              const summary = require('./coverage/coverage-summary.json');
+              const total = summary.total;
+              console.log('| Metric | Coverage |');
+              console.log('|--------|----------|');
+              console.log('| Lines  | ' + total.lines.pct + '% |');
+              console.log('| Statements | ' + total.statements.pct + '% |');
+              console.log('| Functions | ' + total.functions.pct + '% |');
+              console.log('| Branches | ' + total.branches.pct + '% |');
+            " >> $GITHUB_STEP_SUMMARY
+          fi
+
+      - name: Check coverage thresholds
+        run: |
+          node -e "
+            const summary = require('./coverage/coverage-summary.json');
+            const total = summary.total;
+            const MIN_COVERAGE = 90;
+
+            if (total.lines.pct < MIN_COVERAGE) {
+              console.error('❌ Line coverage ' + total.lines.pct + '% is below minimum ' + MIN_COVERAGE + '%');
+              process.exit(1);
+            }
+            if (total.statements.pct < MIN_COVERAGE) {
+              console.error('❌ Statement coverage ' + total.statements.pct + '% is below minimum ' + MIN_COVERAGE + '%');
+              process.exit(1);
+            }
+            if (total.functions.pct < MIN_COVERAGE) {
+              console.error('❌ Function coverage ' + total.functions.pct + '% is below minimum ' + MIN_COVERAGE + '%');
+              process.exit(1);
+            }
+            if (total.branches.pct < 85) {
+              console.error('❌ Branch coverage ' + total.branches.pct + '% is below minimum 85%');
+              process.exit(1);
+            }
+            console.log('✅ All coverage thresholds met!');
+          "
+
+      - name: Upload coverage artifacts
+        uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 30

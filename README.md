@@ -1,5 +1,9 @@
 # Papa's Books
 
+[![CI](https://github.com/thetrev68/papas-books/actions/workflows/ci.yml/badge.svg)](https://github.com/thetrev68/papas-books/actions/workflows/ci.yml)
+[![codecov](https://codecov.io/gh/thetrev68/papas-books/branch/main/graph/badge.svg)](https://codecov.io/gh/thetrev68/papas-books)
+[![E2E Tests](https://github.com/thetrev68/papas-books/actions/workflows/e2e-tests.yml/badge.svg)](https://github.com/thetrev68/papas-books/actions/workflows/e2e-tests.yml)
+
 A multi-user bookkeeping system built for speed, accuracy, and seamless collaboration between users and tax professionals.
 
 ## 🚀 Overview
@@ -21,7 +25,7 @@ Papa's Books is a modern web application designed to simplify financial tracking
 - **State Management**: React Context & Hooks
 - **Backend**: Supabase (PostgreSQL, Auth, RLS)
 - **Deployment**: Vercel
-- **Testing**: Vitest
+- **Testing**: Vitest (96% coverage), Playwright (E2E)
 
 ## 🏗 Architecture
 
@@ -80,17 +84,39 @@ Unlike traditional apps where data is tied directly to a user, Papa's Books ties
 
 ## 🧪 Testing
 
-Run unit tests with Vitest:
+### Test Coverage
+
+Papa's Books has **96% code coverage** with 158 passing tests:
+
+- **Unit Tests:** 17 test files covering business logic, validation, and utilities
+- **E2E Tests:** 4 Playwright tests covering critical user workflows
+- **Coverage:** 96% lines, 96% functions, 91% branches
+
+### Running Tests
+
+**Unit Tests** (Vitest):
 
 ```bash
-npm run test
+npm run test              # Run tests in watch mode
+npm run test:ui           # Interactive UI mode
+npm run test:coverage     # Generate coverage report
 ```
 
-For interactive UI mode:
+**E2E Tests** (Playwright):
 
 ```bash
-npm run test:ui
+npm run test:e2e          # Run all E2E tests
+npm run test:e2e:ui       # Interactive mode
+npm run test:e2e:report   # View HTML report
 ```
+
+**Full Test Suite:**
+
+```bash
+npm run lint && npm run test -- --run && npm run test:e2e
+```
+
+For more details, see [Testing Strategy Documentation](docs/testing-strategy.md).
 
 ## 🗺 Roadmap
 
