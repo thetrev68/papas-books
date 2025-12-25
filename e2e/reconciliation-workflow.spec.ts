@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { isAuthRequired } from './utils/auth';
 
 test.describe('Reconciliation Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/app/reconcile');
     await page.waitForLoadState('networkidle');
+    const authRequired = await isAuthRequired(page);
+    test.skip(authRequired, 'Requires authenticated session (set storageState or login).');
   });
 
   test('should load reconciliation page', async ({ page }) => {

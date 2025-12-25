@@ -7,7 +7,7 @@ interface MappingFormProps {
   preview: ParseResult;
   mapping: CsvMapping | null;
   onUpdate: (mapping: CsvMapping) => void;
-  onApply: () => void;
+  onApply: (mapping: CsvMapping) => void;
   isProcessing: boolean;
 }
 
@@ -47,7 +47,7 @@ export function MappingForm({
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     onUpdate(formData);
-    onApply();
+    onApply(formData);
   };
 
   const handleFieldChange = (field: keyof CsvMapping, value: string | boolean) => {

@@ -1,9 +1,12 @@
 import { test, expect } from '@playwright/test';
+import { isAuthRequired } from './utils/auth';
 
 test.describe('Workbench Editing Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/app/workbench');
     await page.waitForLoadState('networkidle');
+    const authRequired = await isAuthRequired(page);
+    test.skip(authRequired, 'Requires authenticated session (set storageState or login).');
   });
 
   test('should load workbench with transactions table', async ({ page }) => {

@@ -71,7 +71,7 @@ export interface UseImportSessionResult {
   selectAccount: (accountId: string) => void;
   uploadFile: (file: File) => Promise<void>;
   updateMapping: (mapping: CsvMapping) => void;
-  applyMapping: () => Promise<void>;
+  applyMapping: (mapping?: CsvMapping) => Promise<void>;
   checkDuplicates: () => Promise<void>;
   commit: () => Promise<void>;
   reset: () => void;
@@ -141,16 +141,21 @@ export function useImportSession(): UseImportSessionResult {
   };
 
   // Action: Apply mapping and parse full file
-  const applyMapping = async () => {
-    if (!state.file || !state.mapping) return;
+  const applyMapping = async (mappingOverride?: CsvMapping) => {
+    const mapping = mappingOverride ?? state.mapping;
+    if (!state.file || !mapping) return;
+
+    if (mappingOverride) {
+      setState((prev) => ({ ...prev, mapping: mappingOverride }));
+    }
 
     setIsProcessing(true);
     try {
       const parsed = await parseFullCsv(state.file, {
-        hasHeaderRow: state.mapping.hasHeaderRow,
+        hasHeaderRow: mapping.hasHeaderRow,
       });
 
-      const staged = mapRowsToTransactions(parsed.data, state.mapping);
+      const staged = mapRowsToTransactions(parsed.data, mapping);
 
       const errorCount = staged.filter((t) => !t.isValid).length;
 

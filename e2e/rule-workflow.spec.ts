@@ -1,16 +1,22 @@
 import { test, expect } from '@playwright/test';
+import { isAuthRequired } from './utils/auth';
 
 test.describe('Rule Application Workflow', () => {
   test.beforeEach(async ({ page }) => {
     await page.goto('/');
+    const authRequired = await isAuthRequired(page);
+    test.skip(authRequired, 'Requires authenticated session (set storageState or login).');
   });
 
   test('should create a new rule and apply to transactions', async ({ page }) => {
-    // Navigate to rules page
-    await page.goto('/app/rules');
+    // Navigate to rules tab in settings
+    await page.goto('/app/settings');
 
-    // Wait for rules page to load
-    await expect(page.locator('h1, h2').filter({ hasText: /rules/i }).first()).toBeVisible({
+    const rulesTab = page.getByRole('button', { name: 'Rules' });
+    await expect(rulesTab).toBeVisible({ timeout: 10000 });
+    await rulesTab.click();
+
+    await expect(page.getByRole('button', { name: /create rule/i })).toBeVisible({
       timeout: 10000,
     });
 
@@ -55,9 +61,8 @@ test.describe('Rule Application Workflow', () => {
       }
 
       // Save rule
-      const saveButton = page
-        .locator('button:has-text("Save"), button:has-text("Create"), button[type="submit"]')
-        .first();
+      const dialog = page.getByRole('dialog');
+      const saveButton = dialog.getByRole('button', { name: /save/i });
       if (await saveButton.isVisible().catch(() => false)) {
         await saveButton.click();
         await page.waitForTimeout(1000);
@@ -92,8 +97,9 @@ test.describe('Rule Application Workflow', () => {
   });
 
   test('should show rule priority ordering', async ({ page }) => {
-    await page.goto('/app/rules');
+    await page.goto('/app/settings');
     await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: 'Rules' }).click();
 
     // Wait for rules list
     await page.waitForTimeout(2000);
@@ -112,28 +118,56 @@ test.describe('Rule Application Workflow', () => {
   });
 
   test('should allow editing existing rules', async ({ page }) => {
-    await page.goto('/app/rules');
+    await page.goto('/app/settings');
     await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: 'Rules' }).click();
     await page.waitForTimeout(2000);
 
     // Find first edit button
-    const editButton = page
+    let editButton = page
       .locator('button[aria-label*="Edit"], button:has-text("Edit"), [data-action="edit"]')
       .first();
 
+    if (!(await editButton.isVisible().catch(() => false))) {
+      const createButton = page.getByRole('button', { name: /create rule/i });
+      if (await createButton.isVisible().catch(() => false)) {
+        await createButton.click();
+
+        const dialog = page.getByRole('dialog');
+        const keywordInput = dialog.locator('input[name="keyword"], input#keyword').first();
+        await keywordInput.fill('PLAYWRIGHT');
+
+        const categorySelect = dialog
+          .locator('select[name="category"], select[name="categoryId"], select[name="category_id"]')
+          .first();
+        if (await categorySelect.isVisible().catch(() => false)) {
+          const options = await categorySelect.locator('option').count();
+          if (options > 1) {
+            await categorySelect.selectOption({ index: 1 });
+          }
+        }
+
+        const saveButton = dialog.getByRole('button', { name: /save/i });
+        await saveButton.click();
+        await page.waitForTimeout(1000);
+      }
+
+      editButton = page
+        .locator('button[aria-label*="Edit"], button:has-text("Edit"), [data-action="edit"]')
+        .first();
+    }
+
     if (await editButton.isVisible().catch(() => false)) {
       await editButton.click();
-      await page.waitForTimeout(1000);
 
       // Verify edit form/modal opened
-      const keywordInput = page.locator('input[name="keyword"], input#keyword').first();
-      const isFormVisible = await keywordInput.isVisible().catch(() => false);
-      expect(isFormVisible).toBeTruthy();
+      const dialog = page.getByRole('dialog');
+      const keywordInput = dialog.getByRole('textbox', { name: 'Keyword' });
+      await expect(dialog).toBeVisible({ timeout: 10000 });
+      await expect(keywordInput).toBeVisible({ timeout: 10000 });
 
       // Close modal/form
-      const cancelButton = page
-        .locator('button:has-text("Cancel"), button:has-text("Close")')
-        .first();
+      const cancelButton = dialog.getByRole('button', { name: /cancel|close/i });
       if (await cancelButton.isVisible().catch(() => false)) {
         await cancelButton.click();
       } else {
@@ -143,8 +177,9 @@ test.describe('Rule Application Workflow', () => {
   });
 
   test('should toggle rule enabled/disabled state', async ({ page }) => {
-    await page.goto('/app/rules');
+    await page.goto('/app/settings');
     await page.waitForLoadState('networkidle');
+    await page.getByRole('button', { name: 'Rules' }).click();
     await page.waitForTimeout(2000);
 
     // Look for toggle switch or checkbox

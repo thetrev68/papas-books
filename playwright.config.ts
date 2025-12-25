@@ -1,8 +1,16 @@
 import { defineConfig, devices } from '@playwright/test';
+import dotenv from 'dotenv';
+
+dotenv.config({ path: '.env.local' });
 
 /**
  * See https://playwright.dev/docs/test-configuration.
  */
+const storageState =
+  process.env.PLAYWRIGHT_EMAIL && process.env.PLAYWRIGHT_PASSWORD
+    ? 'e2e/.auth/state.json'
+    : undefined;
+
 export default defineConfig({
   testDir: './e2e',
   fullyParallel: true,
@@ -10,10 +18,15 @@ export default defineConfig({
   retries: process.env.CI ? 2 : 0,
   workers: process.env.CI ? 1 : undefined,
   reporter: 'html',
+  globalSetup:
+    process.env.PLAYWRIGHT_EMAIL && process.env.PLAYWRIGHT_PASSWORD
+      ? './e2e/auth.setup.ts'
+      : undefined,
   use: {
     baseURL: 'http://localhost:5173',
     trace: 'on-first-retry',
     screenshot: 'only-on-failure',
+    storageState,
   },
 
   projects: [

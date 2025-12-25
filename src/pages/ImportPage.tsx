@@ -136,7 +136,7 @@ export default function ImportPage() {
             preview={state.rawPreview}
             mapping={state.mapping}
             onUpdate={updateMapping}
-            onApply={applyMapping}
+            onApply={(mapping) => applyMapping(mapping)}
             isProcessing={isProcessing}
           />
         </section>
