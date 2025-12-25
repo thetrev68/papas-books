@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.9](https://github.com/thetrev68/papas-books/compare/v0.1.8...v0.1.9) (2025-12-25)
+
+### Features
+
+- **concurrency:** implement optimistic locking for concurrent edit detection (Task 2.6) ([5e1e064](https://github.com/thetrev68/papas-books/commit/5e1e064ca389d6f1e6051495f06596be3f7da2be))
+- **perf:** add React Query cache optimization with optimistic updates (Task 2.5) ([dcc017e](https://github.com/thetrev68/papas-books/commit/dcc017e82bd973e15dea19fa6b3049bb081cb220))
+
 ## [0.1.8](https://github.com/thetrev68/papas-books/compare/v0.1.7...v0.1.8) (2025-12-25)
 
 ### Features
