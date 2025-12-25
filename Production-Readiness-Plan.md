@@ -18,7 +18,7 @@ This plan outlines **21 specific tasks** organized into 3 weekly sprints, priori
 
 - 🔴 **CRITICAL (0/7 tasks remaining)**: Must complete before production launch - data integrity/security issues ✅ COMPLETE
 - 🟡 **HIGH (1/7 tasks remaining)**: Should complete before launch - performance/reliability issues
-- 🟢 **MEDIUM (7/7 tasks remaining)**: Can address post-launch - UX improvements
+- 🟢 **MEDIUM (6/7 tasks remaining)**: Can address post-launch - UX improvements
 
 ---
 
@@ -1489,7 +1489,7 @@ jobs:
 
 **Goal:** Complete Phase 8 features and prepare for launch
 
-### Task 3.1: Populate change_history JSONB Column 🟢 MEDIUM
+### Task 3.1: Populate change_history JSONB Column ✅ COMPLETE
 
 **Priority:** MEDIUM
 **Estimated Time:** 6 hours
@@ -1497,11 +1497,11 @@ jobs:
 
 **Acceptance Criteria:**
 
-- [ ] Database triggers populate `change_history` on updates
-- [ ] JSON format: `[{ timestamp, user_id, changes: { field: { old, new } } }]`
-- [ ] Works for transactions, accounts, categories, rules
-- [ ] Limited to last 50 changes (prevent bloat)
-- [ ] Tested with sample updates
+- [x] Database triggers populate `change_history` on updates
+- [x] JSON format: `[{ timestamp, user_id, changes: { field: { old, new } } }]`
+- [x] Works for transactions, accounts, categories, rules
+- [x] Limited to last 50 changes (prevent bloat)
+- [x] Tested with sample updates
 
 **Files to Modify:**
 

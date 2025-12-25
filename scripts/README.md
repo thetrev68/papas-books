@@ -170,6 +170,118 @@ service role key to auto-confirm test users.
 
 ---
 
+## Audit Trail Testing Scripts
+
+### `test-change-history.ts`
+
+Tests the change_history JSONB column tracking to verify database triggers are working correctly.
+
+**Purpose:** Verify audit trail implementation captures field-level changes (Task 3.1)
+
+**Prerequisites:**
+
+1. Run `supabase/phase9_audit_triggers.sql` in Supabase SQL Editor
+2. Have a valid user account and bookset with at least one transaction
+
+**Usage:**
+
+```bash
+# Basic usage
+npx tsx scripts/test-change-history.ts <bookset-id> <transaction-id>
+
+# Example
+npx tsx scripts/test-change-history.ts abc123 def456
+```
+
+**Parameters:**
+
+- `bookset-id`: Target bookset UUID
+- `transaction-id`: Any existing transaction UUID in that bookset
+
+**How to find a transaction ID:**
+
+```sql
+-- Run in Supabase SQL Editor
+SELECT id, payee, amount
+FROM transactions
+WHERE bookset_id = '<your-bookset-id>'
+LIMIT 1;
+```
+
+**What it tests:**
+
+1. ✅ Fetches original transaction state
+2. ✅ Updates the payee field
+3. ✅ Verifies change_history was populated with the change
+4. ✅ Makes a second update (amount) to verify accumulation
+5. ✅ Restores original values (cleanup)
+
+**Example Output:**
+
+```text
+🧪 Change History Tracking Test
+
+📦 Bookset ID: abc123
+📝 Transaction ID: def456
+
+Test 1: Fetch Original Transaction
+──────────────────────────────────────────────────
+✅ Original transaction fetched:
+   Payee: Amazon.com
+   Amount: $29.99
+   Change History Entries: 0
+
+Test 2: Update Transaction (Change Payee)
+──────────────────────────────────────────────────
+✅ Transaction updated:
+   New Payee: Updated Payee 1734567890123
+   Change History Entries: 1
+
+Test 3: Verify Change History
+──────────────────────────────────────────────────
+✅ Change history populated:
+   Timestamp: 2025-12-25T10:30:00.000Z
+   User ID: user123
+   Changes:
+     - payee:
+         Old: "Amazon.com"
+         New: "Updated Payee 1734567890123"
+
+✅ PASS: Payee change was tracked correctly
+   Old payee: Amazon.com
+   New payee: Updated Payee 1734567890123
+
+Test 4: Multiple Updates (Verify Accumulation)
+──────────────────────────────────────────────────
+✅ Second update completed:
+   New Amount: $30.99
+   Total Change History Entries: 2
+✅ PASS: Amount change was tracked:
+   Old: $29.99
+   New: $30.99
+
+Test 5: Cleanup (Restore Original Values)
+──────────────────────────────────────────────────
+✅ Transaction restored to original state
+
+══════════════════════════════════════════════════
+📊 Test Summary
+══════════════════════════════════════════════════
+✅ All tests passed!
+✅ Change history tracking is working correctly
+✅ Triggers are properly configured
+```
+
+**Features:**
+
+- Verifies database triggers are active
+- Tests field-level change tracking
+- Validates accumulation of multiple changes
+- Restores original state (non-destructive)
+- Clear pass/fail indicators
+
+---
+
 ## Performance Testing Workflow
 
 ### Step 1: Prepare Test Environment
