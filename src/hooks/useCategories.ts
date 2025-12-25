@@ -9,6 +9,7 @@ import {
   deleteCategory,
 } from '../lib/supabase/categories';
 import type { UpdateCategory } from '../lib/validation/categories';
+import type { Category } from '../types/database';
 import { useToast } from '../components/GlobalToastProvider';
 import { DatabaseError } from '../lib/errors';
 
@@ -86,13 +87,38 @@ export function useUpdateCategory() {
   const mutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateCategory }) =>
       updateCategory(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['categories', activeBookset?.id] });
-      showSuccess('Category updated');
+    // Optimistic update
+    onMutate: async ({ id, updates }) => {
+      if (!activeBookset?.id) return;
+
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ['categories', activeBookset.id] });
+
+      // Snapshot current data
+      const previousCategories = queryClient.getQueryData(['categories', activeBookset.id]);
+
+      // Optimistically update cache
+      queryClient.setQueryData(['categories', activeBookset.id], (old: Category[] = []) => {
+        return old.map((category) => (category.id === id ? { ...category, ...updates } : category));
+      });
+
+      // Return context with snapshot
+      return { previousCategories };
     },
-    onError: (error) => {
+    // On error, rollback
+    onError: (error, _variables, context) => {
+      if (context?.previousCategories && activeBookset?.id) {
+        queryClient.setQueryData(['categories', activeBookset.id], context.previousCategories);
+      }
       const message = error instanceof DatabaseError ? error.message : 'Failed to update category';
       showError(message);
+    },
+    // Always refetch after success or error
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['categories', activeBookset?.id] });
+    },
+    onSuccess: () => {
+      showSuccess('Category updated');
     },
   });
 

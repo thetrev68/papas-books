@@ -2,6 +2,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { useAuth } from '../context/AuthContext';
 import { fetchRules, createRule, updateRule, deleteRule } from '../lib/supabase/rules';
 import { UpdateRule } from '../types/rules';
+import type { Rule } from '../types/database';
 import { useToast } from '../components/GlobalToastProvider';
 import { DatabaseError } from '../lib/errors';
 
@@ -65,6 +66,9 @@ export function useCreateRule() {
 /**
  * Updates an existing rule.
  *
+ * Implements optimistic updates for instant UI feedback.
+ * On error, rolls back to previous state.
+ *
  * @returns Mutation function, loading state, error
  */
 export function useUpdateRule() {
@@ -74,13 +78,38 @@ export function useUpdateRule() {
 
   const mutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateRule }) => updateRule(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['rules', activeBookset?.id] });
-      showSuccess('Rule updated');
+    // Optimistic update
+    onMutate: async ({ id, updates }) => {
+      if (!activeBookset?.id) return;
+
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ['rules', activeBookset.id] });
+
+      // Snapshot current data
+      const previousRules = queryClient.getQueryData(['rules', activeBookset.id]);
+
+      // Optimistically update cache
+      queryClient.setQueryData(['rules', activeBookset.id], (old: Rule[] = []) => {
+        return old.map((rule) => (rule.id === id ? { ...rule, ...updates } : rule));
+      });
+
+      // Return context with snapshot
+      return { previousRules };
     },
-    onError: (error) => {
+    // On error, rollback
+    onError: (error, _variables, context) => {
+      if (context?.previousRules && activeBookset?.id) {
+        queryClient.setQueryData(['rules', activeBookset.id], context.previousRules);
+      }
       const message = error instanceof DatabaseError ? error.message : 'Failed to update rule';
       showError(message);
+    },
+    // Always refetch after success or error
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['rules', activeBookset?.id] });
+    },
+    onSuccess: () => {
+      showSuccess('Rule updated');
     },
   });
 

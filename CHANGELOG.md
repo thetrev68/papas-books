@@ -7,10 +7,15 @@ All notable changes to this project will be documented in this file. See [standa
 ### Features
 
 - restore and wire in CSV validation and sanitization ([02973f6](https://github.com/thetrev68/papas-books/commit/02973f6d3ca5d024fa93e4fd8986d823e039daad))
+- **perf:** add React Query cache optimization with optimistic updates (Task 2.5)
 
 ### Bug Fixes
 
 - resolve lint errors and fix rule editing e2e test ([c86312e](https://github.com/thetrev68/papas-books/commit/c86312e7d8320cf6ec5a5e94ec3408165d4f0123))
+
+### Documentation
+
+- add comprehensive React Query cache strategy documentation
 
 ### Maintenance
 

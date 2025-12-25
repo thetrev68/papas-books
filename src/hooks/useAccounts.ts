@@ -9,6 +9,7 @@ import {
   deleteAccount,
 } from '../lib/supabase/accounts';
 import type { UpdateAccount } from '../lib/validation/accounts';
+import type { Account } from '../types/database';
 import { useToast } from '../components/GlobalToastProvider';
 import { DatabaseError } from '../lib/errors';
 
@@ -86,13 +87,38 @@ export function useUpdateAccount() {
   const mutation = useMutation({
     mutationFn: ({ id, updates }: { id: string; updates: UpdateAccount }) =>
       updateAccount(id, updates),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['accounts', activeBookset?.id] });
-      showSuccess('Account updated');
+    // Optimistic update
+    onMutate: async ({ id, updates }) => {
+      if (!activeBookset?.id) return;
+
+      // Cancel outgoing queries
+      await queryClient.cancelQueries({ queryKey: ['accounts', activeBookset.id] });
+
+      // Snapshot current data
+      const previousAccounts = queryClient.getQueryData(['accounts', activeBookset.id]);
+
+      // Optimistically update cache
+      queryClient.setQueryData(['accounts', activeBookset.id], (old: Account[] = []) => {
+        return old.map((account) => (account.id === id ? { ...account, ...updates } : account));
+      });
+
+      // Return context with snapshot
+      return { previousAccounts };
     },
-    onError: (error) => {
+    // On error, rollback
+    onError: (error, _variables, context) => {
+      if (context?.previousAccounts && activeBookset?.id) {
+        queryClient.setQueryData(['accounts', activeBookset.id], context.previousAccounts);
+      }
       const message = error instanceof DatabaseError ? error.message : 'Failed to update account';
       showError(message);
+    },
+    // Always refetch after success or error
+    onSettled: () => {
+      queryClient.invalidateQueries({ queryKey: ['accounts', activeBookset?.id] });
+    },
+    onSuccess: () => {
+      showSuccess('Account updated');
     },
   });
 
