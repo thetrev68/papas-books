@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.10](https://github.com/thetrev68/papas-books/compare/v0.1.9...v0.1.10) (2025-12-25)
+
+### Documentation
+
+- **testing:** complete Task 2.7 - testing strategy and coverage documentation ([bf41019](https://github.com/thetrev68/papas-books/commit/bf410199cf547d40d5315c0a51e2e60b68f20beb))
+
 ## [0.1.9](https://github.com/thetrev68/papas-books/compare/v0.1.8...v0.1.9) (2025-12-25)
 
 ### Features
