@@ -2,6 +2,27 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.7](https://github.com/thetrev68/papas-books/compare/v0.1.6...v0.1.7) (2025-12-25)
+
+### Features
+
+- add cleanup script for NULL created_by transactions ([ad69127](https://github.com/thetrev68/papas-books/commit/ad69127fef5a785ac1fb43d981bca5b11eca4f74))
+- add database performance indexes (Task 2.2) ([b422efb](https://github.com/thetrev68/papas-books/commit/b422efb935971ed06b5a3ff9479c2e3020c55b3d))
+- add dotenv support to performance testing scripts ([4920180](https://github.com/thetrev68/papas-books/commit/492018060b799407d1b89b24436b6df6d0a12639))
+- add pagination to reports (Task 2.3) ([e494a34](https://github.com/thetrev68/papas-books/commit/e494a34532114ff26af8bef2366156ebedaa5b98))
+- implement end-to-end tests for critical workflows (Task 2.1) ([3d0d9b2](https://github.com/thetrev68/papas-books/commit/3d0d9b2a3fede4933d09480f983ececaabfdb06c))
+- implement large dataset performance testing (Task 2.4) ([2ddfac8](https://github.com/thetrev68/papas-books/commit/2ddfac8311844ed6ee522668d13ca93962d05e95))
+
+### Bug Fixes
+
+- ensure seeded transactions have proper created_by field ([f24756b](https://github.com/thetrev68/papas-books/commit/f24756b913764becc6ff4faf1a4cc3adf5cc9f27))
+- resolve Playwright E2E test failures and add test utilities ([e2ddc71](https://github.com/thetrev68/papas-books/commit/e2ddc71381f76e88dfbcc629cf58d01df3f4e7f2))
+
+### Documentation
+
+- add standalone prompt for reports pagination fix ([ce281f6](https://github.com/thetrev68/papas-books/commit/ce281f6ebf78522890825a7ffe28a7a8cc6140ad))
+- document reports pagination issue found during testing ([5ac6d0b](https://github.com/thetrev68/papas-books/commit/5ac6d0bf41efa873ec6b0ebf4909c196bfddc1d9))
+
 ## [0.1.6](https://github.com/thetrev68/papas-books/compare/v0.1.5...v0.1.6) (2025-12-24)
 
 ### Features
