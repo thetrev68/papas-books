@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.11](https://github.com/thetrev68/papas-books/compare/v0.1.10...v0.1.11) (2025-12-25)
+
+### Features
+
+- **concurrency:** wire optimistic locking into UI components ([9068aea](https://github.com/thetrev68/papas-books/commit/9068aea5adab49f5ab92f5db7abce8027a92ade5))
+
+### Bug Fixes
+
+- **ci:** configure vitest coverage reporters for CI ([b2e3941](https://github.com/thetrev68/papas-books/commit/b2e3941ebe509ef87fae73dd2b205e7b30437252))
+
 ## [0.1.10](https://github.com/thetrev68/papas-books/compare/v0.1.9...v0.1.10) (2025-12-25)
 
 ### Documentation
