@@ -128,8 +128,11 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
     <Modal title={rule ? 'Edit Rule' : 'Create Rule'} onClose={onClose} size="lg">
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Keyword</label>
+          <label htmlFor="rule-keyword" className="block text-sm font-bold text-neutral-500 mb-1">
+            Keyword
+          </label>
           <input
+            id="rule-keyword"
             type="text"
             value={formData.keyword}
             onChange={(e) => setFormData({ ...formData, keyword: e.target.value })}
@@ -140,8 +143,14 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Match Type</label>
+          <label
+            htmlFor="rule-match-type"
+            className="block text-sm font-bold text-neutral-500 mb-1"
+          >
+            Match Type
+          </label>
           <select
+            id="rule-match-type"
             value={formData.matchType}
             onChange={(e) => setFormData({ ...formData, matchType: e.target.value as MatchType })}
             className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
@@ -164,8 +173,11 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
         </label>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Category</label>
+          <label htmlFor="rule-category" className="block text-sm font-bold text-neutral-500 mb-1">
+            Category
+          </label>
           <select
+            id="rule-category"
             value={formData.targetCategoryId}
             onChange={(e) => setFormData({ ...formData, targetCategoryId: e.target.value })}
             className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
@@ -183,10 +195,14 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">
+          <label
+            htmlFor="rule-suggested-payee"
+            className="block text-sm font-bold text-neutral-500 mb-1"
+          >
             Suggested Payee (optional)
           </label>
           <input
+            id="rule-suggested-payee"
             type="text"
             value={formData.suggestedPayee}
             onChange={(e) => setFormData({ ...formData, suggestedPayee: e.target.value })}
@@ -196,8 +212,11 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Priority (1-100)</label>
+          <label htmlFor="rule-priority" className="block text-sm font-bold text-neutral-500 mb-1">
+            Priority (1-100)
+          </label>
           <input
+            id="rule-priority"
             type="number"
             min="1"
             max="100"
