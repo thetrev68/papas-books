@@ -2,6 +2,22 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.8](https://github.com/thetrev68/papas-books/compare/v0.1.7...v0.1.8) (2025-12-25)
+
+### Features
+
+- restore and wire in CSV validation and sanitization ([02973f6](https://github.com/thetrev68/papas-books/commit/02973f6d3ca5d024fa93e4fd8986d823e039daad))
+
+### Bug Fixes
+
+- resolve lint errors and fix rule editing e2e test ([c86312e](https://github.com/thetrev68/papas-books/commit/c86312e7d8320cf6ec5a5e94ec3408165d4f0123))
+
+### Maintenance
+
+- archived completed documents ([380b35a](https://github.com/thetrev68/papas-books/commit/380b35aac6c855678f50b7d900e2a04db0490e23))
+- clean up unused code and configuration based on Knip analysis ([ad21805](https://github.com/thetrev68/papas-books/commit/ad21805e9cc59f862210447a3662c4c84516b738))
+- remove dev-dist build artifacts from tracking and update gitignore ([db97385](https://github.com/thetrev68/papas-books/commit/db97385408c450ba4be9436c0e50518f530096b9))
+
 ## [0.1.7](https://github.com/thetrev68/papas-books/compare/v0.1.6...v0.1.7) (2025-12-25)
 
 ### Features
