@@ -12,34 +12,6 @@ export interface ReportFilters {
   pageSize?: number;
 }
 
-/**
- * @deprecated Use fetchReportTransactions instead. This function is limited to 1000 rows
- * and does not support pagination, which causes incomplete reports for large datasets.
- */
-export async function fetchTransactionsForReport(
-  booksetId: string,
-  startDate: string,
-  endDate: string
-) {
-  try {
-    const { data, error } = await supabase
-      .from('transactions')
-      .select('*')
-      .eq('bookset_id', booksetId)
-      .gte('date', startDate)
-      .lte('date', endDate)
-      .eq('is_archived', false);
-
-    if (error) {
-      handleSupabaseError(error);
-    }
-    return data;
-  } catch (error) {
-    if (error instanceof DatabaseError) throw error;
-    throw new DatabaseError('Failed to fetch report data', undefined, error);
-  }
-}
-
 export async function fetchReportTransactions(
   filters: ReportFilters
 ): Promise<{ data: Transaction[]; total: number }> {

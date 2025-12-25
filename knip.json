@@ -3,7 +3,8 @@
   "ignore": [
     "src/**/*.test.{ts,tsx}",
     "src/components/audit/**",
-    "src/lib/audit/**"
+    "src/lib/audit/**",
+    "src/types/audit.ts"
   ],
   "project": ["src/**/*.{ts,tsx}"],
   "ignoreDependencies": [
@@ -12,7 +13,6 @@
     "@testing-library/user-event",
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser",
-    "@vitest/coverage-v8",
     "eslint-config-prettier",
     "eslint-plugin-react-hooks",
     "eslint-plugin-react-refresh"

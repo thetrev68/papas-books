@@ -4,7 +4,7 @@ import { MAX_DESCRIPTION_LENGTH } from './import';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
-export const mappedTransactionSchema = z.object({
+const mappedTransactionSchema = z.object({
   date: z.string().regex(ISO_DATE_PATTERN, 'Date must be in YYYY-MM-DD format'),
   amount: z.number().int('Amount must be an integer number of cents'),
   description: z
