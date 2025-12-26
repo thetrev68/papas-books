@@ -33,63 +33,117 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const initialSessionHandledRef = useRef(false);
 
   // Helper to fetch user profile and booksets with retry logic
+
   const fetchUserData = async (userId: string, retries = 3, delay = 1000) => {
     console.log(`fetchUserData called for ${userId}. Retries left: ${retries}`);
+
+    // Helper to enforce timeouts on DB requests
+
+    const withTimeout = async <T,>(
+      promise: PromiseLike<T>,
+      ms = 5000,
+      name = 'Request'
+    ): Promise<T> => {
+      const timeoutPromise = new Promise<T>((_, reject) =>
+        setTimeout(() => reject(new Error(`${name} timed out after ${ms}ms`)), ms)
+      );
+
+      return Promise.race([promise as Promise<T>, timeoutPromise]);
+    };
+
     try {
       // 1. Fetch user profile
+
       console.log('Fetching user profile from DB...');
-      const { data: userData, error: userError } = await supabase
+
+      const userQuery = supabase
+
         .from('users')
+
         .select('*')
+
         .eq('id', userId)
+
         .single();
+
+      const { data: userData, error: userError } = await withTimeout(
+        userQuery,
+        5000,
+        'User profile fetch'
+      );
 
       console.log('User profile fetch result:', { userData, error: userError });
 
       if (userError || !userData) {
         if (retries > 0) {
           console.log(`User profile missing or error. Retrying in ${delay}ms...`);
+
           await new Promise((resolve) => setTimeout(resolve, delay));
+
           return fetchUserData(userId, retries - 1, delay);
         }
+
         throw userError || new Error('User profile not found');
       }
 
       setUser(userData);
 
       // 2. Fetch accessible booksets (owned + granted)
+
       console.log('Fetching booksets...');
-      const { data: booksetsData, error: booksetsError } = await supabase
+
+      const booksetsQuery = supabase
+
         .from('booksets')
+
         .select('*');
+
+      const { data: booksetsData, error: booksetsError } = await withTimeout(
+        booksetsQuery,
+        5000,
+        'Booksets fetch'
+      );
 
       if (booksetsError) {
         throw booksetsError;
       }
 
-      const booksets = booksetsData || [];
+      const booksets: Bookset[] = booksetsData || [];
+
       setMyBooksets(booksets);
 
       // 3. Set active bookset
+
       const activeId = userData.active_bookset_id;
+
       const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
+
       setActiveBookset(active);
+
       console.log('fetchUserData completed successfully');
     } catch (err) {
       console.error('Error fetching user data:', err);
+
       // If aborted, it's a timeout
-      if (err instanceof Error && err.name === 'AbortError') {
+
+      if (
+        err instanceof Error &&
+        (err.name === 'AbortError' || err.message.includes('timed out'))
+      ) {
         setError(
-          new Error('Database connection timed out. Please check your internet or API keys.')
+          new Error(
+            'Database connection timed out. Please check your internet, extensions (ad-blockers), or API keys.'
+          )
         );
       } else {
         setError(err instanceof Error ? err : new Error('Unknown error'));
       }
+
       // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
+
       setUser(null);
     }
   };
-
   const runFetchUserData = (userId: string) => {
     if (inFlightRef.current) {
       return inFlightRef.current;
