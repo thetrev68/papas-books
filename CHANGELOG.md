@@ -2,6 +2,25 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.13](https://github.com/thetrev68/papas-books/compare/v0.1.12...v0.1.13) (2025-12-26)
+
+### Features
+
+- **auth:** use sessionStorage for session persistence ([e747de6](https://github.com/thetrev68/papas-books/commit/e747de6e9723d3bd7e5d7faedeaa7f735a695378))
+
+### Bug Fixes
+
+- **auth:** add request timeout to prevent hanging ([0f33618](https://github.com/thetrev68/papas-books/commit/0f336187d2905834267cbb23a7cfabd1d54f9965))
+- **auth:** correct subscription lifecycle in strict mode ([7a35060](https://github.com/thetrev68/papas-books/commit/7a350602403e860b8ec5bf3f6ff8a6642b9fc760))
+- **auth:** enable redirect after successful login ([1e7488f](https://github.com/thetrev68/papas-books/commit/1e7488f74d9b7865a11d7d944031b481eb17332f))
+- **auth:** improve authentication and routing flow ([ae89030](https://github.com/thetrev68/papas-books/commit/ae89030530c12d752b33e2315ac60f86a2a4c628))
+- **auth:** prevent stuck loading state during login ([7bc8c4c](https://github.com/thetrev68/papas-books/commit/7bc8c4c57463131ef6d9013a4cc57fd75ae44b1e))
+- resolve PWA manifest and meta tag issues ([ae91c0b](https://github.com/thetrev68/papas-books/commit/ae91c0bbbbd991e48bd22bddb3c0aafc9d6e8f00))
+
+### Maintenance
+
+- **auth:** add debug logging to user data fetch ([89640f2](https://github.com/thetrev68/papas-books/commit/89640f21122fa55ed1117736f76b5d0a2e906470))
+
 ## [0.1.12](https://github.com/thetrev68/papas-books/compare/v0.1.11...v0.1.12) (2025-12-25)
 
 ### Features
