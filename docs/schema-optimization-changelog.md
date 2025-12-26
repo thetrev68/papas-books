@@ -24,16 +24,19 @@ Performance optimizations have been integrated into both primary schema files to
 **Solution:** Wrap `auth.uid()` calls in subqueries to force single evaluation per query.
 
 **Before:**
+
 ```sql
 USING (auth.uid() = id)
 ```
 
 **After:**
+
 ```sql
 USING ((select auth.uid()) = id)
 ```
 
 **Affected Policies:**
+
 - `users` table:
   - "Users can read own profile" (SELECT) - Line 373 in schema.sql
   - "Users can create own profile" (INSERT) - Line 377 in schema.sql
@@ -48,6 +51,7 @@ USING ((select auth.uid()) = id)
 **Solution:** Combine "Users can update own profile" + "Admins can manage users" into a single policy with OR logic.
 
 **Before (2 policies):**
+
 ```sql
 CREATE POLICY "Users can update own profile"
   ON public.users FOR UPDATE
@@ -61,6 +65,7 @@ CREATE POLICY "Admins can manage users"
 ```
 
 **After (1 policy):**
+
 ```sql
 CREATE POLICY "Users can manage profiles"
   ON public.users FOR UPDATE
@@ -83,20 +88,22 @@ CREATE POLICY "Users can manage profiles"
 
 ## Verification
 
-### Applied to Production Database:
+### Applied to Production Database
 
 ✅ Migration script executed successfully on 2025-12-26
 
 **Query Performance Results:**
+
 - Execution Time: 0.717 ms
 - Planning Time: 5.669 ms
 - All 8 Supabase performance alerts cleared
 
-### Schema Files:
+### Schema Files
 
 ✅ Both schema files updated with identical optimizations
 
 **Verify with:**
+
 ```bash
 # Confirm subquery pattern in schema files
 grep -n "select auth.uid()" supabase/schema.sql

@@ -124,16 +124,6 @@
 
 **Full Documentation:** See [docs/supabase-issues-resolution.md](./supabase-issues-resolution.md) for complete details on all issues, solutions, and risk assessments
 
-### Performance Issue 1: [Title]
-
-- **Query/Operation:** [What's slow]
-- **Current Performance:** [e.g., 2.5s query time]
-- **Root Cause:** [Why it's slow]
-- **Fix Applied:** [Index added, query rewritten, etc.]
-- **New Performance:** [e.g., 150ms query time]
-- **Status:** ✅ Resolved / 🟡 In Progress / ❌ Not Started
-```
-
 ---
 
 ## Database Preparation
