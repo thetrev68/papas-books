@@ -94,6 +94,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     return promise;
   };
 
+  // Effect 1: Check active session on mount (once)
   useEffect(() => {
     if (didInitRef.current) return;
     didInitRef.current = true;
@@ -114,7 +115,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         console.error('getSession error', err);
         setLoading(false);
       });
+  }, []);
 
+  // Effect 2: Listen for auth changes (subscribe/unsubscribe correctly)
+  useEffect(() => {
     // Listen for auth changes
     const {
       data: { subscription },
