@@ -12,6 +12,7 @@ console.log('Initializing Supabase client with URL:', supabaseUrl.substring(0, 2
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
+    storage: window.sessionStorage,
     autoRefreshToken: true,
     detectSessionInUrl: true,
   },
