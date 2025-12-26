@@ -7,19 +7,17 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const [isSubmitting, setIsSubmitting] = useState(false);
   const { signIn, error: authError, user, loading: authLoading } = useAuth();
   const { showError } = useToast();
   const navigate = useNavigate();
 
   // Redirect when user is authenticated
   // Only redirect if we have a user AND we're not currently in the auth loading state
-  // This prevents redirect loops during sign-in
   useEffect(() => {
-    if (user && !authLoading && !isSubmitting) {
+    if (user && !authLoading) {
       navigate('/app/dashboard', { replace: true });
     }
-  }, [user, authLoading, isSubmitting, navigate]);
+  }, [user, authLoading, navigate]);
 
   // Stop loading if an auth error occurs from context (e.g. profile fetch failed)
   useEffect(() => {
@@ -31,7 +29,6 @@ export default function LoginPage() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
-    setIsSubmitting(true);
     try {
       await signIn(email, password);
       // Do not navigate here. Wait for 'user' to be set in context.
@@ -40,7 +37,6 @@ export default function LoginPage() {
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       showError(message);
       setLoading(false);
-      setIsSubmitting(false);
     }
   };
 
