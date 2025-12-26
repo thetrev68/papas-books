@@ -7,6 +7,8 @@
 -- - Phase 9: Enhanced audit trail with field-level change tracking
 -- - Security: Fixed search_path for all SECURITY DEFINER functions
 -- - Performance: Comprehensive indexes for query optimization
+-- - Performance: RLS policy optimizations (auth.uid() subqueries, combined policies)
+--   (See docs/supabase-issues-resolution.md for details)
 --
 -- WARNING: This will DELETE ALL DATA in the database.
 -- Only run this script when you want to completely reset the database.
@@ -367,23 +369,27 @@ $$;
 -- Users
 ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
 
+-- Performance optimized: wrap auth.uid() in subquery for single evaluation
 CREATE POLICY "Users can read own profile"
   ON public.users FOR SELECT
-  USING (auth.uid() = id);
+  USING ((select auth.uid()) = id);
 
 CREATE POLICY "Users can create own profile"
   ON public.users FOR INSERT
-  WITH CHECK (auth.uid() = id);
+  WITH CHECK ((select auth.uid()) = id);
 
-CREATE POLICY "Users can update own profile"
+-- Performance optimized: combine multiple permissive policies into one
+-- This replaces both "Users can update own profile" and "Admins can manage users"
+CREATE POLICY "Users can manage profiles"
   ON public.users FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
-
-CREATE POLICY "Admins can manage users"
-  ON public.users FOR UPDATE
-  USING (user_is_admin())
-  WITH CHECK (user_is_admin());
+  USING (
+    (select auth.uid()) = id OR  -- User can update own profile
+    user_is_admin()               -- OR user is admin
+  )
+  WITH CHECK (
+    (select auth.uid()) = id OR  -- User can update own profile
+    user_is_admin()               -- OR user is admin
+  );
 
 -- Booksets
 ALTER TABLE public.booksets ENABLE ROW LEVEL SECURITY;
@@ -392,9 +398,10 @@ CREATE POLICY "Users can read accessible booksets"
   ON public.booksets FOR SELECT
   USING (user_can_read_bookset(id));
 
+-- Performance optimized: wrap auth.uid() in subquery for single evaluation
 CREATE POLICY "Users can create own booksets"
   ON public.booksets FOR INSERT
-  WITH CHECK (auth.uid() = owner_id);
+  WITH CHECK ((select auth.uid()) = owner_id);
 
 CREATE POLICY "Owners can update booksets"
   ON public.booksets FOR UPDATE
