@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.14](https://github.com/thetrev68/papas-books/compare/v0.1.13...v0.1.14) (2025-12-26)
+
+### Features
+
+- **import:** improve import workflow with debug logging and UX enhancements ([39d5789](https://github.com/thetrev68/papas-books/commit/39d5789b40b3cd0f8a7127b7be3d4b60d50507bd))
+
 ## [0.1.13](https://github.com/thetrev68/papas-books/compare/v0.1.12...v0.1.13) (2025-12-26)
 
 ### Features
