@@ -156,8 +156,14 @@ export async function commitImportBatch(
  */
 export async function undoImportBatch(batchId: string): Promise<void> {
   try {
+    console.log('Calling undo_import_batch RPC with batch_id:', batchId);
     const { error } = await supabase.rpc('undo_import_batch', { _batch_id: batchId });
     if (error) {
+      console.error('Supabase RPC error:', error);
+      console.error('Error code:', error.code);
+      console.error('Error message:', error.message);
+      console.error('Error details:', error.details);
+      console.error('Error hint:', error.hint);
       handleSupabaseError(error);
     }
   } catch (error) {

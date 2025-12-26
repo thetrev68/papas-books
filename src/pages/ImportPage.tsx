@@ -55,11 +55,13 @@ export default function ImportPage() {
     )
       return;
     try {
+      console.log('Attempting to undo batch:', batchId);
       await undoImportBatch(batchId);
       loadBatches();
       alert('Import undone successfully.');
     } catch (err) {
       console.error('Failed to undo batch:', err);
+      console.error('Error details:', JSON.stringify(err, null, 2));
       alert('Failed to undo batch: ' + (err instanceof Error ? err.message : String(err)));
     }
   }
@@ -139,6 +141,15 @@ export default function ImportPage() {
             onApply={(mapping) => applyMapping(mapping)}
             isProcessing={isProcessing}
           />
+          <div className="mt-4 border-t pt-4">
+            <button
+              onClick={reset}
+              disabled={isProcessing}
+              className="text-neutral-500 hover:text-neutral-700 font-medium"
+            >
+              Cancel
+            </button>
+          </div>
         </section>
       )}
 
@@ -181,13 +192,20 @@ export default function ImportPage() {
             </div>
           </div>
 
-          <div className="mb-6">
+          <div className="mb-6 flex gap-4">
             <button
               onClick={checkDuplicates}
               disabled={isProcessing}
               className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
             >
               Check for Duplicates
+            </button>
+            <button
+              onClick={reset}
+              disabled={isProcessing}
+              className="px-6 py-3 bg-white text-neutral-600 font-bold rounded-xl border border-neutral-300 hover:bg-neutral-50 disabled:opacity-50"
+            >
+              Start Over
             </button>
           </div>
 
