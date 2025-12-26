@@ -34,16 +34,21 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Helper to fetch user profile and booksets with retry logic
   const fetchUserData = async (userId: string, retries = 3, delay = 1000) => {
+    console.log(`fetchUserData called for ${userId}. Retries left: ${retries}`);
     try {
       // 1. Fetch user profile
+      console.log('Fetching user profile from DB...');
       const { data: userData, error: userError } = await supabase
         .from('users')
         .select('*')
         .eq('id', userId)
         .single();
 
+      console.log('User profile fetch result:', { userData, error: userError });
+
       if (userError || !userData) {
         if (retries > 0) {
+          console.log(`User profile missing or error. Retrying in ${delay}ms...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
           return fetchUserData(userId, retries - 1, delay);
         }
@@ -53,6 +58,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setUser(userData);
 
       // 2. Fetch accessible booksets (owned + granted)
+      console.log('Fetching booksets...');
       const { data: booksetsData, error: booksetsError } = await supabase
         .from('booksets')
         .select('*');
@@ -68,6 +74,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       const activeId = userData.active_bookset_id;
       const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
       setActiveBookset(active);
+      console.log('fetchUserData completed successfully');
     } catch (err) {
       console.error('Error fetching user data:', err);
       // If aborted, it's a timeout
