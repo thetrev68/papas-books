@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.15](https://github.com/thetrev68/papas-books/compare/v0.1.14...v0.1.15) (2025-12-26)
+
+### Documentation
+
+- complete deployment checklist and rollback procedures (Task 3.6) ([018d32b](https://github.com/thetrev68/papas-books/commit/018d32b473fa194a3aa05cbfcde838ee770bc810))
+- complete RLS policy verification and update production readiness plan ([60c90aa](https://github.com/thetrev68/papas-books/commit/60c90aa91a389136eb63c64c5a494bd6aad8544a))
+- complete Supabase issues resolution and RLS performance optimizations ([89c46fd](https://github.com/thetrev68/papas-books/commit/89c46fde2429c30d685cf36180e3c3a37e784bc9))
+
+### Maintenance
+
+- apply markdown linter auto-fixes to documentation ([1aa70b2](https://github.com/thetrev68/papas-books/commit/1aa70b2c2027bca7ccbc99c55c31931b8dcfb609))
+
 ## [0.1.14](https://github.com/thetrev68/papas-books/compare/v0.1.13...v0.1.14) (2025-12-26)
 
 ### Features
