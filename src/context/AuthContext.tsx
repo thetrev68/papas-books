@@ -121,26 +121,27 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
       console.log('Auth state change event:', _event, 'has session:', !!session?.user);
       setSupabaseUser(session?.user ?? null);
+
       if (session?.user) {
         setLoading(true);
-
-        // If this is a new signup, give the DB trigger a moment
-        if (_event === 'SIGNED_IN' || _event === 'TOKEN_REFRESHED') {
-          // Small initial delay to allow trigger to complete
-          await new Promise((resolve) => setTimeout(resolve, 500));
-          await runFetchUserData(session.user.id);
-          setLoading(false);
-        } else if (_event === 'INITIAL_SESSION') {
-          if (initialSessionHandledRef.current) {
-            setLoading(false);
+        try {
+          // For new signups/logins, we want to ensure we fetch fresh data
+          // fetchUserData has built-in retry logic for DB triggers
+          if (_event === 'INITIAL_SESSION' && initialSessionHandledRef.current) {
+            // Skip if we already handled initial session
             return;
           }
-          initialSessionHandledRef.current = true;
+
+          if (_event === 'INITIAL_SESSION') {
+            initialSessionHandledRef.current = true;
+          }
+
+          console.log('Fetching user data for:', session.user.id);
           await runFetchUserData(session.user.id);
-          setLoading(false);
-        } else {
-          // Other events (USER_UPDATED, etc)
-          await runFetchUserData(session.user.id);
+          console.log('User data fetch complete');
+        } catch (err) {
+          console.error('Error in auth state change handler:', err);
+        } finally {
           setLoading(false);
         }
       } else {
