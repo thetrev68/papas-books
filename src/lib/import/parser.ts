@@ -40,6 +40,14 @@ export async function previewCsv(file: File, options?: ParseOptions): Promise<Pa
       preview: 5, // Only parse first 5 rows
       header: options?.hasHeaderRow ?? true,
       skipEmptyLines: true, // Ignore blank rows
+      transformHeader: (header: string) => {
+        // Trim whitespace and handle empty headers
+        return header.trim() || '__empty__';
+      },
+      transform: (value: string) => {
+        // Ensure all values are strings (PapaParse can return arrays for duplicate columns)
+        return Array.isArray(value) ? value[0] || '' : value;
+      },
       complete: (results) => {
         resolve({
           data: results.data as Record<string, string>[],
@@ -73,6 +81,14 @@ export async function parseFullCsv(file: File, options?: ParseOptions): Promise<
     Papa.parse(file, {
       header: options?.hasHeaderRow ?? true,
       skipEmptyLines: true,
+      transformHeader: (header: string) => {
+        // Trim whitespace and handle empty headers
+        return header.trim() || '__empty__';
+      },
+      transform: (value: string) => {
+        // Ensure all values are strings (PapaParse can return arrays for duplicate columns)
+        return Array.isArray(value) ? value[0] || '' : value;
+      },
       complete: (results) => {
         // Validate row count
         if (results.data.length > MAX_ROWS) {

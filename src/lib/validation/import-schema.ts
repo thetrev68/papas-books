@@ -20,7 +20,12 @@ type RequiredColumn = {
   column: string | undefined;
 };
 
-const baseRowSchema = z.record(z.string());
+const baseRowSchema = z.record(
+  z.union([z.string(), z.array(z.string())]).transform((val) => {
+    // Handle cases where PapaParse returns arrays for duplicate column names
+    return Array.isArray(val) ? val[0] || '' : val;
+  })
+);
 
 function getRequiredColumns(mapping: CsvMapping): RequiredColumn[] {
   const required: RequiredColumn[] = [

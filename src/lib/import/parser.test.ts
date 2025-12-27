@@ -61,6 +61,21 @@ describe('previewCsv', () => {
     expect(result.data).toHaveLength(2);
     expect(result.meta.fields).toBeUndefined();
   });
+
+  it('should handle empty column names from trailing commas', async () => {
+    const csvContent = 'Date,Amount,Description,,,\n1/1/2024,$100,Test,,,\n1/2/2024,$200,Test2,,,';
+    const file = new File([csvContent], 'test.csv', { type: 'text/csv' });
+
+    const result = await previewCsv(file);
+
+    expect(result.data).toHaveLength(2);
+    expect(result.data[0]).toHaveProperty('Date');
+    expect(result.data[0]).toHaveProperty('Amount');
+    expect(result.data[0]).toHaveProperty('Description');
+    // All values should be strings, not arrays
+    expect(typeof result.data[0].Date).toBe('string');
+    expect(typeof result.data[0].Amount).toBe('string');
+  });
 });
 
 describe('parseFullCsv', () => {
