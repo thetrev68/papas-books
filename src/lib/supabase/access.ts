@@ -15,12 +15,20 @@ export async function grantAccessByEmail(
     });
 
     if (error) {
+      // The new RPC function throws an exception if user is not found.
+      // We catch this specific error to maintain API compatibility with the UI.
+      if (error.message && error.message.includes('not found')) {
+        return { success: false, message: 'User not found' };
+      }
       handleSupabaseError(error);
     }
 
-    // data is already in the shape of { success: boolean, grantId?: string, message?: string }
-    // but typed as any/jsonb return from RPC.
-    return data as GrantAccessResult;
+    // The new RPC function returns a UUID (string) on success.
+    // We map this to the expected GrantAccessResult format.
+    return {
+      success: true,
+      grantId: data as unknown as string,
+    };
   } catch (error) {
     if (error instanceof DatabaseError) throw error;
     throw new DatabaseError('Failed to grant access', undefined, error);

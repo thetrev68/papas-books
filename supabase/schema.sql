@@ -47,7 +47,7 @@ DROP FUNCTION IF EXISTS public.prevent_audit_field_changes() CASCADE;
 DROP FUNCTION IF EXISTS public.protect_user_fields() CASCADE;
 DROP FUNCTION IF EXISTS public.track_change_history() CASCADE;
 DROP FUNCTION IF EXISTS public.finalize_reconciliation(uuid, uuid, bigint, timestamp with time zone, bigint, bigint, uuid[]) CASCADE;
-DROP FUNCTION IF EXISTS public.grant_access_by_email(uuid, text, text) CASCADE;
+DROP FUNCTION IF EXISTS public.grant_access_by_email(uuid, text, text, boolean, boolean) CASCADE;
 DROP FUNCTION IF EXISTS public.undo_import_batch(uuid) CASCADE;
 DROP FUNCTION IF EXISTS public.add_payee_alias(uuid, text) CASCADE;
 
@@ -751,40 +751,48 @@ $$;
 CREATE OR REPLACE FUNCTION grant_access_by_email(
   _bookset_id uuid,
   _email text,
-  _role text
+  _role text,
+  _can_import boolean DEFAULT false,
+  _can_reconcile boolean DEFAULT false
 )
-RETURNS jsonb
+RETURNS uuid
 LANGUAGE plpgsql
 SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  _target_user_id uuid;
+  _user_id uuid;
   _grant_id uuid;
 BEGIN
-  -- Find user by email in public.users
-  SELECT id INTO _target_user_id FROM users WHERE email = _email;
+  -- Find user by email
+  SELECT id INTO _user_id FROM users WHERE email = _email;
 
-  IF _target_user_id IS NULL THEN
-    RETURN jsonb_build_object('success', false, 'message', 'User not found');
+  IF _user_id IS NULL THEN
+    RAISE EXCEPTION 'User with email % not found', _email;
   END IF;
 
-  -- Prevent self-granting (optional, but good practice)
-  IF _target_user_id = auth.uid() THEN
-    RETURN jsonb_build_object('success', false, 'message', 'Cannot grant access to yourself');
+  -- Check if grant already exists
+  SELECT id INTO _grant_id FROM access_grants
+  WHERE bookset_id = _bookset_id
+    AND user_id = _user_id
+    AND revoked_at IS NULL;
+
+  IF _grant_id IS NOT NULL THEN
+    -- Update existing grant
+    UPDATE access_grants
+    SET
+      role = _role,
+      can_import = _can_import,
+      can_reconcile = _can_reconcile
+    WHERE id = _grant_id;
+    RETURN _grant_id;
+  ELSE
+    -- Create new grant
+    INSERT INTO access_grants (bookset_id, user_id, granted_by, role, can_import, can_reconcile)
+    VALUES (_bookset_id, _user_id, auth.uid(), _role, _can_import, _can_reconcile)
+    RETURNING id INTO _grant_id;
+    RETURN _grant_id;
   END IF;
-
-  -- Insert or update grant
-  INSERT INTO access_grants ("bookset_id", "user_id", "role", "granted_by")
-  VALUES (_bookset_id, _target_user_id, _role, auth.uid())
-  ON CONFLICT (bookset_id, user_id)
-  DO UPDATE SET
-    role = EXCLUDED.role,
-    revoked_at = NULL,
-    revoked_by = NULL
-  RETURNING id INTO _grant_id;
-
-  RETURN jsonb_build_object('success', true, 'grantId', _grant_id);
 END;
 $$;
 
