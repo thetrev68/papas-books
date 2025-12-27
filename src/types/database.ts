@@ -72,8 +72,9 @@ export interface Transaction {
   // Core Financial Data
   date: string; // ISO 8601 date (YYYY-MM-DD)
   amount: number; // Integer in cents (e.g., -1499 for -$14.99)
-  payee: string; // Cleaned name (initially same as original_description)
-  original_description: string; // Raw bank text (immutable)
+  payee: string | null; // DEPRECATED: Legacy text field (use payee_id instead)
+  payee_id: string | null; // Foreign key to payees table
+  original_description: string; // Raw bank description from CSV (immutable)
 
   // Metadata & Audit
   fingerprint: string; // SHA-256 hash for duplicate detection
@@ -126,8 +127,7 @@ export interface Payee {
   id: string;
   bookset_id: string;
   name: string; // Clean, normalized name (e.g., "Starbucks")
-  aliases: string[]; // Array of raw descriptions that map to this payee
-  category_id?: string; // Default category for this payee
+  default_category_id: string | null; // Default category for this payee
   created_at: string;
   updated_at: string;
   created_by: string;
@@ -144,8 +144,9 @@ export interface Rule {
   case_sensitive: boolean;
 
   // Action to take
-  target_category_id: string;
-  suggested_payee: string | null;
+  target_category_id: string | null;
+  payee_id: string | null; // Payee to assign when rule matches
+  suggested_payee: string | null; // DEPRECATED: Use payee_id instead
 
   // Priority and control
   priority: number;

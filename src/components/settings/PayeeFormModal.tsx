@@ -23,16 +23,14 @@ export default function PayeeFormModal({
   const queryClient = useQueryClient();
   const [formData, setFormData] = useState({
     name: initialName || '',
-    category_id: '',
-    aliases: [] as string[],
+    default_category_id: '',
   });
 
   useEffect(() => {
     if (payee) {
       setFormData({
         name: payee.name,
-        category_id: payee.category_id || '',
-        aliases: [...payee.aliases],
+        default_category_id: payee.default_category_id || '',
       });
     } else if (initialName) {
       setFormData((prev) => ({ ...prev, name: initialName }));
@@ -50,8 +48,7 @@ export default function PayeeFormModal({
       createPayee({
         bookset_id: activeBookset!.id,
         name: data.name,
-        category_id: data.category_id || undefined,
-        aliases: data.aliases,
+        default_category_id: data.default_category_id || null,
       }),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['payees'] });
@@ -78,27 +75,6 @@ export default function PayeeFormModal({
     }
   };
 
-  const handleAddAlias = () => {
-    setFormData((prev) => ({
-      ...prev,
-      aliases: [...prev.aliases, ''],
-    }));
-  };
-
-  const handleUpdateAlias = (index: number, value: string) => {
-    setFormData((prev) => ({
-      ...prev,
-      aliases: prev.aliases.map((alias, i) => (i === index ? value : alias)),
-    }));
-  };
-
-  const handleRemoveAlias = (index: number) => {
-    setFormData((prev) => ({
-      ...prev,
-      aliases: prev.aliases.filter((_, i) => i !== index),
-    }));
-  };
-
   return (
     <Modal title={payee ? 'Edit Payee' : 'Add Payee'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
@@ -115,9 +91,15 @@ export default function PayeeFormModal({
 
         <div>
           <label className="block text-sm font-bold text-neutral-500 mb-1">Default Category</label>
+          <p className="text-sm text-neutral-500 mb-2">
+            This category will be automatically applied when this payee is assigned to a transaction
+            (unless overridden by a rule).
+          </p>
           <select
-            value={formData.category_id}
-            onChange={(e) => setFormData((prev) => ({ ...prev, category_id: e.target.value }))}
+            value={formData.default_category_id}
+            onChange={(e) =>
+              setFormData((prev) => ({ ...prev, default_category_id: e.target.value }))
+            }
             className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           >
             <option value="">No default category</option>
@@ -127,39 +109,6 @@ export default function PayeeFormModal({
               </option>
             ))}
           </select>
-        </div>
-
-        <div>
-          <div className="flex items-center justify-between mb-2">
-            <label className="block text-sm font-bold text-neutral-500">Aliases</label>
-            <button
-              type="button"
-              onClick={handleAddAlias}
-              className="px-3 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
-            >
-              Add Alias
-            </button>
-          </div>
-          <div className="space-y-3">
-            {formData.aliases.map((alias, index) => (
-              <div key={index} className="flex flex-wrap gap-2">
-                <input
-                  type="text"
-                  value={alias}
-                  onChange={(e) => handleUpdateAlias(index, e.target.value)}
-                  placeholder="Alias text"
-                  className="flex-1 min-w-[220px] p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
-                />
-                <button
-                  type="button"
-                  onClick={() => handleRemoveAlias(index)}
-                  className="px-4 py-3 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
-          </div>
         </div>
 
         <div className="flex flex-wrap gap-3 justify-end">

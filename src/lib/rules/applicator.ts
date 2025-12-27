@@ -1,5 +1,5 @@
 import { supabase } from '../supabase/config';
-import { Transaction } from '../../types/database';
+import { Transaction, Payee } from '../../types/database';
 import { Rule, RuleApplicationResult, RuleBatchResult } from '../../types/rules';
 import { findMatchingRules, selectBestRule } from './matcher';
 
@@ -48,21 +48,51 @@ async function applyRuleToTransaction(
   }
 
   try {
+    // Determine which category to apply based on hierarchy:
+    // 1. If rule has a category → use it
+    // 2. Else if rule assigns a payee with default_category_id → use payee's default
+    // 3. Else → no category change
+    let categoryToApply = rule.target_category_id;
+
+    // Fetch payee if rule specifies one (to check for default category)
+    let payeeForRule: Payee | null = null;
+    if (rule.payee_id && !categoryToApply) {
+      const { data: payeeData } = await supabase
+        .from('payees')
+        .select('*')
+        .eq('id', rule.payee_id)
+        .single();
+
+      if (payeeData) {
+        payeeForRule = payeeData as Payee;
+        // Use payee's default category if rule doesn't specify one
+        if (payeeForRule.default_category_id) {
+          categoryToApply = payeeForRule.default_category_id;
+        }
+      }
+    }
+
     // Build transaction update
-    const transactionUpdate: Partial<Transaction> = {
-      // Update category (modify first line of split)
-      // Note: Phase 4 overwrites lines with a single line, effectively removing any splits
-      lines: [
+    const transactionUpdate: Partial<Transaction> = {};
+
+    // Update category if we determined one to apply
+    if (categoryToApply) {
+      transactionUpdate.lines = [
         {
-          category_id: rule.target_category_id,
+          category_id: categoryToApply,
           amount: transaction.amount,
           memo: '',
         },
-      ],
-    };
+      ];
+    }
 
-    // Update payee if rule provides suggestion
-    if (rule.suggested_payee) {
+    // Update payee if rule specifies one (prefer payee_id, fallback to suggested_payee)
+    if (rule.payee_id) {
+      transactionUpdate.payee_id = rule.payee_id;
+      // Clear legacy payee text field when assigning payee_id
+      transactionUpdate.payee = null;
+    } else if (rule.suggested_payee) {
+      // Legacy: Use suggested_payee text (deprecated)
       transactionUpdate.payee = rule.suggested_payee;
     }
 

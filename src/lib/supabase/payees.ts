@@ -5,8 +5,7 @@ import { handleSupabaseError, DatabaseError } from '../errors';
 export interface InsertPayee {
   bookset_id: string;
   name: string;
-  aliases?: string[];
-  category_id?: string;
+  default_category_id?: string | null;
 }
 
 /**

@@ -57,8 +57,10 @@ DROP INDEX IF EXISTS idx_transactions_fingerprint;
 DROP INDEX IF EXISTS idx_transactions_bookset_reviewed;
 DROP INDEX IF EXISTS idx_transactions_account_date_reconciled;
 DROP INDEX IF EXISTS idx_transactions_lines_category;
+DROP INDEX IF EXISTS idx_transactions_payee_id;
 DROP INDEX IF EXISTS idx_rules_bookset_priority;
 DROP INDEX IF EXISTS idx_rules_keyword;
+DROP INDEX IF EXISTS idx_rules_payee_id;
 DROP INDEX IF EXISTS idx_categories_bookset_parent;
 DROP INDEX IF EXISTS idx_categories_sort;
 DROP INDEX IF EXISTS idx_accounts_bookset_active;
@@ -67,7 +69,6 @@ DROP INDEX IF EXISTS idx_access_grants_bookset;
 DROP INDEX IF EXISTS idx_import_batches_account;
 DROP INDEX IF EXISTS idx_import_batches_undone;
 DROP INDEX IF EXISTS idx_payees_bookset_name;
-DROP INDEX IF EXISTS idx_payees_aliases;
 
 -- Drop tables
 DROP TABLE IF EXISTS public.reconciliations CASCADE;
@@ -180,8 +181,9 @@ CREATE TABLE public.transactions (
   bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
   account_id uuid REFERENCES public.accounts(id) ON DELETE CASCADE NOT NULL,
   date timestamp with time zone NOT NULL,
-  payee text NOT NULL,
-  original_description text NOT NULL,
+  payee text, -- Nullable: payee assignment is part of review workflow
+  payee_id uuid REFERENCES public.payees(id) ON DELETE SET NULL,
+  original_description text NOT NULL, -- Immutable bank description from CSV
   amount bigint NOT NULL, -- in cents
   is_split boolean DEFAULT false,
   lines jsonb NOT NULL,
@@ -211,7 +213,8 @@ CREATE TABLE public.rules (
   match_type text CHECK (match_type IN ('contains', 'exact', 'startsWith', 'regex')) NOT NULL,
   case_sensitive boolean DEFAULT false,
   target_category_id uuid REFERENCES public.categories(id),
-  suggested_payee text,
+  payee_id uuid REFERENCES public.payees(id) ON DELETE SET NULL,
+  suggested_payee text, -- DEPRECATED: Use payee_id instead
   priority int DEFAULT 0,
   is_enabled boolean DEFAULT true,
   created_at timestamp with time zone DEFAULT now(),
@@ -249,8 +252,7 @@ CREATE TABLE public.payees (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
   bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
   name text NOT NULL,
-  aliases text[] DEFAULT '{}',
-  category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  default_category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   created_by uuid REFERENCES public.users(id),
@@ -835,19 +837,7 @@ BEGIN
 END;
 $$;
 
--- 8.3 Utility: Payee Alias Management
-CREATE OR REPLACE FUNCTION add_payee_alias(payee_id uuid, new_alias text)
-RETURNS void
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-BEGIN
-  UPDATE payees
-  SET aliases = array_append(aliases, new_alias)
-  WHERE id = payee_id;
-END;
-$$;
+-- 8.3 RPC removed: add_payee_alias (no longer needed after payee refactor)
 
 -- -----------------------------------------------------------------------------
 -- 9. Performance Indexes
@@ -930,9 +920,17 @@ CREATE INDEX IF NOT EXISTS idx_import_batches_undone
 CREATE INDEX IF NOT EXISTS idx_payees_bookset_name
   ON payees(bookset_id, name);
 
--- Alias search (GIN index for array)
-CREATE INDEX IF NOT EXISTS idx_payees_aliases
-  ON payees USING GIN (aliases);
+-- TRANSACTIONS - PAYEE INDEX
+-- Payee lookup for transaction queries
+CREATE INDEX IF NOT EXISTS idx_transactions_payee_id
+  ON transactions(payee_id)
+  WHERE payee_id IS NOT NULL;
+
+-- RULES - PAYEE INDEX
+-- Payee lookup for rule application
+CREATE INDEX IF NOT EXISTS idx_rules_payee_id
+  ON rules(payee_id)
+  WHERE payee_id IS NOT NULL;
 
 -- -----------------------------------------------------------------------------
 -- 10. Repair Users (Sync missing auth.users to public.users)

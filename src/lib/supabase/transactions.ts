@@ -72,6 +72,7 @@ export async function updateTransaction(
       .from('transactions')
       .update({
         payee: transaction.payee,
+        payee_id: transaction.payee_id,
         is_reviewed: transaction.is_reviewed,
         is_split: transaction.is_split,
         lines: transaction.lines,
