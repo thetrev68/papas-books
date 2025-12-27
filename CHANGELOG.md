@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.17](https://github.com/thetrev68/papas-books/compare/v0.1.16...v0.1.17) (2025-12-27)
+
+### Bug Fixes
+
+- handle CSVs without headers by converting array rows to index-keyed objects ([1068fd2](https://github.com/thetrev68/papas-books/commit/1068fd2c841ca0b61e0c22c20b26247ae8a1f91c))
+- handle duplicate/empty CSV column names and fix e2e auth ([05b5d0c](https://github.com/thetrev68/papas-books/commit/05b5d0c21832296161527107b4312fc64aff05d9))
+- increase user data fetch timeout to 15s to prevent timeouts on slow connections ([1bb150e](https://github.com/thetrev68/papas-books/commit/1bb150e7eda6ca0c821636f4a87a7e4a8006961b))
+
+### Code Improvements
+
+- separate payee, bank description, and category concepts ([9ae19fe](https://github.com/thetrev68/papas-books/commit/9ae19fecb78809d12961d20fa3452d0f7cd0431f))
+
 ## [0.1.16](https://github.com/thetrev68/papas-books/compare/v0.1.15...v0.1.16) (2025-12-27)
 
 ### Bug Fixes
