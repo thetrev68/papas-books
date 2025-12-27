@@ -95,15 +95,15 @@ export default function PayeesTab() {
       header: 'Name',
       cell: (info) => <span className="font-bold text-neutral-900">{info.getValue()}</span>,
     }),
-    columnHelper.accessor('category_id', {
+    columnHelper.accessor('default_category_id', {
       header: 'Default Category',
       cell: ({ row, getValue }) => (
         <select
-          value={getValue() || ''}
+          value={getValue() ?? ''}
           onChange={(e) =>
             updateMutation.mutate({
               id: row.original.id,
-              data: { category_id: e.target.value || undefined },
+              data: { default_category_id: e.target.value || null },
             })
           }
           className="w-full bg-transparent border-b border-transparent hover:border-neutral-300 focus:border-brand-500 focus:outline-none py-1"
@@ -115,14 +115,6 @@ export default function PayeesTab() {
             </option>
           ))}
         </select>
-      ),
-    }),
-    columnHelper.accessor('aliases', {
-      header: 'Aliases',
-      cell: (info) => (
-        <span className="text-neutral-500 text-sm">
-          {info.getValue()?.length ? info.getValue().join(', ') : 'None'}
-        </span>
       ),
     }),
     columnHelper.display({

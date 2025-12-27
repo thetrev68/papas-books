@@ -239,7 +239,7 @@ export default function WorkbenchPage() {
           rule={null}
           initialValues={{
             keyword: ruleTransaction.payee || ruleTransaction.original_description,
-            suggestedPayee: ruleTransaction.payee,
+            suggestedPayee: ruleTransaction.payee ?? undefined,
           }}
           onClose={() => setRuleTransaction(null)}
         />

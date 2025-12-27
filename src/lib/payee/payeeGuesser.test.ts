@@ -8,8 +8,7 @@ describe('payeeGuesser', () => {
       id: '1',
       bookset_id: 'bs1',
       name: 'Starbucks',
-      aliases: ['POS PURCHASE STARBUCKS', 'STARBUCKS #123', 'STARBUCKS STORE'],
-      category_id: 'cat1',
+      default_category_id: 'cat1',
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
       created_by: 'user1',
@@ -19,8 +18,7 @@ describe('payeeGuesser', () => {
       id: '2',
       bookset_id: 'bs1',
       name: 'Amazon',
-      aliases: ['AMAZON.COM', 'AMAZON PURCHASE'],
-      category_id: 'cat2',
+      default_category_id: 'cat2',
       created_at: '2024-01-01T00:00:00Z',
       updated_at: '2024-01-01T00:00:00Z',
       created_by: 'user1',
@@ -29,10 +27,10 @@ describe('payeeGuesser', () => {
   ];
 
   describe('guessPayee', () => {
-    it('returns exact alias match with 100% confidence', () => {
+    it('returns fuzzy name match when payee name appears in description', () => {
       const result = guessPayee('POS PURCHASE STARBUCKS', mockPayees);
       expect(result.payee).toEqual(mockPayees[0]);
-      expect(result.confidence).toBe(100);
+      expect(result.confidence).toBe(80);
     });
 
     it('returns fuzzy name match with 80% confidence', () => {
@@ -76,14 +74,13 @@ describe('payeeGuesser', () => {
       expect(result.confidence).toBe(60);
     });
 
-    it('prioritizes exact alias matches over fuzzy matches', () => {
+    it('matches first payee when multiple payees have similar names', () => {
       const payeesWithOverlap: Payee[] = [
         {
           id: '1',
           bookset_id: 'bs1',
           name: 'Starbucks',
-          aliases: ['STARBUCKS'],
-          category_id: 'cat1',
+          default_category_id: 'cat1',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
           created_by: 'user1',
@@ -93,8 +90,7 @@ describe('payeeGuesser', () => {
           id: '2',
           bookset_id: 'bs1',
           name: 'Starbucks Coffee',
-          aliases: ['POS PURCHASE STARBUCKS'],
-          category_id: 'cat1',
+          default_category_id: 'cat1',
           created_at: '2024-01-01T00:00:00Z',
           updated_at: '2024-01-01T00:00:00Z',
           created_by: 'user1',
@@ -103,8 +99,8 @@ describe('payeeGuesser', () => {
       ];
 
       const result = guessPayee('POS PURCHASE STARBUCKS', payeesWithOverlap);
-      expect(result.payee).toEqual(payeesWithOverlap[1]); // Exact alias match
-      expect(result.confidence).toBe(100);
+      expect(result.payee).toEqual(payeesWithOverlap[0]); // First match wins
+      expect(result.confidence).toBe(80);
     });
 
     it('takes first 3 words as merchant name', () => {
@@ -114,11 +110,10 @@ describe('payeeGuesser', () => {
       expect(result.confidence).toBe(60);
     });
 
-    it('handles case insensitive matching', () => {
+    it('handles case insensitive matching for name match', () => {
       const result = guessPayee('pos purchase amazon.com', mockPayees);
-      expect(result.payee).toBeNull();
-      expect(result.suggestedName).toBe('amazon.com');
-      expect(result.confidence).toBe(60);
+      expect(result.payee).toEqual(mockPayees[1]); // Matches "Amazon" payee
+      expect(result.confidence).toBe(80);
     });
   });
 });

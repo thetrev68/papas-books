@@ -10,14 +10,7 @@ export interface PayeeGuess {
  * Guesses payee from description using existing payees
  */
 export function guessPayee(description: string, existingPayees: Payee[]): PayeeGuess {
-  // 1. Exact match against aliases
-  for (const payee of existingPayees) {
-    if (payee.aliases.some((alias) => alias.toLowerCase() === description.toLowerCase())) {
-      return { payee, confidence: 100 };
-    }
-  }
-
-  // 2. Fuzzy match against payee names
+  // 1. Fuzzy match against payee names
   const words = description.toLowerCase().split(/\s+/);
   for (const payee of existingPayees) {
     const payeeWords = payee.name.toLowerCase().split(/\s+/);

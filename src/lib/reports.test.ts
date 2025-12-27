@@ -18,6 +18,7 @@ describe('Reporting Logic', () => {
     account_id: 'a1',
     date,
     payee: 'Test',
+    payee_id: null,
     original_description: 'Test',
     lines: isSplit ? lines : categoryId ? [{ category_id: categoryId, amount, memo: '' }] : [],
     is_split: isSplit,

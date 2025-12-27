@@ -23,7 +23,7 @@ export interface InsertRule {
   keyword: string;
   matchType: MatchType;
   caseSensitive: boolean;
-  targetCategoryId: string;
+  targetCategoryId: string | null;
   suggestedPayee?: string;
   priority: number;
   isEnabled: boolean;

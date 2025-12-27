@@ -31,7 +31,7 @@ function CreateTransactionModal({
     if (initialTransaction) {
       setFormData({
         date: initialTransaction.date.split('T')[0],
-        payee: initialTransaction.payee,
+        payee: initialTransaction.payee || '',
         amount: initialTransaction.amount / 100,
         categoryId: initialTransaction.lines[0]?.category_id || '',
         isSplit: initialTransaction.is_split,

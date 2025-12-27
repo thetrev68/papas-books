@@ -10,6 +10,7 @@ describe('Reconciler Logic', () => {
     account_id: 'a1',
     date: '2023-01-01',
     payee: 'Test',
+    payee_id: null,
     original_description: 'Test',
     lines: [],
     is_split: false,

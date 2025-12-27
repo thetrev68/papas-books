@@ -117,7 +117,7 @@ function WorkbenchTable({
       header: 'Payee',
       cell: (info) => (
         <PayeeSelectCell
-          value={info.getValue()}
+          value={info.getValue() || ''}
           payees={payees}
           onSave={(newValue) => onUpdatePayee(info.row.original.id, newValue)}
           onCancel={() => setEditingPayee(null)}

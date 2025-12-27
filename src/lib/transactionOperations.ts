@@ -24,6 +24,7 @@ export function createManualTransaction(
     date,
     import_date: now,
     payee,
+    payee_id: null, // Will be set by user during review
     original_description: payee,
     amount,
     is_split: !!categoryId,

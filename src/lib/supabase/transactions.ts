@@ -36,7 +36,7 @@ export async function createTransaction(transaction: Transaction): Promise<Trans
         fingerprint: await generateFingerprint(
           transaction.date,
           transaction.amount,
-          transaction.payee
+          transaction.payee || ''
         ),
       })
       .select()

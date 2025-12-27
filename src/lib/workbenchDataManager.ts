@@ -32,7 +32,7 @@ export function filterTransactions(
     // Search filter (payee or description)
     if (filter.search) {
       const searchLower = filter.search.toLowerCase();
-      const matchesPayee = tx.payee.toLowerCase().includes(searchLower);
+      const matchesPayee = tx.payee?.toLowerCase().includes(searchLower) ?? false;
       const matchesDesc = tx.original_description.toLowerCase().includes(searchLower);
       if (!matchesPayee && !matchesDesc) return false;
     }
@@ -57,7 +57,7 @@ export function sortTransactions(
     } else if (sortBy === 'amount') {
       comparison = a.amount - b.amount;
     } else if (sortBy === 'payee') {
-      comparison = a.payee.localeCompare(b.payee);
+      comparison = (a.payee || '').localeCompare(b.payee || '');
     }
 
     return order === 'asc' ? comparison : -comparison;

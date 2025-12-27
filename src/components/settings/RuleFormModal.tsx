@@ -161,7 +161,8 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           matchType: resolvedRecord.match_type,
           caseSensitive: resolvedRecord.case_sensitive,
           targetCategoryId: resolvedRecord.target_category_id,
-          suggestedPayee: resolvedRecord.suggested_payee || undefined,
+          suggestedPayee:
+            resolvedRecord.suggested_payee !== null ? resolvedRecord.suggested_payee : undefined,
           priority: resolvedRecord.priority,
           isEnabled: resolvedRecord.is_enabled,
           conditions: Object.keys(resolvedConditions).length > 0 ? resolvedConditions : undefined,
@@ -179,7 +180,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
         keyword: serverRecord.keyword,
         matchType: serverRecord.match_type,
         caseSensitive: serverRecord.case_sensitive,
-        targetCategoryId: serverRecord.target_category_id,
+        targetCategoryId: serverRecord.target_category_id || '',
         suggestedPayee: serverRecord.suggested_payee || '',
         priority: serverRecord.priority,
         isEnabled: serverRecord.is_enabled,
