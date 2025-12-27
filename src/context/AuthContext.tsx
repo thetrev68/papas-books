@@ -68,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data: userData, error: userError } = await withTimeout(
         userQuery,
-        5000,
+        15000,
         'User profile fetch'
       );
 
@@ -100,7 +100,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data: booksetsData, error: booksetsError } = await withTimeout(
         booksetsQuery,
-        5000,
+        15000,
         'Booksets fetch'
       );
 
