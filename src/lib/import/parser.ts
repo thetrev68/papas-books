@@ -49,10 +49,30 @@ export async function previewCsv(file: File, options?: ParseOptions): Promise<Pa
         return Array.isArray(value) ? value[0] || '' : value;
       },
       complete: (results) => {
+        let data = results.data as Record<string, string>[] | string[][];
+        let fields = results.meta.fields;
+
+        const hasHeader = options?.hasHeaderRow ?? true;
+
+        // If no header row, data is string[][]. Convert to Record<string, string>[] with index keys
+        if (!hasHeader && data.length > 0 && Array.isArray(data[0])) {
+          const rows = data as string[][];
+          const maxCols = rows.reduce((max, row) => Math.max(max, row.length), 0);
+          fields = Array.from({ length: maxCols }, (_, i) => i.toString());
+
+          data = rows.map((row) => {
+            const obj: Record<string, string> = {};
+            row.forEach((val, i) => {
+              obj[i.toString()] = val;
+            });
+            return obj;
+          });
+        }
+
         resolve({
-          data: results.data as Record<string, string>[],
+          data: data as Record<string, string>[],
           meta: {
-            fields: results.meta.fields,
+            fields: fields,
           },
           errors: results.errors,
         });
@@ -98,10 +118,30 @@ export async function parseFullCsv(file: File, options?: ParseOptions): Promise<
           return;
         }
 
+        let data = results.data as Record<string, string>[] | string[][];
+        let fields = results.meta.fields;
+
+        const hasHeader = options?.hasHeaderRow ?? true;
+
+        // If no header row, data is string[][]. Convert to Record<string, string>[] with index keys
+        if (!hasHeader && data.length > 0 && Array.isArray(data[0])) {
+          const rows = data as string[][];
+          const maxCols = rows.reduce((max, row) => Math.max(max, row.length), 0);
+          fields = Array.from({ length: maxCols }, (_, i) => i.toString());
+
+          data = rows.map((row) => {
+            const obj: Record<string, string> = {};
+            row.forEach((val, i) => {
+              obj[i.toString()] = val;
+            });
+            return obj;
+          });
+        }
+
         resolve({
-          data: results.data as Record<string, string>[],
+          data: data as Record<string, string>[],
           meta: {
-            fields: results.meta.fields,
+            fields: fields,
           },
           errors: results.errors,
         });
