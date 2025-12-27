@@ -206,7 +206,7 @@ Papa's Books has **strong test coverage** for business logic and critical user w
   uses: codecov/codecov-action@v4
   with:
     files: ./coverage/coverage-final.json
-    fail_ci_if_error: false  # Don't fail CI if Codecov is down
+    fail_ci_if_error: false # Don't fail CI if Codecov is down
     token: ${{ secrets.CODECOV_TOKEN }}
 ```
 
@@ -238,7 +238,7 @@ Papa's Books has **strong test coverage** for business logic and critical user w
 # Add new job to .github/workflows/ci.yml
 e2e-tests:
   runs-on: ubuntu-latest
-  needs: build-and-test  # Run after unit tests pass
+  needs: build-and-test # Run after unit tests pass
   timeout-minutes: 15
 
   steps:
@@ -583,13 +583,13 @@ describe('transaction validation', () => {
 
 ### Coverage Targets
 
-| Category | Current | Target |
-|----------|---------|--------|
-| Business Logic | ~95% | 95%+ |
-| Validation Schemas | ~100% | 100% |
-| Supabase Client Functions | ~30% | 70%+ |
-| React Components | ~0% | 40%+ |
-| E2E Critical Paths | 100% | 100% |
+| Category                  | Current | Target |
+| ------------------------- | ------- | ------ |
+| Business Logic            | ~95%    | 95%+   |
+| Validation Schemas        | ~100%   | 100%   |
+| Supabase Client Functions | ~30%    | 70%+   |
+| React Components          | ~0%     | 40%+   |
+| E2E Critical Paths        | 100%    | 100%   |
 
 ### CI/CD Metrics
 

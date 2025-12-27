@@ -380,7 +380,7 @@ test('allows editing payee inline', async () => {
 
 #### 1. Test File Naming
 
-```
+```text
 src/lib/fingerprint.ts      → src/lib/fingerprint.test.ts
 src/components/Button.tsx   → src/components/Button.test.tsx
 ```
@@ -418,7 +418,7 @@ const mockTransaction = (overrides?: Partial<Transaction>): Transaction => ({
   amount: 10000,
   payee: 'Test Payee',
   // ... all required fields
-  ...overrides // Allow overriding specific fields
+  ...overrides, // Allow overriding specific fields
 });
 ```
 
@@ -518,10 +518,10 @@ vi.mock('../lib/supabase/config', () => ({
   supabase: {
     from: vi.fn(() => ({
       select: vi.fn(() => ({
-        eq: vi.fn(() => Promise.resolve({ data: mockData, error: null }))
-      }))
-    }))
-  }
+        eq: vi.fn(() => Promise.resolve({ data: mockData, error: null })),
+      })),
+    })),
+  },
 }));
 ```
 
@@ -551,20 +551,20 @@ See [supabase-security-checklist.md](./supabase-security-checklist.md) for detai
 
 **Coverage by Module:**
 
-| Module | Lines | Functions | Branches | Status |
-|--------|-------|-----------|----------|--------|
-| Import Pipeline | 94-100% | 88-100% | 88-100% | ✅ Excellent |
-| Fingerprint | 100% | 100% | N/A | ✅ Perfect |
-| Fuzzy Matcher | 100% | 100% | 100% | ✅ Perfect |
-| Reconciler | 100% | 100% | 100% | ✅ Perfect |
-| Split Calculator | 100% | 100% | 86% | ✅ Excellent |
-| Rules Engine | 95% | 100% | 96% | ✅ Excellent |
-| Reports | 95% | 100% | 77% | ⚠️ Good |
-| Validation Schemas | 100% | 100% | 100% | ✅ Perfect |
-| Transaction Ops | 100% | 100% | 100% | ✅ Perfect |
-| Workbench Manager | 100% | 100% | 97% | ✅ Excellent |
-| Payee Guesser | 90% | 100% | 75% | ⚠️ Good |
-| Supabase Config | 80% | N/A | 75% | ⚠️ Fair |
+| Module             | Lines   | Functions | Branches | Status       |
+| ------------------ | ------- | --------- | -------- | ------------ |
+| Import Pipeline    | 94-100% | 88-100%   | 88-100%  | ✅ Excellent |
+| Fingerprint        | 100%    | 100%      | N/A      | ✅ Perfect   |
+| Fuzzy Matcher      | 100%    | 100%      | 100%     | ✅ Perfect   |
+| Reconciler         | 100%    | 100%      | 100%     | ✅ Perfect   |
+| Split Calculator   | 100%    | 100%      | 86%      | ✅ Excellent |
+| Rules Engine       | 95%     | 100%      | 96%      | ✅ Excellent |
+| Reports            | 95%     | 100%      | 77%      | ⚠️ Good      |
+| Validation Schemas | 100%    | 100%      | 100%     | ✅ Perfect   |
+| Transaction Ops    | 100%    | 100%      | 100%     | ✅ Perfect   |
+| Workbench Manager  | 100%    | 100%      | 97%      | ✅ Excellent |
+| Payee Guesser      | 90%     | 100%      | 75%      | ⚠️ Good      |
+| Supabase Config    | 80%     | N/A       | 75%      | ⚠️ Fair      |
 
 **Uncovered Code Paths (9 total):**
 
@@ -643,7 +643,7 @@ See [supabase-security-checklist.md](./supabase-security-checklist.md) for detai
 
 1. Create test file next to source file:
 
-   ```
+   ```text
    src/lib/myFeature.ts  →  src/lib/myFeature.test.ts
    ```
 
@@ -676,7 +676,7 @@ See [supabase-security-checklist.md](./supabase-security-checklist.md) for detai
 
 1. Create spec file in `e2e/`:
 
-   ```
+   ```text
    e2e/my-feature-workflow.spec.ts
    ```
 
