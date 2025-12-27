@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.18](https://github.com/thetrev68/papas-books/compare/v0.1.17...v0.1.18) (2025-12-27)
+
+### Bug Fixes
+
+- update TypeScript types and code to match payee refactor migration ([40b2f05](https://github.com/thetrev68/papas-books/commit/40b2f0573bdd0823f7c53f73403e5b580bf294bb))
+
 ## [0.1.17](https://github.com/thetrev68/papas-books/compare/v0.1.16...v0.1.17) (2025-12-27)
 
 ### Bug Fixes
