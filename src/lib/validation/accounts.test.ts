@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { insertAccountSchema, updateAccountSchema } from './accounts';
 
 describe('Account Validation', () => {

@@ -33,6 +33,9 @@ export default async function globalSetup() {
       throw new Error(error?.message || 'Supabase login failed without a session.');
     }
 
+    // Ensure test account exists for E2E tests
+    await ensureTestAccount(supabase);
+
     const storageKey = `sb-${new URL(supabaseUrl).hostname.split('.')[0]}-auth-token`;
     const browser = await chromium.launch();
     const context = await browser.newContext();
@@ -54,6 +57,77 @@ export default async function globalSetup() {
   } catch (error) {
     await fs.mkdir(path.dirname(storageStatePath), { recursive: true });
     await fs.writeFile(failureHtmlPath, String(error));
+    throw error;
+  }
+}
+
+/**
+ * Ensures a test account exists for import tests.
+ * Creates one if it doesn't exist, otherwise returns the existing account.
+ * Also ensures the current user has an active bookset configured.
+ */
+async function ensureTestAccount(supabase: ReturnType<typeof createClient>): Promise<void> {
+  try {
+    // Get current user to ensure they have a bookset
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+    if (!user) {
+      throw new Error('No authenticated user found');
+    }
+
+    // Check if user has a bookset
+    const { data: userProfile } = await supabase
+      .from('users')
+      .select('active_bookset_id, own_bookset_id')
+      .eq('id', user.id)
+      .single();
+
+    if (!userProfile || !userProfile.own_bookset_id) {
+      console.log(
+        'User does not have a bookset. This should have been created automatically on signup.'
+      );
+      console.log('You may need to sign up through the app UI to properly initialize the user.');
+      throw new Error('User bookset not found - user may not be properly initialized');
+    }
+
+    const booksetId = userProfile.active_bookset_id || userProfile.own_bookset_id;
+    console.log(`Using bookset: ${booksetId}`);
+
+    // Try to find existing test account
+    const { data: existing } = await supabase
+      .from('accounts')
+      .select('id, name')
+      .eq('name', 'Test Checking Account')
+      .eq('bookset_id', booksetId)
+      .single();
+
+    if (existing) {
+      console.log(`Using existing test account: ${existing.name}`);
+      return;
+    }
+
+    // Create a test account
+    const { data: newAccount, error } = await supabase
+      .from('accounts')
+      .insert({
+        bookset_id: booksetId,
+        name: 'Test Checking Account',
+        type: 'Asset',
+        opening_balance: 0,
+        is_archived: false,
+      })
+      .select('id, name')
+      .single();
+
+    if (error) {
+      console.error('Failed to create test account:', error);
+      throw error;
+    }
+
+    console.log(`Created test account: ${newAccount.name}`);
+  } catch (error) {
+    console.error('Ensure test account error:', error);
     throw error;
   }
 }

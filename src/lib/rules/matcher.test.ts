@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { matchesRule, findMatchingRules, selectBestRule } from './matcher';
 import { Rule } from '../../types/rules';
 import { Transaction } from '../../types/database';

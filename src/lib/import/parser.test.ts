@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { previewCsv, parseFullCsv, MAX_ROWS } from './parser';
 
 describe('previewCsv', () => {
@@ -59,7 +58,8 @@ describe('previewCsv', () => {
     const result = await previewCsv(file, { hasHeaderRow: false });
 
     expect(result.data).toHaveLength(2);
-    expect(result.meta.fields).toBeUndefined();
+    // PapaParse generates numeric column names when header is false
+    expect(result.meta.fields).toEqual(['0', '1', '2']);
   });
 
   it('should handle empty column names from trailing commas', async () => {

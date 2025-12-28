@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { validateMappedTransaction, validateRawCsvRow } from './import-schema';
 import type { CsvMapping, DateFormat, AmountMode } from '../../types/import';
 

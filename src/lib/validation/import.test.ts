@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { sanitizeText, MAX_DESCRIPTION_LENGTH } from './import';
 
 describe('sanitizeText', () => {

@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { cleanCurrency, parseDate, mapRowToTransaction, mapRowsToTransactions } from './mapper';
 import type { CsvMapping, DateFormat, AmountMode } from '../../types/import';
 

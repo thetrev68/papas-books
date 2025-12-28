@@ -1,4 +1,3 @@
-import { describe, it, expect } from 'vitest';
 import { normalizeDescription, generateFingerprint, addFingerprints } from './fingerprint';
 import type { StagedTransaction } from './mapper';
 
