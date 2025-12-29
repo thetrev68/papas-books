@@ -146,7 +146,8 @@ function WorkbenchTable({
         header: () => <div className="text-right">Amount</div>,
         cell: (info) => {
           const amount = info.getValue();
-          const colorClass = amount >= 0 ? 'text-success-700' : 'text-neutral-900';
+          const colorClass =
+            amount >= 0 ? 'text-success-700' : 'text-neutral-900 dark:text-gray-100';
           return (
             <div className={`font-bold text-right ${colorClass}`}>
               $
@@ -434,7 +435,7 @@ function WorkbenchTable({
                                   {getCategoryName(line.category_id)}
                                 </span>
                                 <span
-                                  className={`font-mono font-medium w-32 text-right ${line.amount >= 0 ? 'text-success-700' : 'text-neutral-900'}`}
+                                  className={`font-mono font-medium w-32 text-right ${line.amount >= 0 ? 'text-success-700' : 'text-neutral-900 dark:text-gray-100'}`}
                                 >
                                   {line.amount >= 0 ? '+' : ''}
                                   {(Math.abs(line.amount) / 100).toLocaleString('en-US', {
