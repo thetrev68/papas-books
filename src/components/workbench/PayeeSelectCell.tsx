@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, memo } from 'react';
 import type { Payee } from '../../types/database';
 
 interface PayeeSelectCellProps {
@@ -11,7 +11,7 @@ interface PayeeSelectCellProps {
   onCreatePayee?: (name: string) => void;
 }
 
-function PayeeSelectCell({
+const PayeeSelectCell = memo(function PayeeSelectCell({
   value,
   payees,
   onSave,
@@ -118,6 +118,6 @@ function PayeeSelectCell({
       {value || 'Select Payee...'}
     </span>
   );
-}
+});
 
 export default PayeeSelectCell;
