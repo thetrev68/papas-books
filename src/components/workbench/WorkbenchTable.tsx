@@ -53,7 +53,7 @@ function WorkbenchTable({
 
   const columnHelper = createColumnHelper<Transaction>();
 
-  // Helper to process categories
+  // Helper to process categories - memoized with stable reference
   const sortedCategories = useMemo(() => {
     const categoryMap = new Map(categories.map((c) => [c.id, c]));
 
@@ -103,189 +103,205 @@ function WorkbenchTable({
     return cat ? cat.displayName : 'Uncategorized';
   }
 
-  const columns = [
-    columnHelper.accessor('date', {
-      header: 'Date',
-      cell: (info) => (
-        <span className="text-neutral-600 font-medium">
-          {new Date(info.getValue()).toLocaleDateString()}
-        </span>
-      ),
-      sortingFn: 'datetime',
-    }),
-    columnHelper.accessor('payee', {
-      header: 'Payee',
-      cell: (info) => (
-        <PayeeSelectCell
-          value={info.getValue() || ''}
-          payees={payees}
-          onSave={(newValue) => onUpdatePayee(info.row.original.id, newValue)}
-          onCancel={() => setEditingPayee(null)}
-          isEditing={editingPayee === info.row.original.id}
-          setIsEditing={(editing) => setEditingPayee(editing ? info.row.original.id : null)}
-          onCreatePayee={onCreatePayee}
-        />
-      ),
-    }),
-    columnHelper.accessor('original_description', {
-      header: 'Description',
-      cell: (info) => (
-        <span
-          className="text-neutral-500 italic block truncate max-w-[200px]"
-          title={info.getValue()}
-        >
-          {info.getValue()}
-        </span>
-      ),
-    }),
-    columnHelper.accessor('amount', {
-      header: () => <div className="text-right">Amount</div>,
-      cell: (info) => {
-        const amount = info.getValue();
-        const colorClass = amount >= 0 ? 'text-success-700' : 'text-neutral-900';
-        return (
-          <div className={`font-bold text-right ${colorClass}`}>
-            $
-            {(Math.abs(amount) / 100).toLocaleString('en-US', {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}
-          </div>
-        );
-      },
-      sortingFn: 'basic',
-    }),
-    columnHelper.display({
-      id: 'category',
-      header: 'Category',
-      cell: ({ row }) => {
-        if (row.original.is_split) {
-          return (
-            <div>
-              <button
-                onClick={row.getToggleExpandedHandler()}
-                className="text-brand-600 font-bold hover:underline flex items-center gap-1"
-              >
-                {row.getIsExpanded() ? '▼' : '▶'} Split ({row.original.lines.length})
-              </button>
-            </div>
-          );
-        } else {
-          const currentCategoryId = row.original.lines[0]?.category_id || '';
-          return (
-            <div className="relative">
-              <select
-                value={currentCategoryId}
-                onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
-                className="appearance-none w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-              >
-                <option value="">Uncategorized</option>
-                {sortedCategories.map((cat) => (
-                  <option key={cat.id} value={cat.id}>
-                    {cat.displayName}
-                  </option>
-                ))}
-              </select>
-              <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-700">
-                <svg
-                  className="fill-current h-4 w-4"
-                  xmlns="http://www.w3.org/2000/svg"
-                  viewBox="0 0 20 20"
-                >
-                  <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                </svg>
-              </div>
-            </div>
-          );
-        }
-      },
-    }),
-    columnHelper.accessor('account_id', {
-      header: 'Account',
-      cell: (info) => (
-        <span className="text-sm text-neutral-500 font-medium bg-neutral-100 px-2 py-1 rounded">
-          {getAccountName(info.getValue())}
-        </span>
-      ),
-    }),
-    columnHelper.accessor('is_reviewed', {
-      header: 'Reviewed',
-      cell: (info) => (
-        <div className="flex justify-center">
-          <input
-            type="checkbox"
-            checked={info.getValue()}
-            onChange={() => onReview(info.row.original)}
-            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 cursor-pointer"
+  // Memoize columns to prevent re-creation on every render
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor('date', {
+        header: 'Date',
+        cell: (info) => (
+          <span className="text-neutral-600 font-medium">
+            {new Date(info.getValue()).toLocaleDateString()}
+          </span>
+        ),
+        sortingFn: 'datetime',
+      }),
+      columnHelper.accessor('payee', {
+        header: 'Payee',
+        cell: (info) => (
+          <PayeeSelectCell
+            value={info.getValue() || ''}
+            payees={payees}
+            onSave={(newValue) => onUpdatePayee(info.row.original.id, newValue)}
+            onCancel={() => setEditingPayee(null)}
+            isEditing={editingPayee === info.row.original.id}
+            setIsEditing={(editing) => setEditingPayee(editing ? info.row.original.id : null)}
+            onCreatePayee={onCreatePayee}
           />
-        </div>
-      ),
-    }),
-    columnHelper.display({
-      id: 'actions',
-      header: 'Actions',
-      cell: ({ row }) => (
-        <div className="flex gap-2 justify-center">
-          <button
-            onClick={() => onEdit(row.original)}
-            className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-            title="Edit"
+        ),
+      }),
+      columnHelper.accessor('original_description', {
+        header: 'Description',
+        cell: (info) => (
+          <span
+            className="text-neutral-500 italic block truncate max-w-[200px]"
+            title={info.getValue()}
           >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-              ></path>
-            </svg>
-          </button>
-          <button
-            onClick={() => onSplit(row.original)}
-            className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-            title="Split"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-              ></path>
-            </svg>
-          </button>
-          <button
-            onClick={() => onCreateRule(row.original)}
-            className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-            title="Create Rule"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-              ></path>
-            </svg>
-          </button>
-          <button
-            onClick={() => onDelete(row.original)}
-            className="p-2 text-neutral-400 hover:text-danger-700 transition-colors"
-            title="Delete"
-          >
-            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth="2"
-                d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-2.14-1.928L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-              ></path>
-            </svg>
-          </button>
-        </div>
-      ),
-    }),
-  ];
+            {info.getValue()}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('amount', {
+        header: () => <div className="text-right">Amount</div>,
+        cell: (info) => {
+          const amount = info.getValue();
+          const colorClass = amount >= 0 ? 'text-success-700' : 'text-neutral-900';
+          return (
+            <div className={`font-bold text-right ${colorClass}`}>
+              $
+              {(Math.abs(amount) / 100).toLocaleString('en-US', {
+                minimumFractionDigits: 2,
+                maximumFractionDigits: 2,
+              })}
+            </div>
+          );
+        },
+        sortingFn: 'basic',
+      }),
+      columnHelper.display({
+        id: 'category',
+        header: 'Category',
+        cell: ({ row }) => {
+          if (row.original.is_split) {
+            return (
+              <div>
+                <button
+                  onClick={row.getToggleExpandedHandler()}
+                  className="text-brand-600 font-bold hover:underline flex items-center gap-1"
+                >
+                  {row.getIsExpanded() ? '▼' : '▶'} Split ({row.original.lines.length})
+                </button>
+              </div>
+            );
+          } else {
+            const currentCategoryId = row.original.lines[0]?.category_id || '';
+            return (
+              <div className="relative">
+                <select
+                  value={currentCategoryId}
+                  onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
+                  className="appearance-none w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
+                >
+                  <option value="">Uncategorized</option>
+                  {sortedCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.displayName}
+                    </option>
+                  ))}
+                </select>
+                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-700">
+                  <svg
+                    className="fill-current h-4 w-4"
+                    xmlns="http://www.w3.org/2000/svg"
+                    viewBox="0 0 20 20"
+                  >
+                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
+                  </svg>
+                </div>
+              </div>
+            );
+          }
+        },
+      }),
+      columnHelper.accessor('account_id', {
+        header: 'Account',
+        cell: (info) => (
+          <span className="text-sm text-neutral-500 font-medium bg-neutral-100 px-2 py-1 rounded">
+            {getAccountName(info.getValue())}
+          </span>
+        ),
+      }),
+      columnHelper.accessor('is_reviewed', {
+        header: 'Reviewed',
+        cell: (info) => (
+          <div className="flex justify-center">
+            <input
+              type="checkbox"
+              checked={info.getValue()}
+              onChange={() => onReview(info.row.original)}
+              className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 cursor-pointer"
+            />
+          </div>
+        ),
+      }),
+      columnHelper.display({
+        id: 'actions',
+        header: 'Actions',
+        cell: ({ row }) => (
+          <div className="flex gap-2 justify-center">
+            <button
+              onClick={() => onEdit(row.original)}
+              className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+              title="Edit"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                ></path>
+              </svg>
+            </button>
+            <button
+              onClick={() => onSplit(row.original)}
+              className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+              title="Split"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                ></path>
+              </svg>
+            </button>
+            <button
+              onClick={() => onCreateRule(row.original)}
+              className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+              title="Create Rule"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                ></path>
+              </svg>
+            </button>
+            <button
+              onClick={() => onDelete(row.original)}
+              className="p-2 text-neutral-400 hover:text-danger-700 transition-colors"
+              title="Delete"
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth="2"
+                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-2.14-1.928L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                ></path>
+              </svg>
+            </button>
+          </div>
+        ),
+      }),
+    ],
+    [
+      sortedCategories,
+      payees,
+      onUpdatePayee,
+      onUpdateCategory,
+      editingPayee,
+      onEdit,
+      onSplit,
+      onCreateRule,
+      onDelete,
+      onReview,
+      onCreatePayee,
+    ]
+  );
 
   const table = useReactTable({
     data: transactions,
@@ -305,6 +321,7 @@ function WorkbenchTable({
     getSortedRowModel: getSortedRowModel(),
     getExpandedRowModel: getExpandedRowModel(),
     getRowCanExpand: (row) => row.original.is_split,
+    getRowId: (row) => row.id, // Use transaction ID for stable row identity
   });
 
   // Virtualization
@@ -314,6 +331,11 @@ function WorkbenchTable({
     getScrollElement: () => parentRef.current,
     estimateSize: () => 80, // Taller rows
     overscan: 5,
+    // Measure actual row heights dynamically
+    measureElement:
+      typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
+        ? (element) => element?.getBoundingClientRect().height
+        : undefined,
   });
 
   const items = virtualizer.getVirtualItems();
@@ -370,7 +392,11 @@ function WorkbenchTable({
               const row = table.getRowModel().rows[virtualRow.index];
               return (
                 <Fragment key={row.id}>
-                  <tr className="hover:bg-brand-50 transition-colors group">
+                  <tr
+                    className="hover:bg-brand-50 transition-colors group"
+                    data-index={virtualRow.index}
+                    ref={(node) => virtualizer.measureElement(node)}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <td key={cell.id} className="p-4 align-middle">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -378,7 +404,10 @@ function WorkbenchTable({
                     ))}
                   </tr>
                   {row.getIsExpanded() && (
-                    <tr className="bg-neutral-50 shadow-inner">
+                    <tr
+                      className="bg-neutral-50 shadow-inner"
+                      ref={(node) => virtualizer.measureElement(node)}
+                    >
                       <td colSpan={columns.length} className="p-4">
                         <div className="ml-12 pl-4 border-l-4 border-brand-300">
                           <h4 className="text-sm font-bold text-neutral-500 mb-2 uppercase tracking-wide">
