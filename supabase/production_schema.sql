@@ -22,21 +22,21 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- -----------------------------------------------------------------------------
 -- 0. Cleanup (Reset Schema)
 -- -----------------------------------------------------------------------------
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-DROP FUNCTION IF EXISTS public.handle_new_user();
 
--- Drop Phase 9 audit triggers
-DROP TRIGGER IF EXISTS track_transaction_changes ON public.transactions;
-DROP TRIGGER IF EXISTS track_account_changes ON public.accounts;
-DROP TRIGGER IF EXISTS track_category_changes ON public.categories;
-DROP TRIGGER IF EXISTS track_rule_changes ON public.rules;
+-- Drop tables first (CASCADE will drop all dependent triggers, indexes, and constraints)
+DROP TABLE IF EXISTS public.reconciliations CASCADE;
+DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TABLE IF EXISTS public.import_batches CASCADE;
+DROP TABLE IF EXISTS public.rules CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.payees CASCADE;
+DROP TABLE IF EXISTS public.accounts CASCADE;
+DROP TABLE IF EXISTS public.access_grants CASCADE;
+DROP TABLE IF EXISTS public.booksets CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
 
--- Drop Phase 8 audit triggers (old version)
-DROP TRIGGER IF EXISTS tr_audit_transactions ON public.transactions;
-DROP TRIGGER IF EXISTS tr_audit_accounts ON public.accounts;
-DROP TRIGGER IF EXISTS tr_audit_rules ON public.rules;
-
--- Drop all functions to ensure clean state
+-- Drop functions (these may still exist even after table drops)
+DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
 DROP FUNCTION IF EXISTS public.user_owns_bookset(uuid) CASCADE;
 DROP FUNCTION IF EXISTS public.user_has_access_grant(uuid, text) CASCADE;
 DROP FUNCTION IF EXISTS public.user_can_read_bookset(uuid) CASCADE;
@@ -49,38 +49,8 @@ DROP FUNCTION IF EXISTS public.track_change_history() CASCADE;
 DROP FUNCTION IF EXISTS public.finalize_reconciliation(uuid, uuid, bigint, timestamp with time zone, bigint, bigint, uuid[]) CASCADE;
 DROP FUNCTION IF EXISTS public.grant_access_by_email(uuid, text, text, boolean, boolean) CASCADE;
 DROP FUNCTION IF EXISTS public.undo_import_batch(uuid) CASCADE;
-DROP FUNCTION IF EXISTS public.add_payee_alias(uuid, text) CASCADE;
 
--- Drop indexes
-DROP INDEX IF EXISTS idx_transactions_bookset_account_date;
-DROP INDEX IF EXISTS idx_transactions_fingerprint;
-DROP INDEX IF EXISTS idx_transactions_bookset_reviewed;
-DROP INDEX IF EXISTS idx_transactions_account_date_reconciled;
-DROP INDEX IF EXISTS idx_transactions_lines_category;
-DROP INDEX IF EXISTS idx_transactions_payee_id;
-DROP INDEX IF EXISTS idx_rules_bookset_priority;
-DROP INDEX IF EXISTS idx_rules_keyword;
-DROP INDEX IF EXISTS idx_rules_payee_id;
-DROP INDEX IF EXISTS idx_categories_bookset_parent;
-DROP INDEX IF EXISTS idx_categories_sort;
-DROP INDEX IF EXISTS idx_accounts_bookset_active;
-DROP INDEX IF EXISTS idx_access_grants_user_bookset;
-DROP INDEX IF EXISTS idx_access_grants_bookset;
-DROP INDEX IF EXISTS idx_import_batches_account;
-DROP INDEX IF EXISTS idx_import_batches_undone;
-DROP INDEX IF EXISTS idx_payees_bookset_name;
-
--- Drop tables
-DROP TABLE IF EXISTS public.reconciliations CASCADE;
-DROP TABLE IF EXISTS public.transactions CASCADE;
-DROP TABLE IF EXISTS public.import_batches CASCADE;
-DROP TABLE IF EXISTS public.rules CASCADE;
-DROP TABLE IF EXISTS public.categories CASCADE;
-DROP TABLE IF EXISTS public.accounts CASCADE;
-DROP TABLE IF EXISTS public.access_grants CASCADE;
-DROP TABLE IF EXISTS public.users CASCADE;
-DROP TABLE IF EXISTS public.booksets CASCADE;
-DROP TABLE IF EXISTS public.payees CASCADE;
+-- Note: Indexes and triggers are automatically dropped when tables are dropped with CASCADE
 
 -- -----------------------------------------------------------------------------
 -- 1. Tables
@@ -175,6 +145,18 @@ CREATE TABLE public.categories (
   change_history jsonb -- Phase 9: Audit trail
 );
 
+-- Table: payees (must be created before transactions and rules that reference it)
+CREATE TABLE public.payees (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  default_category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id)
+);
+
 -- Table: transactions
 CREATE TABLE public.transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -245,18 +227,6 @@ CREATE TABLE public.reconciliations (
   created_by uuid REFERENCES public.users(id),
   notes text,
   discrepancy_resolution text
-);
-
--- Table: payees
-CREATE TABLE public.payees (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
-  name text NOT NULL,
-  default_category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  created_by uuid REFERENCES public.users(id),
-  last_modified_by uuid REFERENCES public.users(id)
 );
 
 -- Table: import_batches

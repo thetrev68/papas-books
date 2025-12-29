@@ -10,7 +10,7 @@
 DO $$
 DECLARE
   -- REPLACE THIS WITH YOUR TARGET BOOKSET ID
-  target_bookset_id uuid := '1dcad2dc-6250-400f-ad92-9d083b13e240'; 
+  target_bookset_id uuid := '157c852f-6b62-46d9-89ae-d8abad4d95fa'; 
   
   -- Variables for parent IDs
   income_id uuid;

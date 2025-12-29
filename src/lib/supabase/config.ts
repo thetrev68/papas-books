@@ -7,13 +7,24 @@ if (!supabaseUrl || !supabaseAnonKey) {
   throw new Error('Missing Supabase environment variables');
 }
 
-console.log('Initializing Supabase client with URL:', supabaseUrl.substring(0, 20) + '...');
-
 export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
   auth: {
     persistSession: true,
     storage: window.localStorage,
     autoRefreshToken: true,
     detectSessionInUrl: true,
+  },
+  db: {
+    schema: 'public',
+  },
+  global: {
+    headers: {
+      'x-client-info': 'papas-books',
+    },
+  },
+  realtime: {
+    params: {
+      eventsPerSecond: 10,
+    },
   },
 });

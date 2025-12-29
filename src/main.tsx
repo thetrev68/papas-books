@@ -3,6 +3,18 @@ import ReactDOM from 'react-dom/client';
 import './index.css';
 import './pwa'; // Add PWA registration
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+
+// Suppress verbose Chrome performance warnings in development
+if (import.meta.env.DEV) {
+  const originalWarn = console.warn;
+  console.warn = (...args) => {
+    const message = args[0];
+    if (typeof message === 'string' && message.includes('[Violation]')) {
+      return; // Suppress violation warnings
+    }
+    originalWarn.apply(console, args);
+  };
+}
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from './context/AuthContext';

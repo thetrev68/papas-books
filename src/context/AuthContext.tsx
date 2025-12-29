@@ -1,106 +1,93 @@
-import { createContext, useContext, useEffect, useRef, useState } from 'react';
+import { createContext, useContext, useEffect, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
 import { User, Bookset } from '../types/database';
 
-interface AuthContextType {
-  user: User | null;
+type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error';
+
+interface AuthState {
+  status: AuthStatus;
   supabaseUser: SupabaseUser | null;
-  loading: boolean;
-  error: Error | null;
+  user: User | null;
   activeBookset: Bookset | null;
   myBooksets: Bookset[];
+  error: Error | null;
+}
+
+interface AuthContextType extends AuthState {
   signUp: (email: string, password: string, displayName?: string) => Promise<void>;
   signIn: (email: string, password: string) => Promise<void>;
   signOut: () => Promise<void>;
   resetPassword: (email: string) => Promise<void>;
   switchBookset: (booksetId: string) => Promise<void>;
+  retryAuth: () => void;
   canEdit: boolean;
   canAdmin: boolean;
+  // Backwards compatibility
+  loading: boolean;
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined);
 
+const DEBUG = import.meta.env.DEV;
+const log = (...args: unknown[]) => DEBUG && console.log('[Auth]', ...args);
+
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const [supabaseUser, setSupabaseUser] = useState<SupabaseUser | null>(null);
-  const [user, setUser] = useState<User | null>(null);
-  const [activeBookset, setActiveBookset] = useState<Bookset | null>(null);
-  const [myBooksets, setMyBooksets] = useState<Bookset[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<Error | null>(null);
-  const didInitRef = useRef(false);
-  const inFlightRef = useRef<Promise<void> | null>(null);
-  const initialSessionHandledRef = useRef(false);
+  const [authState, setAuthState] = useState<AuthState>({
+    status: 'initializing',
+    supabaseUser: null,
+    user: null,
+    activeBookset: null,
+    myBooksets: [],
+    error: null,
+  });
 
-  // Helper to fetch user profile and booksets with retry logic
-
-  const fetchUserData = async (userId: string, retries = 3, delay = 1000) => {
-    console.log(`fetchUserData called for ${userId}. Retries left: ${retries}`);
-
-    // Helper to enforce timeouts on DB requests
-
+  // Helper to fetch user profile and booksets
+  const fetchUserData = async (
+    userId: string,
+    retries = 2,
+    delay = 500
+  ): Promise<{ user: User; booksets: Bookset[]; activeBookset: Bookset | null }> => {
     const withTimeout = async <T,>(
       promise: PromiseLike<T>,
-      ms = 5000,
+      ms = 8000,
       name = 'Request'
     ): Promise<T> => {
       const timeoutPromise = new Promise<T>((_, reject) =>
         setTimeout(() => reject(new Error(`${name} timed out after ${ms}ms`)), ms)
       );
-
       return Promise.race([promise as Promise<T>, timeoutPromise]);
     };
 
     try {
+      log('Fetching user data for', userId);
+
       // 1. Fetch user profile
-
-      console.log('Fetching user profile from DB...');
-
-      const userQuery = supabase
-
-        .from('users')
-
-        .select('*')
-
-        .eq('id', userId)
-
-        .single();
+      const userQuery = supabase.from('users').select('*').eq('id', userId).single();
 
       const { data: userData, error: userError } = await withTimeout(
         userQuery,
-        15000,
+        8000,
         'User profile fetch'
       );
 
-      console.log('User profile fetch result:', { userData, error: userError });
-
       if (userError || !userData) {
         if (retries > 0) {
-          console.log(`User profile missing or error. Retrying in ${delay}ms...`);
-
+          log(`User fetch failed, retrying (${retries} left)...`);
           await new Promise((resolve) => setTimeout(resolve, delay));
-
           return fetchUserData(userId, retries - 1, delay);
         }
-
         throw userError || new Error('User profile not found');
       }
 
-      setUser(userData);
+      log('User profile fetched:', userData.email);
 
-      // 2. Fetch accessible booksets (owned + granted)
-
-      console.log('Fetching booksets...');
-
-      const booksetsQuery = supabase
-
-        .from('booksets')
-
-        .select('*');
+      // 2. Fetch accessible booksets
+      const booksetsQuery = supabase.from('booksets').select('*');
 
       const { data: booksetsData, error: booksetsError } = await withTimeout(
         booksetsQuery,
-        15000,
+        8000,
         'Booksets fetch'
       );
 
@@ -109,123 +96,107 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       const booksets: Bookset[] = booksetsData || [];
-
-      setMyBooksets(booksets);
+      log('Booksets fetched:', booksets.length);
 
       // 3. Set active bookset
-
       const activeId = userData.active_bookset_id;
-
       const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
 
-      setActiveBookset(active);
+      log('Active bookset:', active?.name || 'none');
 
-      console.log('fetchUserData completed successfully');
+      return { user: userData, booksets, activeBookset: active };
     } catch (err) {
-      console.error('Error fetching user data:', err);
-
-      // If aborted, it's a timeout
-
-      if (
-        err instanceof Error &&
-        (err.name === 'AbortError' || err.message.includes('timed out'))
-      ) {
-        setError(
-          new Error(
-            'Database connection timed out. Please check your internet, extensions (ad-blockers), or API keys.'
-          )
-        );
-      } else {
-        setError(err instanceof Error ? err : new Error('Unknown error'));
-      }
-
-      // DON'T set user to null on timeout - the session is still valid, just the data fetch failed
-      // Setting user to null would cause ProtectedRoute to redirect to login incorrectly
-      // Only set user to null if the session itself is invalid (handled by onAuthStateChange)
+      log('Error fetching user data:', err);
+      throw err;
     }
   };
-  const runFetchUserData = (userId: string) => {
-    if (inFlightRef.current) {
-      return inFlightRef.current;
-    }
-    const promise = fetchUserData(userId).finally(() => {
-      inFlightRef.current = null;
-    });
-    inFlightRef.current = promise;
-    return promise;
-  };
 
-  // Effect 1: Check active session on mount (once)
+  // Single effect - only source of truth is onAuthStateChange
   useEffect(() => {
-    if (didInitRef.current) return;
-    didInitRef.current = true;
+    log('Setting up auth state change listener');
 
-    // Check active session
-    supabase.auth
-      .getSession()
-      .then(({ data: { session } }) => {
-        setSupabaseUser(session?.user ?? null);
-        if (session?.user && !initialSessionHandledRef.current) {
-          initialSessionHandledRef.current = true;
-          runFetchUserData(session.user.id)
-            .then(() => {
-              setLoading(false);
-            })
-            .catch((err) => {
-              console.error('Error loading user data:', err);
-              // Don't set loading to false on error - keep loading state
-              // The retry or next auth event will handle it
-            });
-          return;
-        }
-        if (!session?.user) setLoading(false);
-      })
-      .catch((err) => {
-        console.error('getSession error', err);
-        setLoading(false);
-      });
-  }, []);
-
-  // Effect 2: Listen for auth changes (subscribe/unsubscribe correctly)
-  useEffect(() => {
-    // Listen for auth changes
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      setSupabaseUser(session?.user ?? null);
+    } = supabase.auth.onAuthStateChange(async (event, session) => {
+      log('Auth state change:', event, session ? 'session exists' : 'no session');
 
-      if (session?.user) {
-        // CRITICAL FIX: Skip SIGNED_IN/INITIAL_SESSION events until getSession() completes
-        // The SIGNED_IN event fires before Supabase client auth is fully initialized, causing queries to fail
-        // Let the first useEffect's getSession() handle the initial load instead
-        if (
-          (_event === 'INITIAL_SESSION' || _event === 'SIGNED_IN') &&
-          !initialSessionHandledRef.current
-        ) {
-          return;
-        }
+      // No session - user is logged out
+      if (!session?.user) {
+        log('No session, setting unauthenticated state');
+        setAuthState({
+          status: 'unauthenticated',
+          supabaseUser: null,
+          user: null,
+          activeBookset: null,
+          myBooksets: [],
+          error: null,
+        });
+        return;
+      }
 
-        setLoading(true);
-        try {
-          await runFetchUserData(session.user.id);
-          setLoading(false);
-        } catch (err) {
-          console.error('Error fetching user data:', err);
-          // Don't set loading to false on error - keep showing loading state
-        }
-      } else {
-        // User signed out or session expired
-        setUser(null);
-        setActiveBookset(null);
-        setMyBooksets([]);
-        setLoading(false);
+      // Validate session is not expired
+      const expiresAt = session.expires_at;
+      const now = Math.floor(Date.now() / 1000);
+
+      if (expiresAt && expiresAt < now) {
+        log('Session expired, setting unauthenticated state');
+        setAuthState({
+          status: 'unauthenticated',
+          supabaseUser: null,
+          user: null,
+          activeBookset: null,
+          myBooksets: [],
+          error: new Error('Session expired. Please log in again.'),
+        });
+        return;
+      }
+
+      // Set intermediate state - we have a session but need to fetch user data
+      log('Valid session, fetching user data...');
+      setAuthState((prev) => ({
+        ...prev,
+        status: 'initializing',
+        supabaseUser: session.user,
+        error: null,
+      }));
+
+      // Fetch user data
+      try {
+        const { user, booksets, activeBookset } = await fetchUserData(session.user.id);
+
+        log('User data fetched successfully, setting authenticated state');
+        setAuthState({
+          status: 'authenticated',
+          supabaseUser: session.user,
+          user,
+          activeBookset,
+          myBooksets: booksets,
+          error: null,
+        });
+      } catch (err) {
+        const error = err instanceof Error ? err : new Error('Unknown error');
+        const isTimeout = error.message.includes('timed out');
+
+        log('Error fetching user data:', error.message);
+
+        setAuthState((prev) => ({
+          ...prev,
+          status: 'error',
+          error: isTimeout
+            ? new Error('Database connection timed out. Please check your internet connection.')
+            : error,
+        }));
       }
     });
 
-    return () => subscription.unsubscribe();
+    return () => {
+      log('Unsubscribing from auth state changes');
+      subscription.unsubscribe();
+    };
   }, []);
 
   const signUp = async (email: string, password: string, displayName?: string) => {
+    log('Signing up:', email);
     const { error } = await supabase.auth.signUp({
       email,
       password,
@@ -240,83 +211,90 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   };
 
   const signIn = async (email: string, password: string) => {
+    log('Signing in:', email);
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
     });
     if (error) throw error;
+    // onAuthStateChange will handle the rest
   };
 
   const signOut = async () => {
-    console.log('signOut called');
+    log('Signing out');
     const { error } = await supabase.auth.signOut();
     if (error) {
       console.error('Sign out error:', error);
       throw error;
     }
-    console.log('Sign out successful');
-
-    // Manually clear state immediately (don't wait for auth state change event)
-    // This ensures the UI updates even if the event listener doesn't fire
-    setUser(null);
-    setActiveBookset(null);
-    setMyBooksets([]);
-    setSupabaseUser(null);
-    setLoading(false);
-    console.log('User state cleared');
+    // onAuthStateChange will handle setting unauthenticated state
   };
 
   const resetPassword = async (email: string) => {
+    log('Resetting password for:', email);
     const { error } = await supabase.auth.resetPasswordForEmail(email);
     if (error) throw error;
   };
 
   const switchBookset = async (booksetId: string) => {
-    if (!user) return;
+    if (!authState.user) return;
+
+    log('Switching bookset to:', booksetId);
 
     // Optimistic update
-    const target = myBooksets.find((b) => b.id === booksetId);
+    const target = authState.myBooksets.find((b) => b.id === booksetId);
     if (target) {
-      setActiveBookset(target);
+      setAuthState((prev) => ({ ...prev, activeBookset: target }));
 
       // Update in DB
       const { error } = await supabase
         .from('users')
         .update({ active_bookset_id: booksetId })
-        .eq('id', user.id);
+        .eq('id', authState.user.id);
 
       if (error) {
         console.error('Failed to update active bookset', error);
-        // Revert? For now just log
+        // Revert on error
+        const original = authState.myBooksets.find(
+          (b) => b.id === authState.user?.active_bookset_id
+        );
+        if (original) {
+          setAuthState((prev) => ({ ...prev, activeBookset: original }));
+        }
       } else {
         // Update local user state
-        setUser({ ...user, active_bookset_id: booksetId });
+        setAuthState((prev) => ({
+          ...prev,
+          user: prev.user ? { ...prev.user, active_bookset_id: booksetId } : null,
+        }));
       }
     }
   };
 
-  const canEdit = !!activeBookset; // Phase 1 simplified: assume if you can see it you can edit it unless RLS stops you.
-  // Real implementation needs to check grants.
-  // We'll refine this when we pull grants.
+  const retryAuth = () => {
+    log('Retrying auth - reloading page');
+    window.location.reload();
+  };
 
-  const canAdmin = !!user?.is_admin;
+  const canEdit = !!authState.activeBookset;
+  const canAdmin = !!authState.user?.is_admin;
+
+  // Backwards compatibility: loading is true when initializing
+  const loading = authState.status === 'initializing';
 
   return (
     <AuthContext.Provider
       value={{
-        user,
-        supabaseUser,
-        loading,
-        error,
-        activeBookset,
-        myBooksets,
+        ...authState,
         signUp,
         signIn,
         signOut,
         resetPassword,
         switchBookset,
+        retryAuth,
         canEdit,
         canAdmin,
+        loading,
       }}
     >
       {children}

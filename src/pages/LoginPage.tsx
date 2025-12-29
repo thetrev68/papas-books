@@ -7,32 +7,24 @@ export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false);
-  const { signIn, error: authError, user, loading: authLoading } = useAuth();
+  const { signIn, status } = useAuth();
   const { showError } = useToast();
   const navigate = useNavigate();
 
   // Redirect when user is authenticated
-  // Only redirect if we have a user AND we're not currently in the auth loading state
   useEffect(() => {
-    if (user && !authLoading) {
+    if (status === 'authenticated') {
       navigate('/app/dashboard', { replace: true });
     }
-  }, [user, authLoading, navigate]);
-
-  // Stop loading if an auth error occurs from context (e.g. profile fetch failed)
-  useEffect(() => {
-    if (authError) {
-      setLoading(false);
-    }
-  }, [authError]);
+  }, [status, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
       await signIn(email, password);
-      // Do not navigate here. Wait for 'user' to be set in context.
-      // Do not set loading to false here; keep it true until redirect or error.
+      // Auth context will handle the rest via onAuthStateChange
+      // Keep loading true until redirect happens
     } catch (error) {
       const message = error instanceof Error ? error.message : 'Failed to sign in';
       showError(message);
@@ -45,11 +37,6 @@ export default function LoginPage() {
       <div className="w-full max-w-md bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
         <h1 className="text-3xl font-bold text-neutral-900 mb-2">Sign In</h1>
         <p className="text-lg text-neutral-600 mb-6">Welcome back. Let&apos;s get you in.</p>
-        {authError && (
-          <div className="mb-4 p-3 rounded-xl border border-danger-700 bg-danger-100 text-danger-700 font-semibold">
-            {authError.message}
-          </div>
-        )}
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
             <label className="block text-sm font-bold text-neutral-500 mb-1">Email</label>
