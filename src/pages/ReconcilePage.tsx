@@ -25,7 +25,7 @@ export default function ReconcilePage() {
 
   if (isLoading) {
     return (
-      <div className="p-4 md:p-8 max-w-7xl mx-auto text-lg text-neutral-500">
+      <div className="p-4 md:p-8 max-w-7xl mx-auto text-lg text-neutral-500 dark:text-gray-400">
         Loading accounts...
       </div>
     );
@@ -36,8 +36,10 @@ export default function ReconcilePage() {
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
       <header className="mb-8">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Reconciliation</h1>
-        <p className="text-lg text-neutral-600">
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-gray-100 mb-2">
+          Reconciliation
+        </h1>
+        <p className="text-lg text-neutral-600 dark:text-gray-400">
           Match your statement to lock in accurate balances.
         </p>
       </header>
@@ -56,7 +58,7 @@ export default function ReconcilePage() {
       {step === 3 && (
         <div className="text-center max-w-md mx-auto mt-8">
           <h2 className="text-2xl font-bold mb-4">Reconciliation Complete!</h2>
-          <p className="text-lg text-neutral-600 mb-6">
+          <p className="text-lg text-neutral-600 dark:text-gray-400 mb-6">
             Your account is now balanced and transactions have been locked.
           </p>
           <button

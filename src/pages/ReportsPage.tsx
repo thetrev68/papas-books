@@ -146,35 +146,35 @@ export default function ReportsPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-neutral-900">Reports</h1>
+      <h1 className="text-3xl font-bold mb-6 text-neutral-900 dark:text-gray-100">Reports</h1>
 
-      <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm mb-8">
+      <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm mb-8">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-          <label className="flex flex-col gap-2 font-bold text-neutral-600">
+          <label className="flex flex-col gap-2 font-bold text-neutral-600 dark:text-gray-400">
             Start Date
             <input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="p-3 border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
           </label>
-          <label className="flex flex-col gap-2 font-bold text-neutral-600">
+          <label className="flex flex-col gap-2 font-bold text-neutral-600 dark:text-gray-400">
             End Date
             <input
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="p-3 border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
           </label>
-          <label className="flex flex-col gap-2 font-bold text-neutral-600">
+          <label className="flex flex-col gap-2 font-bold text-neutral-600 dark:text-gray-400">
             Accounts (Hold Ctrl/Cmd)
             <select
               multiple
               value={selectedAccountIds}
               onChange={handleAccountChange}
-              className="h-24 p-2 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="h-24 p-2 border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               {accounts.map((account) => (
                 <option key={account.id} value={account.id}>
@@ -183,12 +183,12 @@ export default function ReportsPage() {
               ))}
             </select>
           </label>
-          <label className="flex flex-col gap-2 font-bold text-neutral-600">
+          <label className="flex flex-col gap-2 font-bold text-neutral-600 dark:text-gray-400">
             Category
             <select
               value={selectedCategoryId}
               onChange={(e) => setSelectedCategoryId(e.target.value)}
-              className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="p-3 border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">All Categories</option>
               {sortedCategories.map((category) => (
@@ -218,17 +218,17 @@ export default function ReportsPage() {
       )}
 
       {reportData && (
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
-          <div className="p-4 bg-neutral-50 border-b border-neutral-200 flex justify-end gap-4">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          <div className="p-4 bg-neutral-50 dark:bg-gray-900 border-b border-neutral-200 dark:border-gray-700 flex justify-end gap-4">
             <button
               onClick={handleExportCsv}
-              className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-bold text-neutral-700 hover:bg-neutral-100"
+              className="px-4 py-2 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 rounded-lg font-bold text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 dark:bg-gray-900"
             >
               Export CSV
             </button>
             <button
               onClick={handleExportPdf}
-              className="px-4 py-2 bg-white border border-neutral-300 rounded-lg font-bold text-neutral-700 hover:bg-neutral-100"
+              className="px-4 py-2 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 rounded-lg font-bold text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 dark:bg-gray-900"
             >
               Export PDF (Print)
             </button>
@@ -236,29 +236,38 @@ export default function ReportsPage() {
 
           <div className="overflow-x-auto">
             <table className="w-full text-left border-collapse">
-              <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+              <thead className="bg-neutral-100 dark:bg-gray-900 border-b-2 border-neutral-200 dark:border-gray-700">
                 <tr>
-                  <th className="p-4 font-bold text-neutral-600">Category</th>
-                  <th className="p-4 font-bold text-neutral-600 text-right">Tx Count</th>
-                  <th className="p-4 font-bold text-neutral-600 text-right">Total Amount</th>
+                  <th className="p-4 font-bold text-neutral-600 dark:text-gray-400">Category</th>
+                  <th className="p-4 font-bold text-neutral-600 dark:text-gray-400 text-right">
+                    Tx Count
+                  </th>
+                  <th className="p-4 font-bold text-neutral-600 dark:text-gray-400 text-right">
+                    Total Amount
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 text-lg">
+              <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-lg">
                 {reportData.map((row) => (
-                  <tr key={row.categoryId} className="hover:bg-neutral-50">
+                  <tr
+                    key={row.categoryId}
+                    className="hover:bg-neutral-50 dark:hover:bg-gray-700 dark:bg-gray-900"
+                  >
                     <td className="p-4 font-medium">{row.categoryName}</td>
-                    <td className="p-4 text-right text-neutral-600">{row.transactionCount}</td>
-                    <td className="p-4 text-right font-bold text-neutral-900">
+                    <td className="p-4 text-right text-neutral-600 dark:text-gray-400">
+                      {row.transactionCount}
+                    </td>
+                    <td className="p-4 text-right font-bold text-neutral-900 dark:text-gray-100">
                       {formatMoney(row.totalAmount)}
                     </td>
                   </tr>
                 ))}
-                <tr className="bg-neutral-100 font-bold border-t-2 border-neutral-300">
-                  <td className="p-4 text-neutral-900">TOTAL</td>
-                  <td className="p-4 text-right text-neutral-900">
+                <tr className="bg-neutral-100 dark:bg-gray-900 font-bold border-t-2 border-neutral-300 dark:border-gray-600">
+                  <td className="p-4 text-neutral-900 dark:text-gray-100">TOTAL</td>
+                  <td className="p-4 text-right text-neutral-900 dark:text-gray-100">
                     {reportData.reduce((sum, r) => sum + r.transactionCount, 0)}
                   </td>
-                  <td className="p-4 text-right text-neutral-900">
+                  <td className="p-4 text-right text-neutral-900 dark:text-gray-100">
                     {formatMoney(reportData.reduce((sum, r) => sum + r.totalAmount, 0))}
                   </td>
                 </tr>
@@ -266,8 +275,8 @@ export default function ReportsPage() {
             </table>
           </div>
 
-          <div className="p-4 bg-neutral-50 border-t border-neutral-200">
-            <div className="text-sm text-neutral-600 text-center">
+          <div className="p-4 bg-neutral-50 dark:bg-gray-900 border-t border-neutral-200 dark:border-gray-700">
+            <div className="text-sm text-neutral-600 dark:text-gray-400 text-center">
               Report generated from {totalTransactions.toLocaleString()} total transactions
             </div>
           </div>

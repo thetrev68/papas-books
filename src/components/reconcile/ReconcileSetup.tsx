@@ -27,17 +27,23 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
   };
 
   return (
-    <div className="max-w-xl mx-auto bg-white rounded-2xl border border-neutral-200 shadow-sm p-6">
-      <h2 className="text-2xl font-bold text-neutral-900 mb-2">Start Reconciliation</h2>
-      <p className="text-lg text-neutral-600 mb-6">Enter your statement details to begin.</p>
+    <div className="max-w-xl mx-auto bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm p-6">
+      <h2 className="text-2xl font-bold text-neutral-900 dark:text-gray-100 mb-2">
+        Start Reconciliation
+      </h2>
+      <p className="text-lg text-neutral-600 dark:text-gray-400 mb-6">
+        Enter your statement details to begin.
+      </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Select Account</label>
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Select Account
+          </label>
           <select
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             required
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
           >
             <option value="" disabled>
               Select an account
@@ -51,18 +57,20 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Statement Date</label>
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Statement Date
+          </label>
           <input
             type="date"
             value={statementDate}
             onChange={(e) => setStatementDate(e.target.value)}
             required
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
             Statement Ending Balance
           </label>
           <input
@@ -72,7 +80,7 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
             onChange={(e) => setStatementBalance(e.target.value)}
             required
             placeholder="0.00"
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
           />
         </div>
 

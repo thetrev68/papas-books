@@ -30,8 +30,8 @@ export function GlobalToastProvider({ children }: { children: React.ReactNode })
         <div
           className={`fixed top-4 left-1/2 -translate-x-1/2 z-[9999] px-6 py-4 rounded-xl shadow-lg text-lg font-bold border ${
             toast.type === 'error'
-              ? 'bg-danger-100 text-danger-700 border-danger-700'
-              : 'bg-success-100 text-success-700 border-success-700'
+              ? 'bg-danger-100 dark:bg-red-900 text-danger-700 dark:text-red-200 border-danger-700 dark:border-red-700'
+              : 'bg-success-100 dark:bg-green-900 text-success-700 dark:text-green-200 border-success-700 dark:border-green-700'
           }`}
         >
           {toast.message}

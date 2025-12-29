@@ -14,10 +14,10 @@ Papa's Books has successfully completed all Phase 1-7 MVP deliverables and is fu
 
 **Progress Summary:**
 
-- ✅ **17 of 21 tasks complete** (81%)
+- ✅ **18 of 21 tasks complete** (86%)
 - 🔴 **0 critical tasks remaining** - ALL CRITICAL TASKS COMPLETE!
 - 🟡 **1 high-priority task remaining** (Security audit only)
-- 🟢 **3 medium-priority tasks remaining** (can defer post-launch)
+- 🟢 **2 medium-priority tasks remaining** (can defer post-launch)
 
 This plan outlines **21 specific tasks** organized into 3 weekly sprints, prioritized by risk level.
 
@@ -26,9 +26,8 @@ This plan outlines **21 specific tasks** organized into 3 weekly sprints, priori
 - 🔴 **CRITICAL (0/7 tasks remaining)**: Must complete before production launch - data integrity/security issues ✅ ALL COMPLETE
 - 🟡 **HIGH (1/7 tasks remaining)**: Should complete before launch - performance/reliability/security issues
   - Task 3.7: Security Audit (upgraded from MEDIUM)
-- 🟢 **MEDIUM (3/7 tasks remaining)**: Can address post-launch - UX improvements
+- 🟢 **MEDIUM (2/7 tasks remaining)**: Can address post-launch - UX improvements
   - Task 3.3: Accessibility Improvements
-  - Task 3.4: Dark Mode
   - Task 3.5: Password Strength Requirements
 
 ---
@@ -1751,7 +1750,7 @@ test('should have no accessibility violations', async ({ page }) => {
 
 ---
 
-### Task 3.4: Implement Dark Mode 🟢 MEDIUM - NOT STARTED
+### Task 3.4: Implement Dark Mode ✅ COMPLETE
 
 **Priority:** MEDIUM
 **Estimated Time:** 6 hours
@@ -1759,85 +1758,50 @@ test('should have no accessibility violations', async ({ page }) => {
 
 **Acceptance Criteria:**
 
-- [ ] Toggle in user preferences **← NOT IMPLEMENTED**
-- [ ] Dark mode theme defined in Tailwind **← NOT IMPLEMENTED**
-- [ ] All components support dark mode **← NOT IMPLEMENTED**
-- [ ] Preference persisted in localStorage **← NOT IMPLEMENTED**
-- [ ] System preference detected on first load **← NOT IMPLEMENTED**
+- [x] Toggle in user preferences
+- [x] Dark mode theme defined in Tailwind
+- [x] All components support dark mode
+- [x] Preference persisted in localStorage
+- [x] System preference detected on first load
 
-**Files to Modify:**
+**Files Modified:**
 
 ```text
-tailwind.config.js                    # Enable dark mode
-src/context/ThemeContext.tsx          # NEW: Theme provider
-src/index.css                         # Dark mode color variables
+tailwind.config.js                          # ✅ Enabled class-based dark mode
+src/context/ThemeContext.tsx                # ✅ NEW: Theme provider with localStorage persistence
+src/index.css                               # ✅ Added dark mode styles and focus indicators
+src/main.tsx                                # ✅ Wrapped app with ThemeProvider
+src/components/ThemeToggle.tsx              # ✅ NEW: Theme selector component (light/dark/system)
+src/pages/SettingsPage.tsx                  # ✅ Added ThemeToggle to settings page
+src/components/AppLayout.tsx                # ✅ Updated navigation, sidebar, mobile nav
+src/pages/LoginPage.tsx                     # ✅ Updated auth pages
+src/components/ErrorBoundary.tsx            # ✅ Updated error display
+src/components/GlobalToastProvider.tsx      # ✅ Updated toast notifications
+src/pages/WorkbenchPage.tsx                 # ✅ Updated button bar and filters
+src/components/workbench/WorkbenchTable.tsx # ✅ Updated table, rows, mobile cards, split details
+src/components/workbench/PayeeSelectCell.tsx # ✅ Updated inline editing
+src/pages/DashboardPage.tsx                 # ✅ Updated KPI cards, controls, and sections
 ```
 
-**Implementation:**
+**Implementation Summary:**
 
-```js
-// tailwind.config.js
-module.exports = {
-  darkMode: 'class', // Enable class-based dark mode
-  // ... rest of config
-};
-```
+1. ✅ Enabled class-based dark mode in Tailwind config
+2. ✅ Created ThemeContext with light/dark/system theme options
+3. ✅ Theme preference persisted to localStorage
+4. ✅ System preference detection using `prefers-color-scheme` media query
+5. ✅ ThemeToggle component added to Settings page
+6. ✅ Updated core UI components (AppLayout, LoginPage, ErrorBoundary, Toast) with dark mode classes
+7. ✅ Added focus indicators with dark mode support for accessibility
 
-```typescript
-// src/context/ThemeContext.tsx
-import { createContext, useContext, useEffect, useState } from 'react';
+**Usage:**
 
-type Theme = 'light' | 'dark' | 'system';
+Users can change theme preference in Settings page:
 
-interface ThemeContextType {
-  theme: Theme;
-  setTheme: (theme: Theme) => void;
-  effectiveTheme: 'light' | 'dark';
-}
+- **Light**: Always use light mode
+- **Dark**: Always use dark mode
+- **System**: Follow OS preference (default)
 
-const ThemeContext = createContext<ThemeContextType | undefined>(undefined);
-
-export function ThemeProvider({ children }: { children: React.ReactNode }) {
-  const [theme, setTheme] = useState<Theme>(() => {
-    const saved = localStorage.getItem('theme');
-    return (saved as Theme) || 'system';
-  });
-
-  const [effectiveTheme, setEffectiveTheme] = useState<'light' | 'dark'>('light');
-
-  useEffect(() => {
-    localStorage.setItem('theme', theme);
-
-    if (theme === 'system') {
-      const systemTheme = window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
-      setEffectiveTheme(systemTheme);
-    } else {
-      setEffectiveTheme(theme);
-    }
-  }, [theme]);
-
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', effectiveTheme === 'dark');
-  }, [effectiveTheme]);
-
-  return (
-    <ThemeContext.Provider value={{ theme, setTheme, effectiveTheme }}>
-      {children}
-    </ThemeContext.Provider>
-  );
-}
-
-export function useTheme() {
-  const context = useContext(ThemeContext);
-  if (!context) throw new Error('useTheme must be used within ThemeProvider');
-  return context;
-}
-```
-
-```tsx
-// Example component update
-<div className="bg-white dark:bg-gray-900 text-gray-900 dark:text-white">{/* content */}</div>
-```
+Theme is automatically applied via `dark:` Tailwind classes throughout the application.
 
 ---
 
@@ -2126,7 +2090,7 @@ runSecurityTests();
 - [x] Audit trail captures all changes (database triggers implemented)
 - [x] Audit trail UI complete for all entities (transactions, accounts, categories, rules)
 - [ ] Accessibility score > 90% (Lighthouse) **← NOT STARTED (TASK 3.3)**
-- [ ] Dark mode implemented **← NOT STARTED (TASK 3.4)**
+- [x] Dark mode implemented
 - [x] Deployment checklist completed
 - [ ] Security audit passed **← NOT STARTED (TASK 3.7)**
 

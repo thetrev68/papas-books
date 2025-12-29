@@ -146,9 +146,11 @@ export default function WorkbenchPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-neutral-900">Transaction Workbench</h1>
+      <h1 className="text-3xl font-bold mb-6 text-neutral-900 dark:text-gray-100">
+        Transaction Workbench
+      </h1>
 
-      <div className="flex flex-col xl:flex-row gap-4 mb-8 bg-white p-4 rounded-2xl shadow-sm border border-neutral-200">
+      <div className="flex flex-col xl:flex-row gap-4 mb-8 bg-white dark:bg-gray-800 p-4 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700">
         <div className="flex gap-4 flex-wrap">
           <button
             onClick={() => setShowCreateModal(true)}
@@ -160,14 +162,14 @@ export default function WorkbenchPage() {
           <button
             onClick={handleRunRulesOnAll}
             disabled={isApplying || isLoading}
-            className="px-6 py-3 bg-white border-2 border-brand-600 text-brand-700 font-bold rounded-xl hover:bg-brand-50 disabled:opacity-50"
+            className="px-6 py-3 bg-white dark:bg-gray-800 border-2 border-brand-600 dark:border-brand-500 text-brand-700 dark:text-brand-400 font-bold rounded-xl hover:bg-brand-50 dark:hover:bg-gray-700 disabled:opacity-50"
           >
             {isApplying ? 'Applying Rules...' : 'Run Rules on All Unreviewed'}
           </button>
         </div>
 
         <div className="xl:ml-auto flex items-center gap-4">
-          <label className="font-bold text-neutral-600">Status:</label>
+          <label className="font-bold text-neutral-600 dark:text-gray-300">Status:</label>
           <select
             value={
               filter.isReviewed === undefined
@@ -182,7 +184,7 @@ export default function WorkbenchPage() {
                 isReviewed: val === 'all' ? undefined : val === 'reviewed',
               });
             }}
-            className="p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
           >
             <option value="unreviewed">Unreviewed</option>
             <option value="reviewed">Reviewed</option>

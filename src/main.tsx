@@ -18,6 +18,7 @@ if (import.meta.env.DEV) {
 import { QueryClientProvider } from '@tanstack/react-query';
 import { ReactQueryDevtools } from '@tanstack/react-query-devtools';
 import { AuthProvider } from './context/AuthContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { GlobalToastProvider } from './components/GlobalToastProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import RootRedirect from './components/RootRedirect';
@@ -38,35 +39,37 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
-        <BrowserRouter
-          future={{
-            v7_startTransition: true,
-            v7_relativeSplatPath: true,
-          }}
-        >
-          <GlobalToastProvider>
-            <AuthProvider>
-              <Routes>
-                <Route path="/login" element={<LoginPage />} />
-                <Route path="/signup" element={<SignupPage />} />
-                <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
+        <ThemeProvider>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
+            <GlobalToastProvider>
+              <AuthProvider>
+                <Routes>
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/signup" element={<SignupPage />} />
+                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                  <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
 
-                <Route path="/app" element={<ProtectedRoute />}>
-                  <Route path="dashboard" element={<DashboardPage />} />
-                  <Route path="settings" element={<SettingsPage />} />
-                  <Route path="import" element={<ImportPage />} />
-                  <Route path="workbench" element={<WorkbenchPage />} />
-                  <Route path="reconcile" element={<ReconcilePage />} />
-                  <Route path="reports" element={<ReportsPage />} />
-                  <Route path="" element={<Navigate to="dashboard" replace />} />
-                </Route>
+                  <Route path="/app" element={<ProtectedRoute />}>
+                    <Route path="dashboard" element={<DashboardPage />} />
+                    <Route path="settings" element={<SettingsPage />} />
+                    <Route path="import" element={<ImportPage />} />
+                    <Route path="workbench" element={<WorkbenchPage />} />
+                    <Route path="reconcile" element={<ReconcilePage />} />
+                    <Route path="reports" element={<ReportsPage />} />
+                    <Route path="" element={<Navigate to="dashboard" replace />} />
+                  </Route>
 
-                <Route path="/" element={<RootRedirect />} />
-              </Routes>
-            </AuthProvider>
-          </GlobalToastProvider>
-        </BrowserRouter>
+                  <Route path="/" element={<RootRedirect />} />
+                </Routes>
+              </AuthProvider>
+            </GlobalToastProvider>
+          </BrowserRouter>
+        </ThemeProvider>
       </ErrorBoundary>
       {import.meta.env.DEV && <ReactQueryDevtools initialIsOpen={false} />}
     </QueryClientProvider>

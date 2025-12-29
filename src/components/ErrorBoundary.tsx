@@ -28,15 +28,17 @@ export class ErrorBoundary extends Component<Props, State> {
   render() {
     if (this.state.hasError) {
       return (
-        <div className="min-h-screen flex items-center justify-center bg-neutral-50 px-4 font-sans">
-          <div className="max-w-md w-full bg-white shadow-lg rounded-xl p-8 border border-neutral-200">
-            <h1 className="text-2xl font-bold text-neutral-900 mb-4">Something went wrong</h1>
-            <p className="text-neutral-600 mb-6">
+        <div className="min-h-screen flex items-center justify-center bg-neutral-50 dark:bg-gray-900 px-4 font-sans">
+          <div className="max-w-md w-full bg-white dark:bg-gray-800 shadow-lg rounded-xl p-8 border border-neutral-200 dark:border-gray-700">
+            <h1 className="text-2xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
+              Something went wrong
+            </h1>
+            <p className="text-neutral-600 dark:text-gray-400 mb-6">
               We apologize for the inconvenience. The error has been logged and we&apos;ll
               investigate.
             </p>
             {import.meta.env.DEV && this.state.error && (
-              <pre className="bg-danger-50 text-danger-800 p-4 rounded-lg text-sm overflow-auto mb-6 max-h-48">
+              <pre className="bg-danger-50 dark:bg-red-900 text-danger-800 dark:text-red-200 p-4 rounded-lg text-sm overflow-auto mb-6 max-h-48">
                 {this.state.error.message}
               </pre>
             )}

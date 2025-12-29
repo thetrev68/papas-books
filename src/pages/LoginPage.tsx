@@ -33,31 +33,37 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center p-4 bg-neutral-50">
-      <div className="w-full max-w-md bg-white border border-neutral-200 rounded-2xl shadow-sm p-6">
-        <h1 className="text-3xl font-bold text-neutral-900 mb-2">Sign In</h1>
-        <p className="text-lg text-neutral-600 mb-6">Welcome back. Let&apos;s get you in.</p>
+    <div className="min-h-screen flex items-center justify-center p-4 bg-neutral-50 dark:bg-gray-900">
+      <div className="w-full max-w-md bg-white dark:bg-gray-800 border border-neutral-200 dark:border-gray-700 rounded-2xl shadow-sm p-6">
+        <h1 className="text-3xl font-bold text-neutral-900 dark:text-gray-100 mb-2">Sign In</h1>
+        <p className="text-lg text-neutral-600 dark:text-gray-400 mb-6">
+          Welcome back. Let&apos;s get you in.
+        </p>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Email</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Email
+            </label>
             <input
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Password</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Password
+            </label>
             <input
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
             />
           </div>
           <button
@@ -70,13 +76,19 @@ export default function LoginPage() {
         </form>
         <div className="mt-6 text-center space-y-2">
           <p>
-            <Link to="/forgot-password" className="text-brand-700 font-bold hover:underline">
+            <Link
+              to="/forgot-password"
+              className="text-brand-700 dark:text-brand-400 font-bold hover:underline"
+            >
               Forgot Password?
             </Link>
           </p>
-          <p className="text-neutral-600">
+          <p className="text-neutral-600 dark:text-gray-400">
             Don&apos;t have an account?{' '}
-            <Link to="/signup" className="text-brand-700 font-bold hover:underline">
+            <Link
+              to="/signup"
+              className="text-brand-700 dark:text-brand-400 font-bold hover:underline"
+            >
               Sign Up
             </Link>
           </p>

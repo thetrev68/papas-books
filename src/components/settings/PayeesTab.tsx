@@ -93,7 +93,9 @@ export default function PayeesTab() {
   const columns = [
     columnHelper.accessor('name', {
       header: 'Name',
-      cell: (info) => <span className="font-bold text-neutral-900">{info.getValue()}</span>,
+      cell: (info) => (
+        <span className="font-bold text-neutral-900 dark:text-gray-100">{info.getValue()}</span>
+      ),
     }),
     columnHelper.accessor('default_category_id', {
       header: 'Default Category',
@@ -106,7 +108,7 @@ export default function PayeesTab() {
               data: { default_category_id: e.target.value || null },
             })
           }
-          className="w-full bg-transparent border-b border-transparent hover:border-neutral-300 focus:border-brand-500 focus:outline-none py-1"
+          className="w-full bg-transparent border-b border-transparent hover:border-neutral-300 dark:hover:border-gray-600 dark:border-gray-600 focus:border-brand-500 focus:outline-none py-1"
         >
           <option value="">No default category</option>
           {categories?.map((cat) => (
@@ -124,13 +126,13 @@ export default function PayeesTab() {
         <div className="flex gap-2">
           <button
             onClick={() => handleEdit(row.original)}
-            className="px-3 py-1 bg-white border border-neutral-300 rounded-lg text-neutral-600 hover:bg-neutral-50 font-bold text-sm"
+            className="px-3 py-1 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 rounded-lg text-neutral-600 dark:text-gray-400 hover:bg-neutral-50 dark:hover:bg-gray-700 dark:bg-gray-900 font-bold text-sm"
           >
             Edit
           </button>
           <button
             onClick={() => handleDelete(row.original)}
-            className="px-3 py-1 bg-danger-50 border border-danger-200 rounded-lg text-danger-700 hover:bg-danger-100 font-bold text-sm"
+            className="px-3 py-1 bg-danger-100 dark:bg-red-700 border border-danger-700 dark:border-red-600 rounded-lg text-danger-700 dark:text-white hover:bg-danger-200 dark:hover:bg-red-600 font-bold text-sm"
           >
             Delete
           </button>
@@ -153,12 +155,13 @@ export default function PayeesTab() {
     getFilteredRowModel: getFilteredRowModel(),
   });
 
-  if (isLoading) return <div className="text-lg text-neutral-500">Loading payees...</div>;
+  if (isLoading)
+    return <div className="text-lg text-neutral-500 dark:text-gray-400">Loading payees...</div>;
 
   return (
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
-        <h2 className="text-2xl font-bold text-neutral-900">Payees</h2>
+        <h2 className="text-2xl font-bold text-neutral-900 dark:text-gray-100">Payees</h2>
         <button
           onClick={handleCreate}
           className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
@@ -172,19 +175,19 @@ export default function PayeesTab() {
           value={globalFilter ?? ''}
           onChange={(e) => setGlobalFilter(e.target.value)}
           placeholder="Search payees..."
-          className="w-full md:w-96 p-3 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          className="w-full md:w-96 p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-800 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
         />
       </div>
 
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+          <thead className="bg-neutral-100 dark:bg-gray-900 border-b-2 border-neutral-200 dark:border-gray-700">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="p-4 text-base font-bold text-neutral-600 cursor-pointer hover:bg-neutral-200 transition-colors"
+                    className="p-4 text-base font-bold text-neutral-600 dark:text-gray-400 cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-600 transition-colors"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-2">
@@ -199,9 +202,12 @@ export default function PayeesTab() {
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-neutral-200 text-lg">
+          <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-lg">
             {table.getRowModel().rows.map((row) => (
-              <tr key={row.id} className="hover:bg-neutral-50">
+              <tr
+                key={row.id}
+                className="hover:bg-neutral-50 dark:hover:bg-gray-700 dark:bg-gray-900"
+              >
                 {row.getVisibleCells().map((cell) => (
                   <td key={cell.id} className="p-4 align-middle">
                     {flexRender(cell.column.columnDef.cell, cell.getContext())}
@@ -211,7 +217,10 @@ export default function PayeesTab() {
             ))}
             {payees?.length === 0 && (
               <tr>
-                <td colSpan={columns.length} className="p-8 text-center text-neutral-500">
+                <td
+                  colSpan={columns.length}
+                  className="p-8 text-center text-neutral-500 dark:text-gray-400"
+                >
                   No payees found.
                 </td>
               </tr>

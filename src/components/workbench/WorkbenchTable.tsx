@@ -177,29 +177,18 @@ function WorkbenchTable({
           } else {
             const currentCategoryId = row.original.lines[0]?.category_id || '';
             return (
-              <div className="relative">
-                <select
-                  value={currentCategoryId}
-                  onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
-                  className="appearance-none w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold hover:bg-brand-100 focus:outline-none focus:ring-2 focus:ring-brand-500 cursor-pointer"
-                >
-                  <option value="">Uncategorized</option>
-                  {sortedCategories.map((cat) => (
-                    <option key={cat.id} value={cat.id}>
-                      {cat.displayName}
-                    </option>
-                  ))}
-                </select>
-                <div className="pointer-events-none absolute inset-y-0 right-0 flex items-center px-2 text-brand-700">
-                  <svg
-                    className="fill-current h-4 w-4"
-                    xmlns="http://www.w3.org/2000/svg"
-                    viewBox="0 0 20 20"
-                  >
-                    <path d="M9.293 12.95l.707.707L15.657 8l-1.414-1.414L10 10.828 5.757 6.586 4.343 8z" />
-                  </svg>
-                </div>
-              </div>
+              <select
+                value={currentCategoryId}
+                onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
+                className="w-full bg-brand-50 dark:bg-gray-700 border border-brand-200 dark:border-gray-600 text-brand-900 dark:text-gray-100 py-2 px-3 pr-8 rounded-lg font-bold hover:bg-brand-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer"
+              >
+                <option value="">Uncategorized</option>
+                {sortedCategories.map((cat) => (
+                  <option key={cat.id} value={cat.id}>
+                    {cat.displayName}
+                  </option>
+                ))}
+              </select>
             );
           }
         },
@@ -207,7 +196,7 @@ function WorkbenchTable({
       columnHelper.accessor('account_id', {
         header: 'Account',
         cell: (info) => (
-          <span className="text-sm text-neutral-500 font-medium bg-neutral-100 px-2 py-1 rounded">
+          <span className="text-sm text-neutral-500 dark:text-gray-400 font-medium bg-neutral-100 dark:bg-gray-700 px-2 py-1 rounded">
             {getAccountName(info.getValue())}
           </span>
         ),
@@ -370,23 +359,23 @@ function WorkbenchTable({
           value={globalFilter ?? ''}
           onChange={(e) => setGlobalFilter(e.target.value)}
           placeholder="Search..."
-          className="w-full md:w-96 p-4 text-lg border-2 border-neutral-300 rounded-xl bg-white focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+          className="w-full md:w-96 p-4 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
         />
       </div>
 
       {/* Desktop Table */}
       <div
         ref={parentRef}
-        className="hidden md:block bg-white rounded-2xl shadow-sm border border-neutral-200 overflow-hidden h-[calc(100vh-300px)] overflow-y-auto"
+        className="hidden md:block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 overflow-hidden h-[calc(100vh-300px)] overflow-y-auto"
       >
         <table className="w-full text-left border-collapse">
-          <thead className="bg-neutral-100 border-b-2 border-neutral-200 sticky top-0 z-10 shadow-sm">
+          <thead className="bg-neutral-100 dark:bg-gray-900 border-b-2 border-neutral-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
             {table.getHeaderGroups().map((headerGroup) => (
               <tr key={headerGroup.id}>
                 {headerGroup.headers.map((header) => (
                   <th
                     key={header.id}
-                    className="p-4 text-base font-bold text-neutral-600 cursor-pointer hover:bg-neutral-200 transition-colors"
+                    className="p-4 text-base font-bold text-neutral-600 dark:text-gray-300 cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-800 transition-colors"
                     onClick={header.column.getToggleSortingHandler()}
                   >
                     <div className="flex items-center gap-2">
@@ -412,31 +401,31 @@ function WorkbenchTable({
               return (
                 <Fragment key={row.id}>
                   <tr
-                    className="hover:bg-brand-50 transition-colors group"
+                    className="hover:bg-brand-50 dark:hover:bg-gray-700 transition-colors group"
                     data-index={virtualRow.index}
                     ref={(node) => virtualizer.measureElement(node)}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="p-4 align-middle">
+                      <td key={cell.id} className="p-4 align-middle dark:text-gray-200">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
                   </tr>
                   {row.getIsExpanded() && (
                     <tr
-                      className="bg-neutral-50 shadow-inner"
+                      className="bg-neutral-50 dark:bg-gray-900 shadow-inner"
                       ref={(node) => virtualizer.measureElement(node)}
                     >
                       <td colSpan={columns.length} className="p-4">
-                        <div className="ml-12 pl-4 border-l-4 border-brand-300">
-                          <h4 className="text-sm font-bold text-neutral-500 mb-2 uppercase tracking-wide">
+                        <div className="ml-12 pl-4 border-l-4 border-brand-300 dark:border-brand-600">
+                          <h4 className="text-sm font-bold text-neutral-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
                             Split Details
                           </h4>
                           <div className="space-y-2">
                             {row.original.lines.map((line, idx) => (
                               <div
                                 key={idx}
-                                className="flex items-center gap-4 bg-white p-2 rounded-lg border border-neutral-200"
+                                className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-lg border border-neutral-200 dark:border-gray-700"
                               >
                                 <span
                                   className="font-bold text-brand-700 w-1/3 truncate"
@@ -483,14 +472,14 @@ function WorkbenchTable({
           return (
             <div
               key={row.id}
-              className={`bg-white p-5 rounded-2xl shadow-md border-l-8 ${t.is_reviewed ? 'border-success-500' : 'border-neutral-300'}`}
+              className={`bg-white dark:bg-gray-800 p-5 rounded-2xl shadow-md border-l-8 ${t.is_reviewed ? 'border-success-500 dark:border-green-600' : 'border-neutral-300 dark:border-gray-600'}`}
             >
               <div className="flex justify-between items-start mb-2">
-                <span className="text-neutral-500 font-semibold">
+                <span className="text-neutral-500 dark:text-gray-400 font-semibold">
                   {new Date(t.date).toLocaleDateString()}
                 </span>
                 <span
-                  className={`text-xl font-bold ${t.amount >= 0 ? 'text-success-700' : 'text-danger-700'}`}
+                  className={`text-xl font-bold ${t.amount >= 0 ? 'text-success-700 dark:text-green-500' : 'text-danger-700 dark:text-red-500'}`}
                 >
                   {t.amount >= 0 ? '+' : ''}$
                   {(Math.abs(t.amount) / 100).toLocaleString('en-US', {
@@ -499,20 +488,20 @@ function WorkbenchTable({
                   })}
                 </span>
               </div>
-              <div className="text-xl font-medium text-neutral-900 mb-3 truncate">
+              <div className="text-xl font-medium text-neutral-900 dark:text-gray-100 mb-3 truncate">
                 {t.payee || 'Unknown Payee'}
               </div>
 
               <div className="mb-4">
                 {t.is_split ? (
-                  <div className="p-3 bg-brand-50 rounded-lg border border-brand-200 text-brand-800 font-bold">
+                  <div className="p-3 bg-brand-50 dark:bg-brand-900 rounded-lg border border-brand-200 dark:border-brand-700 text-brand-800 dark:text-brand-200 font-bold">
                     {t.lines.length} Split Lines
                   </div>
                 ) : (
                   <select
                     value={currentCategoryId}
                     onChange={(e) => onUpdateCategory(t.id, e.target.value)}
-                    className="w-full bg-brand-50 border border-brand-200 text-brand-900 py-2 px-3 rounded-lg font-bold"
+                    className="w-full bg-brand-50 dark:bg-gray-700 border border-brand-200 dark:border-gray-600 text-brand-900 dark:text-gray-100 py-2 px-3 rounded-lg font-bold"
                   >
                     <option value="">Uncategorized</option>
                     {sortedCategories.map((cat) => (
@@ -529,7 +518,7 @@ function WorkbenchTable({
                   onClick={() => onReview(t)}
                   className={`flex-1 py-3 font-bold rounded-xl flex items-center justify-center gap-2 transition-colors ${
                     t.is_reviewed
-                      ? 'bg-success-100 text-success-700 border border-success-700'
+                      ? 'bg-success-100 dark:bg-green-900 text-success-700 dark:text-green-200 border border-success-700 dark:border-green-700'
                       : 'bg-brand-600 text-white shadow-md'
                   }`}
                 >
@@ -537,7 +526,7 @@ function WorkbenchTable({
                 </button>
                 <button
                   onClick={() => onEdit(t)}
-                  className="p-3 bg-white border-2 border-neutral-300 rounded-xl text-neutral-600"
+                  className="p-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 rounded-xl text-neutral-600 dark:text-gray-300"
                 >
                   Edit
                 </button>

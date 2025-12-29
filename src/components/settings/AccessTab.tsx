@@ -64,7 +64,7 @@ export default function AccessTab() {
 
   if (!isOwner) {
     return (
-      <div className="bg-neutral-50 border border-neutral-200 rounded-xl p-4 text-lg text-neutral-600">
+      <div className="bg-neutral-50 dark:bg-gray-900 border border-neutral-200 dark:border-gray-700 rounded-xl p-4 text-lg text-neutral-600 dark:text-gray-400">
         Only the bookset owner can manage access.
       </div>
     );
@@ -72,34 +72,38 @@ export default function AccessTab() {
 
   return (
     <div>
-      <h2 className="text-2xl font-bold text-neutral-900 mb-2">Access Grants</h2>
-      <p className="mb-6 text-lg text-neutral-600">
+      <h2 className="text-2xl font-bold text-neutral-900 dark:text-gray-100 mb-2">Access Grants</h2>
+      <p className="mb-6 text-lg text-neutral-600 dark:text-gray-400">
         Share &quot;{activeBookset?.name}&quot; with other users.
       </p>
 
       <form
         onSubmit={handleGrant}
-        className="mb-8 p-6 bg-white rounded-2xl border border-neutral-200 shadow-sm"
+        className="mb-8 p-6 bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm"
       >
-        <h3 className="text-xl font-bold text-neutral-900 mb-4">Grant Access</h3>
+        <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">Grant Access</h3>
         <div className="flex flex-col lg:flex-row gap-4 items-end">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">User Email</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              User Email
+            </label>
             <input
               type="email"
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              className="w-full lg:w-72 p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full lg:w-72 p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
               placeholder="user@example.com"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Role</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Role
+            </label>
             <select
               value={role}
               onChange={(e) => setRole(e.target.value as 'viewer' | 'editor')}
-              className="w-full lg:w-56 p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full lg:w-56 p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="viewer">Viewer (Read-only)</option>
               <option value="editor">Editor (Read/Write)</option>
@@ -124,24 +128,34 @@ export default function AccessTab() {
         )}
       </form>
 
-      <h3 className="text-xl font-bold text-neutral-900 mb-2">Active Grants</h3>
+      <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-2">Active Grants</h3>
       {grants.length === 0 ? (
-        <p className="text-neutral-500">No active grants found.</p>
+        <p className="text-neutral-500 dark:text-gray-400">No active grants found.</p>
       ) : (
-        <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+        <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm overflow-hidden">
           <table className="min-w-full border-collapse">
-            <thead className="bg-neutral-100">
+            <thead className="bg-neutral-100 dark:bg-gray-900">
               <tr>
-                <th className="p-4 text-left text-base font-bold text-neutral-600">User ID</th>
-                <th className="p-4 text-left text-base font-bold text-neutral-600">Role</th>
-                <th className="p-4 text-left text-base font-bold text-neutral-600">Granted At</th>
-                <th className="p-4 text-center text-base font-bold text-neutral-600">Actions</th>
+                <th className="p-4 text-left text-base font-bold text-neutral-600 dark:text-gray-400">
+                  User ID
+                </th>
+                <th className="p-4 text-left text-base font-bold text-neutral-600 dark:text-gray-400">
+                  Role
+                </th>
+                <th className="p-4 text-left text-base font-bold text-neutral-600 dark:text-gray-400">
+                  Granted At
+                </th>
+                <th className="p-4 text-center text-base font-bold text-neutral-600 dark:text-gray-400">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 text-lg">
+            <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-lg">
               {grants.map((grant) => (
                 <tr key={grant.id}>
-                  <td className="p-4 font-mono text-base text-neutral-600">{grant.userId}</td>
+                  <td className="p-4 font-mono text-base text-neutral-600 dark:text-gray-400">
+                    {grant.userId}
+                  </td>
                   <td className="p-4 capitalize">{grant.role}</td>
                   <td className="p-4">{new Date(grant.createdAt).toLocaleDateString()}</td>
                   <td className="p-4 text-center">

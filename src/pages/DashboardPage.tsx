@@ -216,16 +216,18 @@ export default function DashboardPage() {
   return (
     <div className="p-4 md:p-8 max-w-[1600px] mx-auto">
       <header className="mb-8">
-        <h2 className="text-3xl font-bold text-neutral-900 mb-2">Dashboard</h2>
-        <p className="text-lg text-neutral-600">
+        <h2 className="text-3xl font-bold text-neutral-900 dark:text-gray-100 mb-2">Dashboard</h2>
+        <p className="text-lg text-neutral-600 dark:text-gray-400">
           A clear snapshot of how things are going right now.
         </p>
       </header>
 
       {/* Time Range */}
       <div className="mb-8 flex flex-wrap items-center gap-3">
-        <span className="text-sm font-bold text-neutral-500 uppercase tracking-wide">Range</span>
-        <div className="inline-flex rounded-xl border-2 border-neutral-200 bg-white p-1">
+        <span className="text-sm font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide">
+          Range
+        </span>
+        <div className="inline-flex rounded-xl border-2 border-neutral-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1">
           {(['month', 'quarter', 'year'] as const).map((rangeOption) => (
             <button
               key={rangeOption}
@@ -233,22 +235,22 @@ export default function DashboardPage() {
               className={`px-4 py-2 rounded-lg font-bold capitalize transition-colors ${
                 timeRange === rangeOption
                   ? 'bg-brand-600 text-white'
-                  : 'text-neutral-600 hover:bg-neutral-100'
+                  : 'text-neutral-600 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700'
               }`}
             >
               {rangeOption}
             </button>
           ))}
         </div>
-        <div className="inline-flex rounded-xl border-2 border-neutral-200 bg-white p-1">
+        <div className="inline-flex rounded-xl border-2 border-neutral-200 dark:border-gray-700 bg-white dark:bg-gray-800 p-1">
           {(['current', 'prior'] as const).map((periodOption) => (
             <button
               key={periodOption}
               onClick={() => setTimePeriod(periodOption)}
               className={`px-4 py-2 rounded-lg font-bold capitalize transition-colors ${
                 timePeriod === periodOption
-                  ? 'bg-neutral-900 text-white'
-                  : 'text-neutral-600 hover:bg-neutral-100'
+                  ? 'bg-neutral-900 dark:bg-gray-600 text-white'
+                  : 'text-neutral-600 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700'
               }`}
             >
               {periodOption}
@@ -259,34 +261,36 @@ export default function DashboardPage() {
 
       {/* KPI Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-4 gap-4 mb-10">
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <p className="text-sm font-bold text-neutral-500 uppercase tracking-wide">Total Cash</p>
-          <div className="text-3xl font-bold text-neutral-900 mt-2">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <p className="text-sm font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide">
+            Total Cash
+          </p>
+          <div className="text-3xl font-bold text-neutral-900 dark:text-gray-100 mt-2">
             {formatMoney(kpiData.totalCash)}
           </div>
           <p className="text-sm text-neutral-500 font-semibold mt-2">Across asset accounts</p>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <p className="text-sm font-bold text-neutral-500 uppercase tracking-wide">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <p className="text-sm font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide">
             Net Income ({timePeriod} {timeRange})
           </p>
-          <div className="text-3xl font-bold text-neutral-900 mt-2 text-success-700">
+          <div className="text-3xl font-bold text-success-700 dark:text-green-400 mt-2">
             {formatMoney(kpiData.netIncome)}
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <p className="text-sm font-bold text-neutral-500 uppercase tracking-wide">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <p className="text-sm font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide">
             Net Expenses ({timePeriod} {timeRange})
           </p>
-          <div className="text-3xl font-bold text-neutral-900 mt-2 text-danger-700">
+          <div className="text-3xl font-bold text-danger-700 dark:text-red-400 mt-2">
             {formatMoney(kpiData.netExpenses)}
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <p className="text-sm font-bold text-neutral-500 uppercase tracking-wide">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <p className="text-sm font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide">
             Uncategorized
           </p>
-          <div className="text-3xl font-bold text-neutral-900 mt-2">
+          <div className="text-3xl font-bold text-neutral-900 dark:text-gray-100 mt-2">
             {kpiData.uncategorizedCount}
           </div>
           <Link
@@ -300,18 +304,20 @@ export default function DashboardPage() {
 
       {/* Alerts + Quick Actions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-10">
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <h3 className="text-xl font-bold text-neutral-900 mb-4">Alerts & Tasks</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
+            Alerts & Tasks
+          </h3>
           <div className="space-y-3">
             {kpiData.uncategorizedCount > 0 ? (
               <Link
                 to="/app/workbench"
-                className="block w-full text-left p-4 rounded-xl border-2 border-danger-100 bg-danger-100 text-danger-700 font-bold hover:bg-danger-200 transition-colors"
+                className="block w-full text-left p-4 rounded-xl border-2 border-danger-100 dark:border-red-800 bg-danger-100 dark:bg-red-900 text-danger-700 dark:text-red-200 font-bold hover:bg-danger-200 dark:hover:bg-red-800 transition-colors"
               >
                 {kpiData.uncategorizedCount} transactions need review
               </Link>
             ) : (
-              <div className="p-4 rounded-xl border-2 border-success-100 bg-success-100 text-success-700 font-bold">
+              <div className="p-4 rounded-xl border-2 border-success-100 dark:border-green-800 bg-success-100 dark:bg-green-900 text-success-700 dark:text-green-200 font-bold">
                 All transactions reviewed!
               </div>
             )}
@@ -319,21 +325,23 @@ export default function DashboardPage() {
             {accounts?.some((a) => !a.last_reconciled_date) && (
               <Link
                 to="/app/reconcile"
-                className="block w-full text-left p-4 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold hover:border-brand-500 transition-colors"
+                className="block w-full text-left p-4 rounded-xl border-2 border-neutral-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-neutral-700 dark:text-gray-300 font-bold hover:border-brand-500 dark:hover:bg-gray-700 transition-colors"
               >
                 Reconcile your accounts
               </Link>
             )}
             <Link
               to="/app/import"
-              className="block w-full text-left p-4 rounded-xl border-2 border-neutral-200 bg-white text-neutral-700 font-bold hover:border-brand-500 transition-colors"
+              className="block w-full text-left p-4 rounded-xl border-2 border-neutral-200 dark:border-gray-700 bg-white dark:bg-gray-800 text-neutral-700 dark:text-gray-300 font-bold hover:border-brand-500 dark:hover:bg-gray-700 transition-colors"
             >
               Review recent imports
             </Link>
           </div>
         </div>
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <h3 className="text-xl font-bold text-neutral-900 mb-4">Quick Actions</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
+            Quick Actions
+          </h3>
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <Link
               to="/app/import"
@@ -343,19 +351,19 @@ export default function DashboardPage() {
             </Link>
             <Link
               to="/app/workbench"
-              className="flex items-center justify-center p-5 bg-white border-2 border-brand-600 text-brand-700 text-lg font-bold rounded-xl hover:bg-brand-50 transition-colors"
+              className="flex items-center justify-center p-5 bg-white dark:bg-gray-800 border-2 border-brand-600 dark:border-brand-500 text-brand-700 dark:text-brand-400 text-lg font-bold rounded-xl hover:bg-brand-50 dark:hover:bg-gray-700 transition-colors"
             >
               Add Transaction
             </Link>
             <Link
               to="/app/reconcile"
-              className="flex items-center justify-center p-5 bg-white border-2 border-neutral-300 text-neutral-700 text-lg font-bold rounded-xl hover:bg-neutral-50 transition-colors"
+              className="flex items-center justify-center p-5 bg-white dark:bg-gray-800 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-300 text-lg font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-700 transition-colors"
             >
               Reconcile
             </Link>
             <Link
               to="/app/reports"
-              className="flex items-center justify-center p-5 bg-white border-2 border-neutral-300 text-neutral-700 text-lg font-bold rounded-xl hover:bg-neutral-50 transition-colors"
+              className="flex items-center justify-center p-5 bg-white dark:bg-gray-800 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-300 text-lg font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-700 transition-colors"
             >
               View Reports
             </Link>
@@ -365,19 +373,21 @@ export default function DashboardPage() {
 
       {/* Trends + Recent Activity */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 mb-12">
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm space-y-6">
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm space-y-6">
           <div>
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Spending Trend</h3>
+            <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
+              Spending Trend
+            </h3>
             <div className="space-y-3">
               {trendBuckets.map((bucket) => (
                 <div key={bucket.label}>
-                  <div className="flex justify-between text-sm text-neutral-500 font-bold mb-1">
+                  <div className="flex justify-between text-sm text-neutral-500 dark:text-gray-400 font-bold mb-1">
                     <span>{bucket.label}</span>
                     <span>{formatMoney(bucket.value)}</span>
                   </div>
-                  <div className="h-4 rounded-full bg-neutral-100">
+                  <div className="h-4 rounded-full bg-neutral-100 dark:bg-gray-700">
                     <div
-                      className="h-4 rounded-full bg-brand-600"
+                      className="h-4 rounded-full bg-brand-600 dark:bg-brand-500"
                       style={{ width: `${bucket.percent}%` }}
                     />
                   </div>
@@ -387,15 +397,21 @@ export default function DashboardPage() {
           </div>
 
           <div>
-            <h3 className="text-xl font-bold text-neutral-900 mb-4">Top Categories</h3>
+            <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
+              Top Categories
+            </h3>
             {topCategories.length === 0 ? (
-              <div className="text-neutral-500">No expenses in this range.</div>
+              <div className="text-neutral-500 dark:text-gray-400">No expenses in this range.</div>
             ) : (
               <div className="space-y-3">
                 {topCategories.map((cat) => (
                   <div key={cat.id} className="flex items-center justify-between">
-                    <span className="font-bold text-neutral-900">{cat.name}</span>
-                    <span className="font-bold text-neutral-900">{formatMoney(cat.amount)}</span>
+                    <span className="font-bold text-neutral-900 dark:text-gray-100">
+                      {cat.name}
+                    </span>
+                    <span className="font-bold text-neutral-900 dark:text-gray-100">
+                      {formatMoney(cat.amount)}
+                    </span>
                   </div>
                 ))}
               </div>
@@ -403,8 +419,10 @@ export default function DashboardPage() {
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-2xl border border-neutral-200 shadow-sm">
-          <h3 className="text-xl font-bold text-neutral-900 mb-4">Recent Activity</h3>
+        <div className="bg-white dark:bg-gray-800 p-6 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm">
+          <h3 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
+            Recent Activity
+          </h3>
           <div className="space-y-4">
             {isLoading ? (
               <div>Loading activity...</div>
@@ -419,23 +437,23 @@ export default function DashboardPage() {
                 return (
                   <div
                     key={t.id}
-                    className="flex items-center justify-between p-2 hover:bg-neutral-50 rounded-lg"
+                    className="flex items-center justify-between p-2 hover:bg-neutral-50 dark:hover:bg-gray-700 rounded-lg"
                   >
                     <div>
-                      <div className="font-bold text-neutral-900 text-lg">
+                      <div className="font-bold text-neutral-900 dark:text-gray-100 text-lg">
                         {t.payee || t.original_description}
                       </div>
-                      <div className="text-sm text-neutral-500 font-medium">
+                      <div className="text-sm text-neutral-500 dark:text-gray-400 font-medium">
                         {new Date(t.date).toLocaleDateString()}
                       </div>
                     </div>
                     <div className="text-right">
                       <div
-                        className={`font-bold text-lg ${t.amount < 0 ? 'text-neutral-900' : 'text-success-700'}`}
+                        className={`font-bold text-lg ${t.amount < 0 ? 'text-danger-700 dark:text-red-400' : 'text-success-700 dark:text-green-400'}`}
                       >
                         {formatMoney(t.amount)}
                       </div>
-                      <div className="text-sm font-bold text-neutral-500 uppercase tracking-wide mt-1">
+                      <div className="text-sm font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide mt-1">
                         {categoryName}
                       </div>
                     </div>

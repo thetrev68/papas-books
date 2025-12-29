@@ -68,21 +68,25 @@ export default function ImportPage() {
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
-      <h1 className="text-3xl font-bold mb-6 text-neutral-900">Import Transactions</h1>
+      <h1 className="text-3xl font-bold mb-6 text-neutral-900 dark:text-gray-100">
+        Import Transactions
+      </h1>
 
       {/* Step 1: Account Selection & File Upload */}
       {state.step === 'upload' && (
-        <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200 mb-8">
-          <h2 className="text-xl font-bold mb-6 text-neutral-800">
+        <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 mb-8">
+          <h2 className="text-xl font-bold mb-6 text-neutral-800 dark:text-gray-100">
             1. Select Account & Upload CSV
           </h2>
 
           <div className="mb-6">
-            <label className="block text-base font-bold text-neutral-600 mb-2">Account:</label>
+            <label className="block text-base font-bold text-neutral-600 dark:text-gray-400 mb-2">
+              Account:
+            </label>
             <select
               onChange={(e) => selectAccount(e.target.value)}
               value={state.selectedAccountId || ''}
-              className="w-full p-4 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-4 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">-- Select Account --</option>
               {accounts.map((acc) => (
@@ -94,7 +98,9 @@ export default function ImportPage() {
           </div>
 
           <div className="mb-6">
-            <label className="block text-base font-bold text-neutral-600 mb-2">CSV File:</label>
+            <label className="block text-base font-bold text-neutral-600 dark:text-gray-400 mb-2">
+              CSV File:
+            </label>
             <input
               type="file"
               accept=".csv"
@@ -110,7 +116,7 @@ export default function ImportPage() {
                 }
               }}
               disabled={isProcessing}
-              className="w-full p-4 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
+              className="w-full p-4 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-900 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-bold file:bg-brand-50 file:text-brand-700 hover:file:bg-brand-100"
             />
           </div>
 
@@ -122,13 +128,17 @@ export default function ImportPage() {
 
       {/* Step 2: Mapping Configuration */}
       {state.step === 'mapping' && state.rawPreview && (
-        <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200 mb-8">
-          <h2 className="text-xl font-bold mb-6 text-neutral-800">2. Configure CSV Mapping</h2>
+        <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 mb-8">
+          <h2 className="text-xl font-bold mb-6 text-neutral-800 dark:text-gray-100">
+            2. Configure CSV Mapping
+          </h2>
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold mb-2 text-neutral-600">Preview (first 5 rows):</h3>
-            <div className="overflow-x-auto border border-neutral-200 rounded-xl">
-              <pre className="bg-neutral-50 p-4 text-xs">
+            <h3 className="text-lg font-bold mb-2 text-neutral-600 dark:text-gray-400">
+              Preview (first 5 rows):
+            </h3>
+            <div className="overflow-x-auto border border-neutral-200 dark:border-gray-700 rounded-xl">
+              <pre className="bg-neutral-50 dark:bg-gray-900 p-4 text-xs">
                 {JSON.stringify(state.rawPreview.data.slice(0, 5), null, 2)}
               </pre>
             </div>
@@ -145,7 +155,7 @@ export default function ImportPage() {
             <button
               onClick={reset}
               disabled={isProcessing}
-              className="text-neutral-500 hover:text-neutral-700 font-medium"
+              className="text-neutral-500 dark:text-gray-400 hover:text-neutral-700 dark:hover:text-gray-300 dark:text-gray-300 font-medium"
             >
               Cancel
             </button>
@@ -155,24 +165,40 @@ export default function ImportPage() {
 
       {/* Step 3: Review & Commit */}
       {state.step === 'review' && (
-        <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200 mb-8">
-          <h2 className="text-xl font-bold mb-6 text-neutral-800">3. Review Transactions</h2>
+        <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 mb-8">
+          <h2 className="text-xl font-bold mb-6 text-neutral-800 dark:text-gray-100">
+            3. Review Transactions
+          </h2>
 
           <div className="mb-6">
-            <h3 className="text-lg font-bold mb-2 text-neutral-600">Preview (first 10 mapped):</h3>
-            <div className="overflow-x-auto border border-neutral-200 rounded-xl">
-              <table className="min-w-full divide-y divide-neutral-200">
-                <thead className="bg-neutral-100">
+            <h3 className="text-lg font-bold mb-2 text-neutral-600 dark:text-gray-400">
+              Preview (first 10 mapped):
+            </h3>
+            <div className="overflow-x-auto border border-neutral-200 dark:border-gray-700 rounded-xl">
+              <table className="min-w-full divide-y divide-neutral-200 dark:divide-gray-700">
+                <thead className="bg-neutral-100 dark:bg-gray-900">
                   <tr>
-                    <th className="px-4 py-3 text-left font-bold text-neutral-600">Row</th>
-                    <th className="px-4 py-3 text-left font-bold text-neutral-600">Date</th>
-                    <th className="px-4 py-3 text-left font-bold text-neutral-600">Amount</th>
-                    <th className="px-4 py-3 text-left font-bold text-neutral-600">Description</th>
-                    <th className="px-4 py-3 text-left font-bold text-neutral-600">Valid</th>
-                    <th className="px-4 py-3 text-left font-bold text-neutral-600">Errors</th>
+                    <th className="px-4 py-3 text-left font-bold text-neutral-600 dark:text-gray-400">
+                      Row
+                    </th>
+                    <th className="px-4 py-3 text-left font-bold text-neutral-600 dark:text-gray-400">
+                      Date
+                    </th>
+                    <th className="px-4 py-3 text-left font-bold text-neutral-600 dark:text-gray-400">
+                      Amount
+                    </th>
+                    <th className="px-4 py-3 text-left font-bold text-neutral-600 dark:text-gray-400">
+                      Description
+                    </th>
+                    <th className="px-4 py-3 text-left font-bold text-neutral-600 dark:text-gray-400">
+                      Valid
+                    </th>
+                    <th className="px-4 py-3 text-left font-bold text-neutral-600 dark:text-gray-400">
+                      Errors
+                    </th>
                   </tr>
                 </thead>
-                <tbody className="divide-y divide-neutral-200 bg-white">
+                <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 bg-white dark:bg-gray-800">
                   {state.stagedTransactions.slice(0, 10).map((t, i) => (
                     <tr key={i} className={!t.isValid ? 'bg-red-50' : ''}>
                       <td className="px-4 py-3">{t.rowIndex + 1}</td>
@@ -203,15 +229,17 @@ export default function ImportPage() {
             <button
               onClick={reset}
               disabled={isProcessing}
-              className="px-6 py-3 bg-white text-neutral-600 font-bold rounded-xl border border-neutral-300 hover:bg-neutral-50 disabled:opacity-50"
+              className="px-6 py-3 bg-white dark:bg-gray-800 text-neutral-600 dark:text-gray-400 font-bold rounded-xl border border-neutral-300 dark:border-gray-600 hover:bg-neutral-50 dark:hover:bg-gray-700 dark:bg-gray-900 disabled:opacity-50"
             >
               Start Over
             </button>
           </div>
 
           {state.stats.total > 0 && (
-            <div className="mb-6 bg-neutral-50 p-6 rounded-xl border border-neutral-200">
-              <h3 className="text-lg font-bold mb-4 text-neutral-800">Import Statistics:</h3>
+            <div className="mb-6 bg-neutral-50 dark:bg-gray-900 p-6 rounded-xl border border-neutral-200 dark:border-gray-700">
+              <h3 className="text-lg font-bold mb-4 text-neutral-800 dark:text-gray-100">
+                Import Statistics:
+              </h3>
               <ul className="space-y-2 text-lg">
                 <li>
                   Total rows: <span className="font-bold">{state.stats.total}</span>
@@ -219,7 +247,7 @@ export default function ImportPage() {
                 <li className="text-success-700 font-medium">
                   New transactions: <span className="font-bold">{state.stats.new}</span>
                 </li>
-                <li className="text-neutral-500">
+                <li className="text-neutral-500 dark:text-gray-400">
                   Exact duplicates (will skip):{' '}
                   <span className="font-bold">{state.stats.exact_duplicates}</span>
                 </li>
@@ -247,14 +275,14 @@ export default function ImportPage() {
           {state.stats.new > 0 && (
             <div className="flex flex-col gap-6">
               <div className="mb-4">
-                <label className="flex items-center gap-4 p-4 border-2 border-neutral-200 rounded-xl bg-white cursor-pointer hover:border-brand-500 transition-colors">
+                <label className="flex items-center gap-4 p-4 border-2 border-neutral-200 dark:border-gray-700 rounded-xl bg-white dark:bg-gray-800 cursor-pointer hover:border-brand-500 transition-colors">
                   <input
                     type="checkbox"
                     checked={state.applyRulesOnImport}
                     onChange={(e) => setApplyRulesOnImport(e.target.checked)}
-                    className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+                    className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-600"
                   />
-                  <span className="text-lg font-medium text-neutral-900">
+                  <span className="text-lg font-medium text-neutral-900 dark:text-gray-100">
                     Automatically apply rules after import
                   </span>
                 </label>
@@ -275,9 +303,11 @@ export default function ImportPage() {
 
       {/* Step 4: Importing */}
       {state.step === 'importing' && (
-        <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200 mb-8">
-          <h2 className="text-xl font-bold mb-4 text-neutral-800">Importing...</h2>
-          <div className="text-lg text-neutral-600 animate-pulse">
+        <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 mb-8">
+          <h2 className="text-xl font-bold mb-4 text-neutral-800 dark:text-gray-100">
+            Importing...
+          </h2>
+          <div className="text-lg text-neutral-600 dark:text-gray-400 animate-pulse">
             Please wait while transactions are being saved to the database.
           </div>
         </section>
@@ -285,19 +315,23 @@ export default function ImportPage() {
 
       {/* Step 5: Complete */}
       {state.step === 'complete' && state.importResult && (
-        <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200 mb-8 border-l-8 border-success-700">
+        <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 mb-8 border-l-8 border-success-700">
           <h2 className="text-2xl font-bold mb-4 text-success-700">Import Complete!</h2>
           <div className="space-y-2 mb-6 text-lg">
             <p>
               Successfully imported <span className="font-bold">{state.stats.new}</span>{' '}
               transactions.
             </p>
-            <p className="text-base text-neutral-500">Batch ID: {state.importResult.batchId}</p>
+            <p className="text-base text-neutral-500 dark:text-gray-400">
+              Batch ID: {state.importResult.batchId}
+            </p>
           </div>
 
           {state.ruleApplicationResult && (
-            <div className="mb-6 p-6 bg-neutral-50 rounded-xl border border-neutral-200">
-              <h3 className="font-bold mb-2 text-neutral-800">Rule Application Results:</h3>
+            <div className="mb-6 p-6 bg-neutral-50 dark:bg-gray-900 rounded-xl border border-neutral-200 dark:border-gray-700">
+              <h3 className="font-bold mb-2 text-neutral-800 dark:text-gray-100">
+                Rule Application Results:
+              </h3>
               <ul className="space-y-1 text-base">
                 <li>Applied: {state.ruleApplicationResult.appliedCount}</li>
                 <li>Skipped: {state.ruleApplicationResult.skippedCount}</li>
@@ -321,7 +355,7 @@ export default function ImportPage() {
 
       {/* Error State */}
       {state.step === 'error' && (
-        <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200 mb-8 border-l-8 border-danger-700">
+        <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 mb-8 border-l-8 border-danger-700">
           <h2 className="text-2xl font-bold mb-4 text-danger-700">Error</h2>
           <div className="text-danger-700 mb-6 font-medium text-lg">{state.error}</div>
           <button
@@ -334,30 +368,46 @@ export default function ImportPage() {
       )}
 
       {/* Recent Imports Section */}
-      <section className="bg-white p-8 rounded-2xl shadow-sm border border-neutral-200">
-        <h2 className="text-xl font-bold mb-6 text-neutral-800">Recent Imports</h2>
+      <section className="bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700">
+        <h2 className="text-xl font-bold mb-6 text-neutral-800 dark:text-gray-100">
+          Recent Imports
+        </h2>
         {loadingBatches ? (
-          <p className="text-lg text-neutral-500">Loading...</p>
+          <p className="text-lg text-neutral-500 dark:text-gray-400">Loading...</p>
         ) : batches.length === 0 ? (
-          <p className="text-lg text-neutral-500 italic">No recent imports found.</p>
+          <p className="text-lg text-neutral-500 dark:text-gray-400 italic">
+            No recent imports found.
+          </p>
         ) : (
-          <div className="overflow-x-auto border border-neutral-200 rounded-xl">
-            <table className="min-w-full divide-y divide-neutral-200">
-              <thead className="bg-neutral-100">
+          <div className="overflow-x-auto border border-neutral-200 dark:border-gray-700 rounded-xl">
+            <table className="min-w-full divide-y divide-neutral-200 dark:divide-gray-700">
+              <thead className="bg-neutral-100 dark:bg-gray-900">
                 <tr>
-                  <th className="p-4 text-left font-bold text-neutral-600">Date</th>
-                  <th className="p-4 text-left font-bold text-neutral-600">File Name</th>
-                  <th className="p-4 text-right font-bold text-neutral-600">Count</th>
-                  <th className="p-4 text-center font-bold text-neutral-600">Status</th>
-                  <th className="p-4 text-center font-bold text-neutral-600">Actions</th>
+                  <th className="p-4 text-left font-bold text-neutral-600 dark:text-gray-400">
+                    Date
+                  </th>
+                  <th className="p-4 text-left font-bold text-neutral-600 dark:text-gray-400">
+                    File Name
+                  </th>
+                  <th className="p-4 text-right font-bold text-neutral-600 dark:text-gray-400">
+                    Count
+                  </th>
+                  <th className="p-4 text-center font-bold text-neutral-600 dark:text-gray-400">
+                    Status
+                  </th>
+                  <th className="p-4 text-center font-bold text-neutral-600 dark:text-gray-400">
+                    Actions
+                  </th>
                 </tr>
               </thead>
-              <tbody className="divide-y divide-neutral-200 bg-white text-lg">
+              <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 bg-white dark:bg-gray-800 text-lg">
                 {batches.map((batch) => (
                   <tr
                     key={batch.id}
                     className={
-                      batch.is_undone ? 'bg-neutral-50 text-neutral-400' : 'hover:bg-neutral-50'
+                      batch.is_undone
+                        ? 'bg-neutral-50 dark:bg-gray-700 text-neutral-400 dark:text-gray-500'
+                        : 'hover:bg-neutral-50 dark:hover:bg-gray-700'
                     }
                   >
                     <td className="p-4">{new Date(batch.imported_at).toLocaleString()}</td>
