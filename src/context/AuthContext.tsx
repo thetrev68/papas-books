@@ -120,6 +120,20 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     } = supabase.auth.onAuthStateChange(async (event, session) => {
       log('Auth state change:', event, session ? 'session exists' : 'no session');
 
+      // Token refresh shouldn't trigger re-initialization - just update the session
+      // FIX: Prevents 10+ second "Loading..." screen when tokens auto-refresh (every ~1 hour)
+      // Security: Token refresh is handled by Supabase automatically. The new session
+      // is already validated before this event fires. User profile data doesn't change
+      // during token refresh, so re-fetching is unnecessary and causes poor UX.
+      if (event === 'TOKEN_REFRESHED' && session?.user) {
+        log('Token refreshed, updating session only (no re-fetch)');
+        setAuthState((prev) => ({
+          ...prev,
+          supabaseUser: session.user,
+        }));
+        return;
+      }
+
       // No session - user is logged out
       if (!session?.user) {
         log('No session, setting unauthenticated state');
