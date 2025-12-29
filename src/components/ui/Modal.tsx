@@ -22,14 +22,14 @@ export default function Modal({ title, onClose, children, size = 'md' }: ModalPr
       onClick={onClose}
     >
       <div
-        className={`w-full ${sizeClasses[size]} bg-white rounded-2xl border border-neutral-200 shadow-lg max-h-[90vh] overflow-y-auto`}
+        className={`w-full ${sizeClasses[size]} bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-lg max-h-[90vh] overflow-y-auto`}
         onClick={(e) => e.stopPropagation()}
       >
-        <div className="flex items-center justify-between border-b border-neutral-200 p-4">
-          <h2 className="text-xl font-bold text-neutral-900">{title}</h2>
+        <div className="flex items-center justify-between border-b border-neutral-200 dark:border-gray-700 p-4">
+          <h2 className="text-xl font-bold text-neutral-900 dark:text-gray-100">{title}</h2>
           <button
             onClick={onClose}
-            className="text-neutral-400 hover:text-neutral-700 text-2xl leading-none"
+            className="text-neutral-400 dark:text-gray-400 hover:text-neutral-700 dark:hover:text-gray-200 text-2xl leading-none"
             aria-label="Close"
             type="button"
           >

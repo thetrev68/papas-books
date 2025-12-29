@@ -132,24 +132,30 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
       <Modal title={account ? 'Edit Account' : 'Create Account'} onClose={onClose}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Name
+            </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
-            {errors.name && <div className="text-danger-700 mt-1 text-sm">{errors.name}</div>}
+            {errors.name && (
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">{errors.name}</div>
+            )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Type</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Type
+            </label>
             <select
               value={formData.type}
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value as 'Asset' | 'Liability' })
               }
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="Asset">Asset</option>
               <option value="Liability">Liability</option>
@@ -157,7 +163,7 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
               Opening Balance ($)
             </label>
             <input
@@ -167,27 +173,35 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
               onChange={(e) =>
                 setFormData({ ...formData, openingBalance: parseFloat(e.target.value) || 0 })
               }
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
             {errors.openingBalance && (
-              <div className="text-danger-700 mt-1 text-sm">{errors.openingBalance}</div>
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+                {errors.openingBalance}
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Opening Date</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Opening Date
+            </label>
             <input
               type="date"
               value={formData.openingBalanceDate}
               onChange={(e) => setFormData({ ...formData, openingBalanceDate: e.target.value })}
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
             {errors.openingBalanceDate && (
-              <div className="text-danger-700 mt-1 text-sm">{errors.openingBalanceDate}</div>
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+                {errors.openingBalanceDate}
+              </div>
             )}
           </div>
 
-          {errors.form && <div className="text-danger-700 text-sm">{errors.form}</div>}
+          {errors.form && (
+            <div className="text-danger-700 dark:text-red-400 text-sm">{errors.form}</div>
+          )}
 
           <div className="flex flex-wrap gap-3 justify-end">
             <button
@@ -200,7 +214,7 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
             >
               Cancel
             </button>

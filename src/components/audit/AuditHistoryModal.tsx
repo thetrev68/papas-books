@@ -88,13 +88,13 @@ export default function AuditHistoryModal({
     <Modal title={`Audit Trail: ${entityName}`} onClose={onClose} size="lg">
       <div className="space-y-4">
         {isLoading ? (
-          <p className="text-neutral-500">Loading history...</p>
+          <p className="text-neutral-500 dark:text-gray-400">Loading history...</p>
         ) : history.length === 0 ? (
           <div className="space-y-4">
-            <p className="text-neutral-500">No changes recorded yet.</p>
+            <p className="text-neutral-500 dark:text-gray-400">No changes recorded yet.</p>
             {entity && (
-              <div className="border-t border-neutral-200 pt-4">
-                <p className="text-xs text-neutral-500">
+              <div className="border-t border-neutral-200 dark:border-gray-700 pt-4">
+                <p className="text-xs text-neutral-500 dark:text-gray-400">
                   Created on {new Date(entity.created_at).toLocaleString()}
                   {entity.created_by && userMap.get(entity.created_by) && (
                     <>
@@ -114,21 +114,26 @@ export default function AuditHistoryModal({
                 const changes = formatChanges(entry);
 
                 return (
-                  <div key={index} className="border-l-2 border-blue-500 pl-4 pb-3">
-                    <div className="flex flex-wrap justify-between text-sm text-neutral-600 mb-2">
+                  <div
+                    key={index}
+                    className="border-l-2 border-blue-500 dark:border-blue-400 pl-4 pb-3"
+                  >
+                    <div className="flex flex-wrap justify-between text-sm text-neutral-600 dark:text-gray-300 mb-2">
                       <span className="font-semibold">{userName}</span>
-                      <span className="text-neutral-500">
+                      <span className="text-neutral-500 dark:text-gray-400">
                         {new Date(entry.timestamp).toLocaleString()}
                       </span>
                     </div>
                     {changes.length > 0 ? (
-                      <ul className="list-disc pl-6 text-neutral-700 space-y-1">
+                      <ul className="list-disc pl-6 text-neutral-700 dark:text-gray-300 space-y-1">
                         {changes.map((change, i) => (
                           <li key={i}>{change}</li>
                         ))}
                       </ul>
                     ) : (
-                      <p className="text-neutral-500 text-sm italic">No visible changes</p>
+                      <p className="text-neutral-500 dark:text-gray-400 text-sm italic">
+                        No visible changes
+                      </p>
                     )}
                   </div>
                 );
@@ -136,8 +141,8 @@ export default function AuditHistoryModal({
             </div>
 
             {entity && (
-              <div className="border-t border-neutral-200 pt-4">
-                <p className="text-xs text-neutral-500">
+              <div className="border-t border-neutral-200 dark:border-gray-700 pt-4">
+                <p className="text-xs text-neutral-500 dark:text-gray-400">
                   Created on {new Date(entity.created_at).toLocaleString()}
                   {entity.created_by && userMap.get(entity.created_by) && (
                     <>
@@ -154,7 +159,7 @@ export default function AuditHistoryModal({
         <div className="flex justify-end pt-4">
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
             type="button"
           >
             Close

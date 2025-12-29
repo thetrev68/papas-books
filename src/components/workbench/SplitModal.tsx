@@ -113,28 +113,36 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
   return (
     <Modal title="Split Transaction" onClose={onClose} size="lg">
       <div className="space-y-4">
-        <p className="text-lg text-neutral-600">
+        <p className="text-lg text-neutral-600 dark:text-gray-300">
           Total Amount: ${(transaction.amount / 100).toFixed(2)}
         </p>
 
         <div className="overflow-x-auto">
           <table className="w-full text-left border-collapse">
-            <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+            <thead className="bg-neutral-100 dark:bg-gray-700 border-b-2 border-neutral-200 dark:border-gray-600">
               <tr>
-                <th className="p-3 text-base font-bold text-neutral-600">Category</th>
-                <th className="p-3 text-base font-bold text-neutral-600">Amount</th>
-                <th className="p-3 text-base font-bold text-neutral-600">Memo</th>
-                <th className="p-3 text-base font-bold text-neutral-600">Actions</th>
+                <th className="p-3 text-base font-bold text-neutral-600 dark:text-gray-300">
+                  Category
+                </th>
+                <th className="p-3 text-base font-bold text-neutral-600 dark:text-gray-300">
+                  Amount
+                </th>
+                <th className="p-3 text-base font-bold text-neutral-600 dark:text-gray-300">
+                  Memo
+                </th>
+                <th className="p-3 text-base font-bold text-neutral-600 dark:text-gray-300">
+                  Actions
+                </th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-neutral-200 text-lg">
+            <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-lg">
               {lines.map((line, index) => (
                 <tr key={index}>
                   <td className="p-3">
                     <select
                       value={line.category_id}
                       onChange={(e) => updateLine(index, 'category_id', e.target.value)}
-                      className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                      className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
                     >
                       <option value="">Select Category</option>
                       {sortedCategories.map((cat) => (
@@ -150,7 +158,7 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
                       step="0.01"
                       value={(line.amount / 100).toFixed(2)}
                       onChange={(e) => updateLine(index, 'amount', parseFloat(e.target.value) || 0)}
-                      className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                      className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
                     />
                   </td>
                   <td className="p-3">
@@ -158,13 +166,13 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
                       type="text"
                       value={line.memo || ''}
                       onChange={(e) => updateLine(index, 'memo', e.target.value)}
-                      className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+                      className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
                     />
                   </td>
                   <td className="p-3">
                     <button
                       onClick={() => removeLine(index)}
-                      className="px-4 py-2 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
+                      className="px-4 py-2 bg-danger-100 dark:bg-red-900 text-danger-700 dark:text-red-200 font-bold rounded-xl border border-danger-700 dark:border-red-700 hover:bg-danger-200 dark:hover:bg-red-800"
                       type="button"
                     >
                       Remove
@@ -180,7 +188,7 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
           <select
             value={newLine.categoryId}
             onChange={(e) => setNewLine({ ...newLine, categoryId: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           >
             <option value="">Select Category</option>
             {sortedCategories.map((cat) => (
@@ -195,19 +203,19 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
             placeholder="Amount"
             value={newLine.amount || ''}
             onChange={(e) => setNewLine({ ...newLine, amount: parseFloat(e.target.value) || 0 })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
           <input
             type="text"
             placeholder="Memo"
             value={newLine.memo}
             onChange={(e) => setNewLine({ ...newLine, memo: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
           <button
             onClick={addLine}
             disabled={!newLine.categoryId || newLine.amount === 0}
-            className="px-4 py-3 bg-success-100 text-success-700 font-bold rounded-xl border border-success-700 hover:bg-success-200 disabled:opacity-50"
+            className="px-4 py-3 bg-success-100 dark:bg-green-900 text-success-700 dark:text-green-200 font-bold rounded-xl border border-success-700 dark:border-green-700 hover:bg-success-200 dark:hover:bg-green-800 disabled:opacity-50"
             type="button"
           >
             Add
@@ -232,7 +240,7 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
         </div>
 
         {validationError && (
-          <div className="p-4 rounded-xl border bg-danger-50 border-danger-200 text-danger-700 text-sm font-medium">
+          <div className="p-4 rounded-xl border bg-danger-50 dark:bg-red-900/20 border-danger-200 dark:border-red-800 text-danger-700 dark:text-red-300 text-sm font-medium">
             Error: {validationError}
           </div>
         )}
@@ -248,7 +256,7 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
             type="button"
           >
             Cancel

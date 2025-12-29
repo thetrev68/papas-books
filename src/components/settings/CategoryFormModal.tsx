@@ -143,50 +143,58 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
       <Modal title={category ? 'Edit Category' : 'Create Category'} onClose={onClose}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Name
+            </label>
             <input
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
-            {errors.name && <div className="text-danger-700 mt-1 text-sm">{errors.name}</div>}
+            {errors.name && (
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">{errors.name}</div>
+            )}
           </div>
 
-          <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
+          <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700">
             <input
               type="checkbox"
               checked={formData.isTaxDeductible}
               onChange={(e) => setFormData({ ...formData, isTaxDeductible: e.target.checked })}
-              className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+              className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-600"
             />
-            <span className="text-lg font-medium text-neutral-900">Tax Deductible</span>
+            <span className="text-lg font-medium text-neutral-900 dark:text-gray-100">
+              Tax Deductible
+            </span>
           </label>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
               Tax Line Item (optional)
             </label>
             <input
               type="text"
               value={formData.taxLineItem}
               onChange={(e) => setFormData({ ...formData, taxLineItem: e.target.value })}
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
               placeholder="e.g., Schedule C - Line 7"
             />
             {errors.taxLineItem && (
-              <div className="text-danger-700 mt-1 text-sm">{errors.taxLineItem}</div>
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+                {errors.taxLineItem}
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
               Parent Category (optional)
             </label>
             <select
               value={formData.parentCategoryId}
               onChange={(e) => setFormData({ ...formData, parentCategoryId: e.target.value })}
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">None (top-level)</option>
               {categories
@@ -199,26 +207,34 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
                 ))}
             </select>
             {errors.parentCategoryId && (
-              <div className="text-danger-700 mt-1 text-sm">{errors.parentCategoryId}</div>
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+                {errors.parentCategoryId}
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Sort Order</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Sort Order
+            </label>
             <input
               type="number"
               value={formData.sortOrder}
               onChange={(e) =>
                 setFormData({ ...formData, sortOrder: parseInt(e.target.value) || 0 })
               }
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
             {errors.sortOrder && (
-              <div className="text-danger-700 mt-1 text-sm">{errors.sortOrder}</div>
+              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+                {errors.sortOrder}
+              </div>
             )}
           </div>
 
-          {errors.form && <div className="text-danger-700 text-sm">{errors.form}</div>}
+          {errors.form && (
+            <div className="text-danger-700 dark:text-red-400 text-sm">{errors.form}</div>
+          )}
 
           <div className="flex flex-wrap gap-3 justify-end">
             <button
@@ -231,7 +247,7 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
             >
               Cancel
             </button>

@@ -145,23 +145,27 @@ function CreateTransactionModal({
     <Modal title={initialTransaction ? 'Edit Transaction' : 'Create Transaction'} onClose={onClose}>
       <div className="space-y-4">
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Date</label>
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Date
+          </label>
           <input
             type="date"
             value={formData.date}
             onChange={(e) => setFormData({ ...formData, date: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Payee</label>
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Payee
+          </label>
           <input
             type="text"
             list="payees-list"
             value={formData.payee}
             onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             placeholder="Select or type payee name..."
           />
           <datalist id="payees-list">
@@ -172,33 +176,39 @@ function CreateTransactionModal({
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Amount</label>
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Amount
+          </label>
           <input
             type="number"
             step="0.01"
             value={formData.amount}
             onChange={(e) => setFormData({ ...formData, amount: parseFloat(e.target.value) || 0 })}
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
         </div>
 
-        <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 rounded-xl bg-white">
+        <label className="flex items-center gap-3 p-3 border-2 border-neutral-200 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700">
           <input
             type="checkbox"
             checked={formData.isSplit}
             onChange={(e) => setFormData({ ...formData, isSplit: e.target.checked })}
-            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300"
+            className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-600"
           />
-          <span className="text-lg font-medium text-neutral-900">Split Transaction</span>
+          <span className="text-lg font-medium text-neutral-900 dark:text-gray-100">
+            Split Transaction
+          </span>
         </label>
 
         {!formData.isSplit && (
           <div>
-            <label className="block text-sm font-bold text-neutral-500 mb-1">Category</label>
+            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              Category
+            </label>
             <select
               value={formData.categoryId}
               onChange={(e) => setFormData({ ...formData, categoryId: e.target.value })}
-              className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+              className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">Select Category</option>
               {sortedCategories.map((cat) => (
@@ -211,11 +221,11 @@ function CreateTransactionModal({
         )}
 
         {initialTransaction?.original_description && (
-          <div className="bg-neutral-50 p-3 rounded-xl border border-neutral-200">
-            <span className="block text-xs font-bold text-neutral-500 uppercase tracking-wide mb-1">
+          <div className="bg-neutral-50 dark:bg-gray-700 p-3 rounded-xl border border-neutral-200 dark:border-gray-600">
+            <span className="block text-xs font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide mb-1">
               Bank Description
             </span>
-            <span className="text-neutral-700 font-mono text-sm break-all">
+            <span className="text-neutral-700 dark:text-gray-300 font-mono text-sm break-all">
               {initialTransaction.original_description}
             </span>
           </div>
@@ -236,7 +246,7 @@ function CreateTransactionModal({
           </button>
           <button
             onClick={onClose}
-            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
             type="button"
           >
             Cancel
