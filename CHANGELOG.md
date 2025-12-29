@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.1](https://github.com/thetrev68/papas-books/compare/v0.3.0...v0.3.1) (2025-12-29)
+
+### Features
+
+- implement audit trail UI for all entities (Task 3.2) ([1a4d13d](https://github.com/thetrev68/papas-books/commit/1a4d13d3fe3dea194c402fc781f24aa1f0e9ad02))
+- implement dark mode (Task 3.4) ([17210ab](https://github.com/thetrev68/papas-books/commit/17210ab4b21945b40ec79d0760593bb9f1f48f42))
+
+### Bug Fixes
+
+- enhance changelog post-processor to handle markdown formatting issues ([e79dfbe](https://github.com/thetrev68/papas-books/commit/e79dfbe871c2820a2e24d710b99886ccade46645))
+
+### Documentation
+
+- complete Task 2.7 - testing strategy documentation ([78d3616](https://github.com/thetrev68/papas-books/commit/78d36166888983989036dacd91587b0e7acad53a))
+
 ## [0.3.0](https://github.com/thetrev68/papas-books/compare/v0.1.19...v0.3.0) (2025-12-29)
 
 ### ⚠ BREAKING CHANGES
