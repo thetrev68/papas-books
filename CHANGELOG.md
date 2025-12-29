@@ -2,6 +2,75 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.2.0](https://github.com/thetrev68/papas-books/compare/v0.1.19...v0.2.0) (2025-12-29)
+
+### ⚠ BREAKING CHANGES
+
+- Complete rewrite of authentication system to eliminate race conditions
+
+This commit fundamentally redesigns the authentication architecture to fix
+chronic race condition issues that required 10+ patches over time.
+
+## Root Cause Fixed
+
+The dual-source-of-truth pattern (getSession() + onAuthStateChange()) created
+race conditions where both effects would try to fetch user data simultaneously,
+coordinated by fragile ref timing. This led to stuck loading states, timeouts,
+and unpredictable behavior.
+
+## New Architecture (Option A - Single Source of Truth)
+
+### AuthContext Changes (src/context/AuthContext.tsx)
+
+- **REMOVED**: Dual useEffect pattern with getSession() and onAuthStateChange()
+- **REMOVED**: All coordination refs (didInitRef, initialSessionHandledRef, inFlightRef)
+- **ADDED**: Single useEffect using only onAuthStateChange as source of truth
+- **ADDED**: Explicit state machine: 'initializing' | 'authenticated' | 'unauthenticated' | 'error'
+- **ADDED**: Debug logging in dev mode for easy troubleshooting
+- **ADDED**: retryAuth() function for error recovery
+
+### Component Updates
+
+- **ProtectedRoute**: Added error state with retry button and user-friendly error messages
+- **LoginPage**: Simplified to single status check, removed complex timing logic
+- **tailwind.config.js**: Added @tailwindcss/forms plugin for checkbox visibility
+- **config.ts**: Optimized Supabase client configuration
+
+### Benefits
+
+- ✅ No race conditions - single event stream controls all auth state
+- ✅ No stuck loading states - all code paths reach terminal state
+- ✅ Error recovery - users can retry on timeout instead of being stuck
+- ✅ Simpler code - no complex ref coordination needed
+- ✅ Explicit states - TypeScript ensures exhaustive handling
+- ✅ Debug friendly - comprehensive logging in dev mode
+
+### Testing
+
+- E2E tests passing with new auth flow
+- Build succeeds, linting passes
+- Backwards compatible: loading prop preserved for existing code
+
+### Files Changed
+
+- src/context/AuthContext.tsx - Complete rewrite (single source of truth)
+- src/components/ProtectedRoute.tsx - Added error state handling
+- src/pages/LoginPage.tsx - Simplified redirect logic
+- tailwind.config.js - Added forms plugin
+- src/lib/supabase/config.ts - Optimized config
+- src/main.tsx - Suppress violation warnings in dev
+- src/context/AuthContext.backup.tsx - Backup of old implementation
+
+Closes issues with auth timeouts, stuck loading states, and race conditions.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+### Code Improvements
+
+- rewrite auth system with single source of truth architecture ([b566d1b](https://github.com/thetrev68/papas-books/commit/b566d1bd2fa116d0f9126b084f0b9d6637485cd8))
+
 ## [0.1.19](https://github.com/thetrev68/papas-books/compare/v0.1.18...v0.1.19) (2025-12-29)
 
 ### Bug Fixes
