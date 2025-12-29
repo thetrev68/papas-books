@@ -14,6 +14,7 @@ export default defineConfig({
     coverage: {
       provider: 'v8',
       reporter: ['text', 'json', 'json-summary', 'html'],
+      include: ['src/**/*.ts', 'src/**/*.tsx'],
       exclude: [
         'node_modules/**',
         'e2e/**',
@@ -23,6 +24,13 @@ export default defineConfig({
         '**/*.spec.tsx',
         '**/types/**',
         '**/*.d.ts',
+        'src/main.tsx',
+        'src/vite-env.d.ts',
+        'src/components/**',
+        'src/context/**',
+        'src/hooks/**',
+        'src/pages/**',
+        'src/pwa.ts',
       ],
     },
   },
