@@ -84,25 +84,65 @@ export default function AccountsTab() {
                     {new Date(account.opening_balance_date).toLocaleDateString()}
                   </td>
                   <td className="p-4">
-                    <button
-                      onClick={() => handleEdit(account)}
-                      className="px-3 py-1 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-300 font-bold rounded-lg hover:bg-neutral-50 dark:hover:bg-gray-700 dark:bg-gray-900 mr-2 text-sm"
-                    >
-                      Edit
-                    </button>
-                    <button
-                      onClick={() => setHistoryAccount(account)}
-                      className="px-3 py-1 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-300 font-bold rounded-lg hover:bg-neutral-50 dark:hover:bg-gray-700 dark:bg-gray-900 mr-2 text-sm"
-                      title="View History"
-                    >
-                      History
-                    </button>
-                    <button
-                      onClick={() => handleDelete(account.id)}
-                      className="px-3 py-1 bg-danger-100 dark:bg-red-700 text-danger-700 dark:text-white font-bold rounded-lg border border-danger-700 dark:border-red-600 hover:bg-danger-200 dark:hover:bg-red-600 text-sm"
-                    >
-                      Delete
-                    </button>
+                    <div className="flex gap-2">
+                      <button
+                        onClick={() => handleEdit(account)}
+                        className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+                        title="Edit"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+                          ></path>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => setHistoryAccount(account)}
+                        className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+                        title="View History"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                          ></path>
+                        </svg>
+                      </button>
+                      <button
+                        onClick={() => handleDelete(account.id)}
+                        className="p-2 text-neutral-400 hover:text-danger-700 transition-colors"
+                        title="Delete"
+                      >
+                        <svg
+                          className="w-5 h-5"
+                          fill="none"
+                          stroke="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth="2"
+                            d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-2.14-1.928L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                          ></path>
+                        </svg>
+                      </button>
+                    </div>
                   </td>
                 </tr>
               ))}
