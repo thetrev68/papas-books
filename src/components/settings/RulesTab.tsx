@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useRules, useDeleteRule, useUpdateRule } from '../../hooks/useRules';
 import { useCategories } from '../../hooks/useCategories';
 import RuleFormModal from './RuleFormModal';
+import AuditHistoryModal from '../audit/AuditHistoryModal';
 import { Rule } from '../../types/database';
 
 export default function RulesTab() {
@@ -11,6 +12,7 @@ export default function RulesTab() {
   const { categories } = useCategories();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
+  const [historyRule, setHistoryRule] = useState<Rule | null>(null);
 
   function handleCreate() {
     setEditingRule(null);
@@ -105,6 +107,13 @@ export default function RulesTab() {
                         Edit
                       </button>
                       <button
+                        onClick={() => setHistoryRule(rule)}
+                        className="px-4 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 mr-2"
+                        title="View History"
+                      >
+                        History
+                      </button>
+                      <button
                         onClick={() => handleDelete(rule.id)}
                         className="px-4 py-2 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
                       >
@@ -120,6 +129,16 @@ export default function RulesTab() {
       )}
 
       {isFormOpen && <RuleFormModal rule={editingRule} onClose={() => setIsFormOpen(false)} />}
+
+      {historyRule && (
+        <AuditHistoryModal
+          entityType="rule"
+          entityId={historyRule.id}
+          entityName={`Rule: ${historyRule.keyword}`}
+          isOpen={true}
+          onClose={() => setHistoryRule(null)}
+        />
+      )}
     </div>
   );
 }

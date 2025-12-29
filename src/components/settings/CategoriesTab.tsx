@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useCategories, useDeleteCategory } from '../../hooks/useCategories';
 import CategoryFormModal from './CategoryFormModal';
+import AuditHistoryModal from '../audit/AuditHistoryModal';
 import type { Category } from '../../types/database';
 
 export default function CategoriesTab() {
@@ -8,6 +9,7 @@ export default function CategoriesTab() {
   const { deleteCategory } = useDeleteCategory();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [historyCategory, setHistoryCategory] = useState<Category | null>(null);
 
   function handleCreate() {
     setEditingCategory(null);
@@ -90,6 +92,13 @@ export default function CategoriesTab() {
                       Edit
                     </button>
                     <button
+                      onClick={() => setHistoryCategory(category)}
+                      className="px-4 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 mr-2"
+                      title="View History"
+                    >
+                      History
+                    </button>
+                    <button
                       onClick={() => handleDelete(category.id)}
                       className="px-4 py-2 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
                     >
@@ -105,6 +114,16 @@ export default function CategoriesTab() {
 
       {isFormOpen && (
         <CategoryFormModal category={editingCategory} onClose={() => setIsFormOpen(false)} />
+      )}
+
+      {historyCategory && (
+        <AuditHistoryModal
+          entityType="category"
+          entityId={historyCategory.id}
+          entityName={historyCategory.name}
+          isOpen={true}
+          onClose={() => setHistoryCategory(null)}
+        />
       )}
     </div>
   );

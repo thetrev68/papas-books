@@ -10,6 +10,7 @@ import RuleBatchResultModal from '../components/workbench/RuleBatchResultModal';
 import SplitModal from '../components/workbench/SplitModal';
 import RuleFormModal from '../components/settings/RuleFormModal';
 import PayeeFormModal from '../components/settings/PayeeFormModal';
+import TransactionHistoryModal from '../components/audit/TransactionHistoryModal';
 import { VersionConflictModal } from '../components/common/VersionConflictModal';
 import type { Transaction } from '../types/database';
 
@@ -24,6 +25,7 @@ export default function WorkbenchPage() {
   const [splitTransaction, setSplitTransaction] = useState<Transaction | null>(null);
   const [ruleTransaction, setRuleTransaction] = useState<Transaction | null>(null);
   const [newPayeeName, setNewPayeeName] = useState<string | null>(null);
+  const [historyTransaction, setHistoryTransaction] = useState<Transaction | null>(null);
 
   const { transactions, isLoading, filter, setFilter } = useWorkbenchData(activeBookset?.id || '');
   const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
@@ -205,6 +207,7 @@ export default function WorkbenchPage() {
             onUpdateCategory={handleUpdateCategory}
             onCreateRule={handleCreateRule}
             onCreatePayee={handleCreatePayee}
+            onShowHistory={setHistoryTransaction}
           />
         </div>
       )}
@@ -264,6 +267,13 @@ export default function WorkbenchPage() {
           theirChanges={conflictData.serverRecord}
           onResolve={handleConflictResolve}
           onClose={() => clearConflict()}
+        />
+      )}
+
+      {historyTransaction && (
+        <TransactionHistoryModal
+          transaction={historyTransaction}
+          onClose={() => setHistoryTransaction(null)}
         />
       )}
     </div>

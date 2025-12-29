@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { useAccounts, useDeleteAccount } from '../../hooks/useAccounts';
 import AccountFormModal from './AccountFormModal';
+import AuditHistoryModal from '../audit/AuditHistoryModal';
 import type { Account } from '../../types/database';
 
 export default function AccountsTab() {
@@ -8,6 +9,7 @@ export default function AccountsTab() {
   const { deleteAccount } = useDeleteAccount();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
+  const [historyAccount, setHistoryAccount] = useState<Account | null>(null);
 
   function handleCreate() {
     setEditingAccount(null);
@@ -76,6 +78,13 @@ export default function AccountsTab() {
                       Edit
                     </button>
                     <button
+                      onClick={() => setHistoryAccount(account)}
+                      className="px-4 py-2 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50 mr-2"
+                      title="View History"
+                    >
+                      History
+                    </button>
+                    <button
                       onClick={() => handleDelete(account.id)}
                       className="px-4 py-2 bg-danger-100 text-danger-700 font-bold rounded-xl border border-danger-700 hover:bg-danger-200"
                     >
@@ -91,6 +100,16 @@ export default function AccountsTab() {
 
       {isFormOpen && (
         <AccountFormModal account={editingAccount} onClose={() => setIsFormOpen(false)} />
+      )}
+
+      {historyAccount && (
+        <AuditHistoryModal
+          entityType="account"
+          entityId={historyAccount.id}
+          entityName={historyAccount.name}
+          isOpen={true}
+          onClose={() => setHistoryAccount(null)}
+        />
       )}
     </div>
   );

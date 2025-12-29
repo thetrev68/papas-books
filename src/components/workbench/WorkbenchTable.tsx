@@ -28,6 +28,7 @@ interface WorkbenchTableProps {
   onUpdateCategory: (transactionId: string, categoryId: string) => void;
   onCreateRule: (transaction: Transaction) => void;
   onCreatePayee?: (name: string) => void;
+  onShowHistory?: (transaction: Transaction) => void;
 }
 
 function WorkbenchTable({
@@ -40,6 +41,7 @@ function WorkbenchTable({
   onUpdateCategory,
   onCreateRule,
   onCreatePayee,
+  onShowHistory,
 }: WorkbenchTableProps) {
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
@@ -284,6 +286,22 @@ function WorkbenchTable({
                 ></path>
               </svg>
             </button>
+            {onShowHistory && (
+              <button
+                onClick={() => onShowHistory(row.original)}
+                className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+                title="View History"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                  ></path>
+                </svg>
+              </button>
+            )}
           </div>
         ),
       }),
@@ -300,6 +318,7 @@ function WorkbenchTable({
       onDelete,
       onReview,
       onCreatePayee,
+      onShowHistory,
     ]
   );
 
