@@ -51,6 +51,15 @@ export default async function globalSetup() {
     const page = await context.newPage();
     await page.goto(`${baseURL}/app/dashboard`, { waitUntil: 'domcontentloaded' });
 
+    // Wait for the app to initialize and redirect to dashboard
+    await page.waitForSelector('text=Loading...', { state: 'hidden', timeout: 90000 });
+    await page.waitForSelector('h1:has-text("Dashboard"), h2:has-text("Dashboard")', {
+      timeout: 30000,
+    });
+
+    // Navigate to a blank page to clear any route state before saving storage
+    await page.goto('about:blank');
+
     await fs.mkdir(path.dirname(storageStatePath), { recursive: true });
     await context.storageState({ path: storageStatePath });
     await browser.close();

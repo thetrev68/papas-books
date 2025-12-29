@@ -139,9 +139,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setError(err instanceof Error ? err : new Error('Unknown error'));
       }
 
-      // Ensure user is null if fetch fails, so ProtectedRoute redirects correctly
-
-      setUser(null);
+      // DON'T set user to null on timeout - the session is still valid, just the data fetch failed
+      // Setting user to null would cause ProtectedRoute to redirect to login incorrectly
+      // Only set user to null if the session itself is invalid (handled by onAuthStateChange)
     }
   };
   const runFetchUserData = (userId: string) => {
@@ -167,7 +167,15 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         setSupabaseUser(session?.user ?? null);
         if (session?.user && !initialSessionHandledRef.current) {
           initialSessionHandledRef.current = true;
-          runFetchUserData(session.user.id).finally(() => setLoading(false));
+          runFetchUserData(session.user.id)
+            .then(() => {
+              setLoading(false);
+            })
+            .catch((err) => {
+              console.error('Error loading user data:', err);
+              // Don't set loading to false on error - keep loading state
+              // The retry or next auth event will handle it
+            });
           return;
         }
         if (!session?.user) setLoading(false);
@@ -184,34 +192,29 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
-      console.log('Auth state change event:', _event, 'has session:', !!session?.user);
       setSupabaseUser(session?.user ?? null);
 
       if (session?.user) {
+        // CRITICAL FIX: Skip SIGNED_IN/INITIAL_SESSION events until getSession() completes
+        // The SIGNED_IN event fires before Supabase client auth is fully initialized, causing queries to fail
+        // Let the first useEffect's getSession() handle the initial load instead
+        if (
+          (_event === 'INITIAL_SESSION' || _event === 'SIGNED_IN') &&
+          !initialSessionHandledRef.current
+        ) {
+          return;
+        }
+
         setLoading(true);
         try {
-          // For new signups/logins, we want to ensure we fetch fresh data
-          // fetchUserData has built-in retry logic for DB triggers
-          if (_event === 'INITIAL_SESSION' && initialSessionHandledRef.current) {
-            // Skip if we already handled initial session
-            return;
-          }
-
-          if (_event === 'INITIAL_SESSION') {
-            initialSessionHandledRef.current = true;
-          }
-
-          console.log('Fetching user data for:', session.user.id);
           await runFetchUserData(session.user.id);
-          console.log('User data fetch complete');
-        } catch (err) {
-          console.error('Error in auth state change handler:', err);
-        } finally {
           setLoading(false);
+        } catch (err) {
+          console.error('Error fetching user data:', err);
+          // Don't set loading to false on error - keep showing loading state
         }
       } else {
         // User signed out or session expired
-        console.log('No session - clearing user state');
         setUser(null);
         setActiveBookset(null);
         setMyBooksets([]);
