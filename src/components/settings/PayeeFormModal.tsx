@@ -1,9 +1,9 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { createPayee, updatePayee } from '../../lib/supabase/payees';
 import { fetchCategories } from '../../lib/supabase/categories';
-import type { Payee } from '../../types/database';
+import type { Payee, Category } from '../../types/database';
 import Modal from '../ui/Modal';
 
 interface PayeeFormModalProps {
@@ -42,6 +42,47 @@ export default function PayeeFormModal({
     queryFn: () => fetchCategories(activeBookset!.id),
     enabled: !!activeBookset,
   });
+
+  // Helper to process categories with parent:child format
+  const sortedCategories = useMemo(() => {
+    if (!categories) return [];
+
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+    const getRoot = (cat: Category): Category => {
+      let current = cat;
+      const seen = new Set<string>();
+      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
+        if (seen.has(current.id)) break;
+        seen.add(current.id);
+        current = categoryMap.get(current.parent_category_id)!;
+      }
+      return current;
+    };
+
+    const getFullName = (cat: Category) => {
+      if (!cat.parent_category_id) return cat.name;
+      const parent = categoryMap.get(cat.parent_category_id);
+      return parent ? `${parent.name}: ${cat.name}` : cat.name;
+    };
+
+    return [...categories]
+      .sort((a, b) => {
+        const rootA = getRoot(a);
+        const rootB = getRoot(b);
+        const isIncomeA = rootA.name === 'Income';
+        const isIncomeB = rootB.name === 'Income';
+
+        if (isIncomeA && !isIncomeB) return -1;
+        if (!isIncomeA && isIncomeB) return 1;
+
+        return getFullName(a).localeCompare(getFullName(b));
+      })
+      .map((cat) => ({
+        ...cat,
+        displayName: getFullName(cat),
+      }));
+  }, [categories]);
 
   const createMutation = useMutation({
     mutationFn: (data: typeof formData) =>
@@ -103,9 +144,9 @@ export default function PayeeFormModal({
             className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           >
             <option value="">No default category</option>
-            {categories?.map((category) => (
+            {sortedCategories.map((category) => (
               <option key={category.id} value={category.id}>
-                {category.name}
+                {category.displayName}
               </option>
             ))}
           </select>

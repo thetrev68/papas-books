@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCategories } from '../../hooks/useCategories';
 import { useCreateRule, useUpdateRule } from '../../hooks/useRules';
 import { useOptimisticLocking } from '../../hooks/useOptimisticLocking';
 import { insertRuleSchema, validateRegex } from '../../lib/validation/rules';
-import { Rule } from '../../types/database';
+import { Rule, Category } from '../../types/database';
 import { MatchType, RuleConditions } from '../../types/rules';
 import Modal from '../ui/Modal';
 import { VersionConflictModal } from '../common/VersionConflictModal';
@@ -23,6 +23,45 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
   const { createRule, isLoading: isCreating } = useCreateRule();
   const { updateRule, isLoading: isUpdating } = useUpdateRule();
   const { categories } = useCategories();
+
+  // Helper to process categories with parent:child format
+  const sortedCategories = useMemo(() => {
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+    const getRoot = (cat: Category): Category => {
+      let current = cat;
+      const seen = new Set<string>();
+      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
+        if (seen.has(current.id)) break;
+        seen.add(current.id);
+        current = categoryMap.get(current.parent_category_id)!;
+      }
+      return current;
+    };
+
+    const getFullName = (cat: Category) => {
+      if (!cat.parent_category_id) return cat.name;
+      const parent = categoryMap.get(cat.parent_category_id);
+      return parent ? `${parent.name}: ${cat.name}` : cat.name;
+    };
+
+    return [...categories]
+      .sort((a, b) => {
+        const rootA = getRoot(a);
+        const rootB = getRoot(b);
+        const isIncomeA = rootA.name === 'Income';
+        const isIncomeB = rootB.name === 'Income';
+
+        if (isIncomeA && !isIncomeB) return -1;
+        if (!isIncomeA && isIncomeB) return 1;
+
+        return getFullName(a).localeCompare(getFullName(b));
+      })
+      .map((cat) => ({
+        ...cat,
+        displayName: getFullName(cat),
+      }));
+  }, [categories]);
 
   // Optimistic locking for concurrent edit detection
   const { conflictData, checkForConflict, resolveConflict, hasConflict, clearConflict } =
@@ -258,9 +297,9 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
               className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">-- Select Category --</option>
-              {categories.map((cat) => (
+              {sortedCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                  {cat.displayName}
                 </option>
               ))}
             </select>

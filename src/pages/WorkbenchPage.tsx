@@ -214,6 +214,7 @@ export default function WorkbenchPage() {
           accountId={activeBookset?.id || ''}
           onSave={handleCreateTransaction}
           onClose={() => setShowCreateModal(false)}
+          onCreatePayee={handleCreatePayee}
         />
       )}
 
@@ -223,6 +224,7 @@ export default function WorkbenchPage() {
           initialTransaction={editTransaction}
           onSave={handleSaveEdit}
           onClose={() => setEditTransaction(null)}
+          onCreatePayee={handleCreatePayee}
         />
       )}
 

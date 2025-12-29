@@ -1,7 +1,8 @@
-import { useState, useEffect } from 'react';
-import type { Transaction } from '../../types/database';
+import { useState, useEffect, useMemo } from 'react';
+import type { Transaction, Category } from '../../types/database';
 import { createManualTransaction } from '../../lib/transactionOperations';
 import { useCategories } from '../../hooks/useCategories';
+import { usePayees } from '../../hooks/usePayees';
 import Modal from '../ui/Modal';
 
 interface CreateTransactionModalProps {
@@ -9,6 +10,7 @@ interface CreateTransactionModalProps {
   initialTransaction?: Transaction;
   onSave: (transaction: Transaction) => void;
   onClose: () => void;
+  onCreatePayee?: (name: string) => void;
 }
 
 function CreateTransactionModal({
@@ -16,6 +18,7 @@ function CreateTransactionModal({
   initialTransaction,
   onSave,
   onClose,
+  onCreatePayee,
 }: CreateTransactionModalProps) {
   const [formData, setFormData] = useState({
     date: new Date().toISOString().split('T')[0],
@@ -26,6 +29,46 @@ function CreateTransactionModal({
   });
 
   const { categories } = useCategories();
+  const { payees } = usePayees();
+
+  // Helper to process categories with parent:child format
+  const sortedCategories = useMemo(() => {
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+    const getRoot = (cat: Category): Category => {
+      let current = cat;
+      const seen = new Set<string>();
+      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
+        if (seen.has(current.id)) break;
+        seen.add(current.id);
+        current = categoryMap.get(current.parent_category_id)!;
+      }
+      return current;
+    };
+
+    const getFullName = (cat: Category) => {
+      if (!cat.parent_category_id) return cat.name;
+      const parent = categoryMap.get(cat.parent_category_id);
+      return parent ? `${parent.name}: ${cat.name}` : cat.name;
+    };
+
+    return [...categories]
+      .sort((a, b) => {
+        const rootA = getRoot(a);
+        const rootB = getRoot(b);
+        const isIncomeA = rootA.name === 'Income';
+        const isIncomeB = rootB.name === 'Income';
+
+        if (isIncomeA && !isIncomeB) return -1;
+        if (!isIncomeA && isIncomeB) return 1;
+
+        return getFullName(a).localeCompare(getFullName(b));
+      })
+      .map((cat) => ({
+        ...cat,
+        displayName: getFullName(cat),
+      }));
+  }, [categories]);
 
   useEffect(() => {
     if (initialTransaction) {
@@ -40,6 +83,34 @@ function CreateTransactionModal({
   }, [initialTransaction]);
 
   const handleSave = () => {
+    // Validate payee exists in the master list
+    const payeeExists = payees.some(
+      (p) => p.name.toLowerCase() === formData.payee.trim().toLowerCase()
+    );
+
+    if (formData.payee.trim() && !payeeExists) {
+      if (onCreatePayee) {
+        // Offer to add the payee
+        if (confirm(`Payee "${formData.payee}" does not exist. Do you want to add it?`)) {
+          // Save the transaction first, then open the payee modal
+          saveTransaction();
+          onCreatePayee(formData.payee);
+        }
+        // If they decline, just return without saving (stay in the modal)
+      } else {
+        // Fallback if no onCreatePayee handler is provided
+        alert(
+          `Payee "${formData.payee}" does not exist in the master payee list. Please add it to the payee list first or select an existing payee.`
+        );
+      }
+      return;
+    }
+
+    // Payee exists or is empty, proceed with save
+    saveTransaction();
+  };
+
+  const saveTransaction = () => {
     if (initialTransaction) {
       const updatedTransaction: Transaction = {
         ...initialTransaction,
@@ -87,10 +158,17 @@ function CreateTransactionModal({
           <label className="block text-sm font-bold text-neutral-500 mb-1">Payee</label>
           <input
             type="text"
+            list="payees-list"
             value={formData.payee}
             onChange={(e) => setFormData({ ...formData, payee: e.target.value })}
             className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            placeholder="Select or type payee name..."
           />
+          <datalist id="payees-list">
+            {payees.map((payee) => (
+              <option key={payee.id} value={payee.name} />
+            ))}
+          </datalist>
         </div>
 
         <div>
@@ -123,9 +201,9 @@ function CreateTransactionModal({
               className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">Select Category</option>
-              {categories.map((cat) => (
+              {sortedCategories.map((cat) => (
                 <option key={cat.id} value={cat.id}>
-                  {cat.name}
+                  {cat.displayName}
                 </option>
               ))}
             </select>

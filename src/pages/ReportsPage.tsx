@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../hooks/useAccounts';
 import { useCategories } from '../hooks/useCategories';
@@ -9,12 +9,51 @@ import {
   exportReportToCsv,
 } from '../lib/reports';
 import { CategorySummary, ReportFilter } from '../types/reconcile';
-import { Transaction } from '../types/database';
+import { Transaction, Category } from '../types/database';
 
 export default function ReportsPage() {
   const { activeBookset } = useAuth();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
+
+  // Helper to process categories with parent:child format
+  const sortedCategories = useMemo(() => {
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+    const getRoot = (cat: Category): Category => {
+      let current = cat;
+      const seen = new Set<string>();
+      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
+        if (seen.has(current.id)) break;
+        seen.add(current.id);
+        current = categoryMap.get(current.parent_category_id)!;
+      }
+      return current;
+    };
+
+    const getFullName = (cat: Category) => {
+      if (!cat.parent_category_id) return cat.name;
+      const parent = categoryMap.get(cat.parent_category_id);
+      return parent ? `${parent.name}: ${cat.name}` : cat.name;
+    };
+
+    return [...categories]
+      .sort((a, b) => {
+        const rootA = getRoot(a);
+        const rootB = getRoot(b);
+        const isIncomeA = rootA.name === 'Income';
+        const isIncomeB = rootB.name === 'Income';
+
+        if (isIncomeA && !isIncomeB) return -1;
+        if (!isIncomeA && isIncomeB) return 1;
+
+        return getFullName(a).localeCompare(getFullName(b));
+      })
+      .map((cat) => ({
+        ...cat,
+        displayName: getFullName(cat),
+      }));
+  }, [categories]);
 
   const [startDate, setStartDate] = useState(new Date().getFullYear() + '-01-01');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -152,9 +191,9 @@ export default function ReportsPage() {
               className="p-3 border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             >
               <option value="">All Categories</option>
-              {categories.map((category) => (
+              {sortedCategories.map((category) => (
                 <option key={category.id} value={category.id}>
-                  {category.name}
+                  {category.displayName}
                 </option>
               ))}
             </select>
