@@ -62,13 +62,15 @@ export function VersionConflictModal<T extends VersionedRecord>({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
+        className="bg-white dark:bg-gray-800 rounded-lg shadow-xl max-w-4xl w-full mx-4 max-h-[90vh] overflow-y-auto"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
-        <div className="border-b px-6 py-4">
-          <h2 className="text-xl font-semibold text-gray-900">Concurrent Edit Detected</h2>
-          <p className="text-sm text-gray-600 mt-1">
+        <div className="border-b border-gray-200 dark:border-gray-700 px-6 py-4">
+          <h2 className="text-xl font-semibold text-gray-900 dark:text-gray-100">
+            Concurrent Edit Detected
+          </h2>
+          <p className="text-sm text-gray-600 dark:text-gray-400 mt-1">
             {entityType.charAt(0).toUpperCase() + entityType.slice(1)}:{' '}
             <strong>{entityName}</strong>
           </p>
@@ -76,10 +78,10 @@ export function VersionConflictModal<T extends VersionedRecord>({
 
         {/* Content */}
         <div className="px-6 py-4 space-y-4">
-          <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+          <div className="bg-yellow-50 dark:bg-yellow-900/20 border border-yellow-200 dark:border-yellow-700 rounded-lg p-4">
             <div className="flex items-start">
               <svg
-                className="w-5 h-5 text-yellow-600 mt-0.5 mr-2 flex-shrink-0"
+                className="w-5 h-5 text-yellow-600 dark:text-yellow-400 mt-0.5 mr-2 flex-shrink-0"
                 fill="currentColor"
                 viewBox="0 0 20 20"
               >
@@ -90,10 +92,10 @@ export function VersionConflictModal<T extends VersionedRecord>({
                 />
               </svg>
               <div>
-                <h3 className="text-sm font-medium text-yellow-800">
+                <h3 className="text-sm font-medium text-yellow-800 dark:text-yellow-200">
                   This {entityType} was modified by {modifiedBy}
                 </h3>
-                <p className="text-sm text-yellow-700 mt-1">
+                <p className="text-sm text-yellow-700 dark:text-yellow-300 mt-1">
                   Last updated: {modifiedAt}
                   <br />
                   Your changes conflict with theirs. Choose how to resolve this conflict.
@@ -104,26 +106,34 @@ export function VersionConflictModal<T extends VersionedRecord>({
 
           {changedFields.length > 0 && (
             <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-2">Changed Fields:</h3>
+              <h3 className="text-sm font-semibold text-gray-700 dark:text-gray-300 mb-2">
+                Changed Fields:
+              </h3>
               <div className="space-y-3">
                 {changedFields.map((field) => (
                   <div key={field} className="grid grid-cols-2 gap-4 text-sm">
                     <div>
-                      <div className="text-xs font-medium text-gray-500 mb-1">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
                         {field.replace(/_/g, ' ').toUpperCase()}
                       </div>
-                      <div className="bg-red-50 border border-red-200 rounded p-2">
-                        <div className="text-xs text-gray-500 mb-1">Your version:</div>
-                        <div className="text-gray-900 font-mono text-xs break-all">
+                      <div className="bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-700 rounded p-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Your version:
+                        </div>
+                        <div className="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">
                           {formatValue(yourChanges[field as keyof T])}
                         </div>
                       </div>
                     </div>
                     <div>
-                      <div className="text-xs font-medium text-gray-500 mb-1">&nbsp;</div>
-                      <div className="bg-green-50 border border-green-200 rounded p-2">
-                        <div className="text-xs text-gray-500 mb-1">Their version:</div>
-                        <div className="text-gray-900 font-mono text-xs break-all">
+                      <div className="text-xs font-medium text-gray-500 dark:text-gray-400 mb-1">
+                        &nbsp;
+                      </div>
+                      <div className="bg-green-50 dark:bg-green-900/20 border border-green-200 dark:border-green-700 rounded p-2">
+                        <div className="text-xs text-gray-500 dark:text-gray-400 mb-1">
+                          Their version:
+                        </div>
+                        <div className="text-gray-900 dark:text-gray-100 font-mono text-xs break-all">
                           {formatValue(theirChanges[field as keyof T])}
                         </div>
                       </div>
@@ -136,13 +146,13 @@ export function VersionConflictModal<T extends VersionedRecord>({
         </div>
 
         {/* Footer */}
-        <div className="border-t px-6 py-4 bg-gray-50 flex gap-3">
+        <div className="border-t border-gray-200 dark:border-gray-700 px-6 py-4 bg-gray-50 dark:bg-gray-900 flex gap-3">
           <button
             onClick={() => onResolve('reload')}
-            className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-gray-700 hover:bg-gray-100 focus:outline-none focus:ring-2 focus:ring-gray-500"
+            className="flex-1 px-4 py-2 border border-gray-300 dark:border-gray-600 rounded-lg text-gray-700 dark:text-gray-200 bg-white dark:bg-gray-800 hover:bg-gray-100 dark:hover:bg-gray-700 focus:outline-none focus:ring-2 focus:ring-gray-500"
           >
             <div className="text-sm font-medium">Discard My Changes</div>
-            <div className="text-xs text-gray-500">Use their version</div>
+            <div className="text-xs text-gray-500 dark:text-gray-400">Use their version</div>
           </button>
           <button
             onClick={() => onResolve('overwrite')}

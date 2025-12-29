@@ -92,7 +92,7 @@ export default function RulesTab() {
                 return (
                   <tr
                     key={rule.id}
-                    className={`hover:bg-neutral-50 ${rule.is_enabled ? '' : 'opacity-60'}`}
+                    className={`hover:bg-neutral-50 dark:hover:bg-gray-700 ${rule.is_enabled ? '' : 'opacity-60'}`}
                   >
                     <td className="p-4">{rule.priority}</td>
                     <td className="p-4 font-medium text-neutral-900 dark:text-gray-100">

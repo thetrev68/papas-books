@@ -58,9 +58,11 @@ export function MappingForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <div>
-        <label className="block text-sm font-medium mb-1">Quick Setup (Optional)</label>
+        <label className="block text-sm font-medium dark:text-gray-300 mb-1">
+          Quick Setup (Optional)
+        </label>
         <select
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
           onChange={(e) => handleBankProfileChange(e.target.value)}
           defaultValue=""
         >
@@ -74,11 +76,11 @@ export function MappingForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Date Column:</label>
+        <label className="block text-sm font-medium dark:text-gray-300 mb-1">Date Column:</label>
         <select
           value={formData.dateColumn}
           onChange={(e) => handleFieldChange('dateColumn', e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
           required
         >
           <option value="">-- Select --</option>
@@ -91,11 +93,13 @@ export function MappingForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Description Column:</label>
+        <label className="block text-sm font-medium dark:text-gray-300 mb-1">
+          Description Column:
+        </label>
         <select
           value={formData.descriptionColumn}
           onChange={(e) => handleFieldChange('descriptionColumn', e.target.value)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
           required
         >
           <option value="">-- Select --</option>
@@ -108,11 +112,11 @@ export function MappingForm({
       </div>
 
       <div>
-        <label className="block text-sm font-medium mb-1">Amount Mode:</label>
+        <label className="block text-sm font-medium dark:text-gray-300 mb-1">Amount Mode:</label>
         <select
           value={formData.amountMode}
           onChange={(e) => handleFieldChange('amountMode', e.target.value as AmountMode)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
         >
           <option value="signed">Single Column (Signed)</option>
           <option value="separate">Separate Debit/Credit Columns</option>
@@ -121,11 +125,13 @@ export function MappingForm({
 
       {formData.amountMode === 'signed' && (
         <div>
-          <label className="block text-sm font-medium mb-1">Amount Column:</label>
+          <label className="block text-sm font-medium dark:text-gray-300 mb-1">
+            Amount Column:
+          </label>
           <select
             value={formData.amountColumn}
             onChange={(e) => handleFieldChange('amountColumn', e.target.value)}
-            className="w-full border border-gray-300 rounded px-3 py-2"
+            className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
             required
           >
             <option value="">-- Select --</option>
@@ -141,11 +147,13 @@ export function MappingForm({
       {formData.amountMode === 'separate' && (
         <>
           <div>
-            <label className="block text-sm font-medium mb-1">Inflow Column (Credits):</label>
+            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
+              Inflow Column (Credits):
+            </label>
             <select
               value={formData.inflowColumn || ''}
               onChange={(e) => handleFieldChange('inflowColumn', e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
               required
             >
               <option value="">-- Select --</option>
@@ -158,11 +166,13 @@ export function MappingForm({
           </div>
 
           <div>
-            <label className="block text-sm font-medium mb-1">Outflow Column (Debits):</label>
+            <label className="block text-sm font-medium dark:text-gray-300 mb-1">
+              Outflow Column (Debits):
+            </label>
             <select
               value={formData.outflowColumn || ''}
               onChange={(e) => handleFieldChange('outflowColumn', e.target.value)}
-              className="w-full border border-gray-300 rounded px-3 py-2"
+              className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
               required
             >
               <option value="">-- Select --</option>
@@ -177,11 +187,11 @@ export function MappingForm({
       )}
 
       <div>
-        <label className="block text-sm font-medium mb-1">Date Format:</label>
+        <label className="block text-sm font-medium dark:text-gray-300 mb-1">Date Format:</label>
         <select
           value={formData.dateFormat}
           onChange={(e) => handleFieldChange('dateFormat', e.target.value as DateFormat)}
-          className="w-full border border-gray-300 rounded px-3 py-2"
+          className="w-full border border-gray-300 dark:border-gray-600 rounded px-3 py-2 bg-white dark:bg-gray-700 dark:text-gray-100"
         >
           <option value="MM/dd/yyyy">MM/dd/yyyy (e.g., 01/31/2024)</option>
           <option value="dd/MM/yyyy">dd/MM/yyyy (e.g., 31/01/2024)</option>
@@ -191,7 +201,7 @@ export function MappingForm({
       </div>
 
       <div>
-        <label className="flex items-center">
+        <label className="flex items-center dark:text-gray-200">
           <input
             type="checkbox"
             checked={formData.hasHeaderRow}

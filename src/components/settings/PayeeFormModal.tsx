@@ -120,19 +120,23 @@ export default function PayeeFormModal({
     <Modal title={payee ? 'Edit Payee' : 'Add Payee'} onClose={onClose}>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Name</label>
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Name
+          </label>
           <input
             type="text"
             value={formData.name}
             onChange={(e) => setFormData((prev) => ({ ...prev, name: e.target.value }))}
             required
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 mb-1">Default Category</label>
-          <p className="text-sm text-neutral-500 mb-2">
+          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            Default Category
+          </label>
+          <p className="text-sm text-neutral-500 dark:text-gray-400 mb-2">
             This category will be automatically applied when this payee is assigned to a transaction
             (unless overridden by a rule).
           </p>
@@ -141,7 +145,7 @@ export default function PayeeFormModal({
             onChange={(e) =>
               setFormData((prev) => ({ ...prev, default_category_id: e.target.value }))
             }
-            className="w-full p-3 text-lg border-2 border-neutral-300 rounded-xl bg-neutral-50 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
+            className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           >
             <option value="">No default category</option>
             {sortedCategories.map((category) => (
@@ -163,7 +167,7 @@ export default function PayeeFormModal({
           <button
             type="button"
             onClick={onClose}
-            className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+            className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
           >
             Cancel
           </button>

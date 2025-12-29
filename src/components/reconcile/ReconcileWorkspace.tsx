@@ -117,29 +117,37 @@ export default function ReconcileWorkspace({
 
   return (
     <div className="space-y-6">
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm p-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm p-6 flex flex-col lg:flex-row lg:items-start lg:justify-between gap-6">
         <div>
-          <h3 className="text-2xl font-bold text-neutral-900">Reconciling: {account.name}</h3>
-          <p className="text-lg text-neutral-600 mt-2">Statement Date: {formattedDate}</p>
-          <p className="text-lg text-neutral-600">
+          <h3 className="text-2xl font-bold text-neutral-900 dark:text-gray-100">
+            Reconciling: {account.name}
+          </h3>
+          <p className="text-lg text-neutral-600 dark:text-gray-400 mt-2">
+            Statement Date: {formattedDate}
+          </p>
+          <p className="text-lg text-neutral-600 dark:text-gray-400">
             Statement Ending Balance:{' '}
             <span className="font-bold">{formatMoney(statementBalance)}</span>
           </p>
         </div>
         <div className="text-right space-y-2">
-          <div className="text-lg text-neutral-600">
+          <div className="text-lg text-neutral-600 dark:text-gray-400">
             Target Balance:{' '}
-            <span className="font-bold text-neutral-900">{formatMoney(statementBalance)}</span>
+            <span className="font-bold text-neutral-900 dark:text-gray-100">
+              {formatMoney(statementBalance)}
+            </span>
           </div>
-          <div className="text-lg text-neutral-600">
+          <div className="text-lg text-neutral-600 dark:text-gray-400">
             Calculated Balance:{' '}
-            <span className="font-bold text-neutral-900">
+            <span className="font-bold text-neutral-900 dark:text-gray-100">
               {formatMoney(reconciliationState.calculatedEndingBalance)}
             </span>
           </div>
           <div
             className={`text-2xl font-bold ${
-              reconciliationState.difference === 0 ? 'text-success-700' : 'text-danger-700'
+              reconciliationState.difference === 0
+                ? 'text-success-700 dark:text-green-400'
+                : 'text-danger-700 dark:text-red-400'
             }`}
           >
             {reconciliationState.difference === 0
@@ -157,7 +165,7 @@ export default function ReconcileWorkspace({
             </button>
             <button
               onClick={onCancel}
-              className="px-6 py-3 bg-white border-2 border-neutral-300 text-neutral-700 font-bold rounded-xl hover:bg-neutral-50"
+              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
               type="button"
             >
               Cancel
@@ -166,24 +174,28 @@ export default function ReconcileWorkspace({
         </div>
       </div>
 
-      <div className="bg-white rounded-2xl border border-neutral-200 shadow-sm overflow-hidden">
+      <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm overflow-hidden">
         <table className="w-full text-left border-collapse">
-          <thead className="bg-neutral-100 border-b-2 border-neutral-200">
+          <thead className="bg-neutral-100 dark:bg-gray-700 border-b-2 border-neutral-200 dark:border-gray-600">
             <tr>
-              <th className="p-4 text-base font-bold text-neutral-600 text-center">Match</th>
-              <th className="p-4 text-base font-bold text-neutral-600">Date</th>
-              <th className="p-4 text-base font-bold text-neutral-600">Payee</th>
-              <th className="p-4 text-base font-bold text-neutral-600 text-right">Amount</th>
+              <th className="p-4 text-base font-bold text-neutral-600 dark:text-gray-300 text-center">
+                Match
+              </th>
+              <th className="p-4 text-base font-bold text-neutral-600 dark:text-gray-300">Date</th>
+              <th className="p-4 text-base font-bold text-neutral-600 dark:text-gray-300">Payee</th>
+              <th className="p-4 text-base font-bold text-neutral-600 dark:text-gray-300 text-right">
+                Amount
+              </th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-neutral-200 text-lg">
+          <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-lg">
             {candidates.map((tx) => {
               const amount = sumTransactionAmountForReconcile(tx);
               const isChecked = checkedIds.has(tx.id);
               return (
                 <tr
                   key={tx.id}
-                  className={`cursor-pointer ${isChecked ? 'bg-brand-50' : 'bg-white'} hover:bg-neutral-50`}
+                  className={`cursor-pointer ${isChecked ? 'bg-brand-50 dark:bg-brand-900/20' : 'bg-white dark:bg-gray-800'} hover:bg-neutral-50 dark:hover:bg-gray-700`}
                   onClick={() => toggleTransaction(tx.id)}
                 >
                   <td className="p-4 text-center">
@@ -191,12 +203,16 @@ export default function ReconcileWorkspace({
                       type="checkbox"
                       checked={isChecked}
                       onChange={() => {}}
-                      className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 pointer-events-none"
+                      className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-500 pointer-events-none"
                     />
                   </td>
-                  <td className="p-4 text-neutral-700">{new Date(tx.date).toLocaleDateString()}</td>
-                  <td className="p-4 text-neutral-900 font-medium">{tx.payee}</td>
-                  <td className="p-4 text-right font-bold text-neutral-900">
+                  <td className="p-4 text-neutral-700 dark:text-gray-300">
+                    {new Date(tx.date).toLocaleDateString()}
+                  </td>
+                  <td className="p-4 text-neutral-900 dark:text-gray-100 font-medium">
+                    {tx.payee}
+                  </td>
+                  <td className="p-4 text-right font-bold text-neutral-900 dark:text-gray-100">
                     {formatMoney(amount)}
                   </td>
                 </tr>
