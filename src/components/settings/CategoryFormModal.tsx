@@ -190,7 +190,8 @@ export default function CategoryFormModal({ category, onClose }: CategoryFormMod
             >
               <option value="">None (top-level)</option>
               {categories
-                .filter((c) => c.id !== category?.id)
+                .filter((c) => c.id !== category?.id && c.parent_category_id === null)
+                .sort((a, b) => a.name.localeCompare(b.name))
                 .map((c) => (
                   <option key={c.id} value={c.id}>
                     {c.name}
