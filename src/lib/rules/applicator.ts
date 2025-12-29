@@ -1,11 +1,21 @@
 import { supabase } from '../supabase/config';
 import { Transaction, Payee } from '../../types/database';
-import { Rule, RuleApplicationResult, RuleBatchResult } from '../../types/rules';
+import { Rule, RuleApplicationResult, RuleBatchResult, RuleMatch } from '../../types/rules';
 import { findMatchingRules, selectBestRule } from './matcher';
 
 export interface ApplyRuleOptions {
   overrideReviewed?: boolean; // If true, apply rule even if transaction is already reviewed
   setReviewedFlag?: boolean; // If true, mark transaction as reviewed after applying rule
+}
+
+export interface RulePreviewResult {
+  transactionId: string;
+  originalDescription: string;
+  amount: number;
+  matchingRules: RuleMatch[];
+  wouldApply: boolean;
+  selectedRule: Rule | null;
+  reason?: string;
 }
 
 /**
@@ -205,6 +215,10 @@ export async function applyRulesToBatch(
   let skippedCount = 0;
   let errorCount = 0;
 
+  console.log(
+    `[Rules] Processing ${transactions.length} transactions with ${rules.filter((r) => r.is_enabled).length} active rules`
+  );
+
   for (const transaction of transactions) {
     const result = await applyRulesToTransaction(transaction, rules, options);
     results.push(result);
@@ -221,6 +235,10 @@ export async function applyRulesToBatch(
     }
   }
 
+  console.log(
+    `[Rules] Complete: ${appliedCount} applied, ${skippedCount} skipped, ${errorCount} errors`
+  );
+
   return {
     totalTransactions: transactions.length,
     appliedCount,
@@ -228,4 +246,69 @@ export async function applyRulesToBatch(
     errorCount,
     results,
   };
+}
+
+/**
+ * Previews which transactions would match rules without applying them.
+ *
+ * Useful for debugging and showing users what would happen before applying.
+ *
+ * @param transactions - Array of transactions to test
+ * @param rules - Array of all rules
+ * @param options - Optional configuration (same as apply)
+ * @returns Array of preview results showing what would happen
+ */
+export function previewRulesForBatch(
+  transactions: Transaction[],
+  rules: Rule[],
+  options?: ApplyRuleOptions
+): RulePreviewResult[] {
+  const { overrideReviewed = false } = options || {};
+  const results: RulePreviewResult[] = [];
+
+  for (const transaction of transactions) {
+    // Check if transaction is reconciled
+    if (transaction.reconciled) {
+      results.push({
+        transactionId: transaction.id,
+        originalDescription: transaction.original_description,
+        amount: transaction.amount,
+        matchingRules: [],
+        wouldApply: false,
+        selectedRule: null,
+        reason: 'Transaction is reconciled',
+      });
+      continue;
+    }
+
+    // Check if transaction is already reviewed
+    if (transaction.is_reviewed && !overrideReviewed) {
+      results.push({
+        transactionId: transaction.id,
+        originalDescription: transaction.original_description,
+        amount: transaction.amount,
+        matchingRules: [],
+        wouldApply: false,
+        selectedRule: null,
+        reason: 'Transaction already reviewed',
+      });
+      continue;
+    }
+
+    // Find matching rules
+    const matches = findMatchingRules(transaction, rules);
+    const bestRule = selectBestRule(matches);
+
+    results.push({
+      transactionId: transaction.id,
+      originalDescription: transaction.original_description,
+      amount: transaction.amount,
+      matchingRules: matches,
+      wouldApply: !!bestRule,
+      selectedRule: bestRule,
+      reason: !bestRule ? 'No matching rules' : undefined,
+    });
+  }
+
+  return results;
 }

@@ -443,18 +443,23 @@ CREATE POLICY "Users can read import_batches" ON public.import_batches FOR SELEC
 -- Write policies
 CREATE POLICY "Editors can insert accounts" ON public.accounts FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update accounts" ON public.accounts FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can delete accounts" ON public.accounts FOR DELETE USING (user_can_write_bookset(bookset_id));
 
 CREATE POLICY "Editors can insert categories" ON public.categories FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update categories" ON public.categories FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can delete categories" ON public.categories FOR DELETE USING (user_can_write_bookset(bookset_id));
 
 CREATE POLICY "Editors can insert rules" ON public.rules FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update rules" ON public.rules FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can delete rules" ON public.rules FOR DELETE USING (user_can_write_bookset(bookset_id));
 
 CREATE POLICY "Editors can insert payees" ON public.payees FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update payees" ON public.payees FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can delete payees" ON public.payees FOR DELETE USING (user_can_write_bookset(bookset_id));
 
 CREATE POLICY "Editors can insert import_batches" ON public.import_batches FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update import_batches" ON public.import_batches FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
+CREATE POLICY "Editors can delete import_batches" ON public.import_batches FOR DELETE USING (user_can_write_bookset(bookset_id));
 
 -- Transactions
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
@@ -471,6 +476,10 @@ CREATE POLICY "Editors can update unreconciled transactions"
   ON public.transactions FOR UPDATE
   USING (user_can_write_bookset(bookset_id) AND reconciled = false)
   WITH CHECK (user_can_write_bookset(bookset_id) AND reconciled = false);
+
+CREATE POLICY "Editors can delete unreconciled transactions"
+  ON public.transactions FOR DELETE
+  USING (user_can_write_bookset(bookset_id) AND reconciled = false);
 
 -- Reconciliations
 ALTER TABLE public.reconciliations ENABLE ROW LEVEL SECURITY;

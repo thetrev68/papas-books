@@ -62,6 +62,7 @@ export async function createRule(rule: InsertRule): Promise<Rule> {
         is_enabled: rule.isEnabled,
         use_count: 0,
         last_used_at: null,
+        conditions: rule.conditions || null,
       })
       .select()
       .single();
@@ -109,6 +110,7 @@ export async function updateRule(
       dbUpdates.suggested_payee = updates.suggestedPayee || null;
     if (updates.priority !== undefined) dbUpdates.priority = updates.priority;
     if (updates.isEnabled !== undefined) dbUpdates.is_enabled = updates.isEnabled;
+    if (updates.conditions !== undefined) dbUpdates.conditions = updates.conditions || null;
 
     let query = supabase.from('rules').update(dbUpdates).eq('id', id);
 
