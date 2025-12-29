@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.3](https://github.com/thetrev68/papas-books/compare/v0.3.2...v0.3.3) (2025-12-29)
+
+### Bug Fixes
+
+- **workbench:** improve amount text contrast in dark mode ([35f15da](https://github.com/thetrev68/papas-books/commit/35f15da0cedd20f37e26be73cfe8c469d3a458cc))
+
 ## [0.3.2](https://github.com/thetrev68/papas-books/compare/v0.3.1...v0.3.2) (2025-12-29)
 
 ### Bug Fixes
