@@ -13,10 +13,14 @@ const storageState =
 
 export default defineConfig({
   testDir: './e2e',
-  fullyParallel: true,
+  fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 2 : 0,
-  workers: process.env.CI ? 1 : undefined,
+  workers: 1,
+  timeout: 120000,
+  expect: {
+    timeout: 30000,
+  },
   reporter: 'html',
   globalSetup:
     process.env.PLAYWRIGHT_EMAIL && process.env.PLAYWRIGHT_PASSWORD
