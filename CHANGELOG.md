@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.1.19](https://github.com/thetrev68/papas-books/compare/v0.1.18...v0.1.19) (2025-12-29)
+
+### Bug Fixes
+
+- resolve markdownlint issues in documentation ([66b8634](https://github.com/thetrev68/papas-books/commit/66b8634a0dc11b7288fbf261febe9fb8fa6565d2))
+- resolve Playwright test failures caused by auth initialization race condition ([98a5bfe](https://github.com/thetrev68/papas-books/commit/98a5bfec712736ea842320535470325297fdb967))
+- resolve vitest test failures and improve Playwright test setup ([739a3a1](https://github.com/thetrev68/papas-books/commit/739a3a1889560b021acdc1f15e4f135b1fcafe44))
+
+### Maintenance
+
+- improve Playwright test infrastructure ([bd1e86d](https://github.com/thetrev68/papas-books/commit/bd1e86d18bf7a373700a9cb2bfe0fd8a870a97ef))
+
 ## [0.1.18](https://github.com/thetrev68/papas-books/compare/v0.1.17...v0.1.18) (2025-12-27)
 
 ### Bug Fixes
