@@ -2,7 +2,7 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
-## [0.2.0](https://github.com/thetrev68/papas-books/compare/v0.1.19...v0.2.0) (2025-12-29)
+## [0.3.0](https://github.com/thetrev68/papas-books/compare/v0.1.19...v0.3.0) (2025-12-29)
 
 ### ⚠ BREAKING CHANGES
 
@@ -19,6 +19,91 @@ coordinated by fragile ref timing. This led to stuck loading states, timeouts,
 and unpredictable behavior.
 
 ## New Architecture (Option A - Single Source of Truth)
+
+### AuthContext Changes (src/context/AuthContext.tsx)
+
+- **REMOVED**: Dual useEffect pattern with getSession() and onAuthStateChange()
+- **REMOVED**: All coordination refs (didInitRef, initialSessionHandledRef, inFlightRef)
+- **ADDED**: Single useEffect using only onAuthStateChange as source of truth
+- **ADDED**: Explicit state machine: 'initializing' | 'authenticated' | 'unauthenticated' | 'error'
+- **ADDED**: Debug logging in dev mode for easy troubleshooting
+- **ADDED**: retryAuth() function for error recovery
+
+### Component Updates
+
+- **ProtectedRoute**: Added error state with retry button and user-friendly error messages
+- **LoginPage**: Simplified to single status check, removed complex timing logic
+- **tailwind.config.js**: Added @tailwindcss/forms plugin for checkbox visibility
+- **config.ts**: Optimized Supabase client configuration
+
+### Benefits
+
+- ✅ No race conditions - single event stream controls all auth state
+- ✅ No stuck loading states - all code paths reach terminal state
+- ✅ Error recovery - users can retry on timeout instead of being stuck
+- ✅ Simpler code - no complex ref coordination needed
+- ✅ Explicit states - TypeScript ensures exhaustive handling
+- ✅ Debug friendly - comprehensive logging in dev mode
+
+### Testing
+
+- E2E tests passing with new auth flow
+- Build succeeds, linting passes
+- Backwards compatible: loading prop preserved for existing code
+
+### Files Changed
+
+- src/context/AuthContext.tsx - Complete rewrite (single source of truth)
+- src/components/ProtectedRoute.tsx - Added error state handling
+- src/pages/LoginPage.tsx - Simplified redirect logic
+- tailwind.config.js - Added forms plugin
+- src/lib/supabase/config.ts - Optimized config
+- src/main.tsx - Suppress violation warnings in dev
+- src/context/AuthContext.backup.tsx - Backup of old implementation
+
+Closes issues with auth timeouts, stuck loading states, and race conditions.
+
+🤖 Generated with [Claude Code](https://claude.com/claude-code)
+
+Co-Authored-By: Claude Sonnet 4.5 <noreply@anthropic.com>
+
+### Bug Fixes
+
+- complete rules engine implementation with conditions support and RLS policies ([91503c5](https://github.com/thetrev68/papas-books/commit/91503c50ce1e9f306f64e17cc4ebcd599d6596e3))
+- eliminate virtualization flickering in workbench table ([970bb7b](https://github.com/thetrev68/papas-books/commit/970bb7b17583965faa15f8934c62906d516832ee))
+- filter parent category dropdown to show only top-level categories alphabetically ([9beba79](https://github.com/thetrev68/papas-books/commit/9beba79ff1812e4ea6b29decce84387c0960c6d9))
+- prevent token refresh from triggering app re-initialization ([9ad00a1](https://github.com/thetrev68/papas-books/commit/9ad00a1c7880ad72134322e1f375cb71e6caab97))
+- standardize payee validation and category display across modals ([7d0f1a1](https://github.com/thetrev68/papas-books/commit/7d0f1a18ff96cef3b79ec7b0f6c078c9ad03060b))
+
+### Code Improvements
+
+- rewrite auth system with single source of truth architecture ([b566d1b](https://github.com/thetrev68/papas-books/commit/b566d1bd2fa116d0f9126b084f0b9d6637485cd8))
+
+### Maintenance
+
+- tidy up changelog and package.json ([e2ff138](https://github.com/thetrev68/papas-books/commit/e2ff1382c2c52b7bfa601b58c5417bd3f9068ae5))
+
+### Performance
+
+- memoize PayeeSelectCell to prevent unnecessary re-renders ([8c68eae](https://github.com/thetrev68/papas-books/commit/8c68eae7ebe5a9b8f26d687b107bdd701531bd56))
+
+## [0.2.0](https://github.com/thetrev68/papas-books/compare/v0.1.19...v0.2.0) (2025-12-29)
+
+### ⚠ BREAKING CHANGES
+
+- Complete rewrite of authentication system to eliminate race conditions
+
+This commit fundamentally redesigns the authentication architecture to fix
+chronic race condition issues that required 10+ patches over time.
+
+## Root Cause Fixed (0.2.0)
+
+The dual-source-of-truth pattern (getSession() + onAuthStateChange()) created
+race conditions where both effects would try to fetch user data simultaneously,
+coordinated by fragile ref timing. This led to stuck loading states, timeouts,
+and unpredictable behavior.
+
+## New Architecture (Option A - Single Source of Truth) (0.2.0)
 
 ### AuthContext Changes (src/context/AuthContext.tsx)
 
