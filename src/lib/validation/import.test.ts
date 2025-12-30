@@ -42,6 +42,8 @@ describe('sanitizeText', () => {
 
   it('should remove script and style blocks completely', () => {
     expect(sanitizeText('<script>malicious code</script>Safe text', 100)).toBe('Safe text');
+    // Malformed closing tag with whitespace and extra garbage should also be removed
+    expect(sanitizeText('<script>malicious code</script\t\n bar>Safe text', 100)).toBe('Safe text');
     expect(sanitizeText('<style>body { display: none; }</style>Visible', 100)).toBe('Visible');
   });
 });

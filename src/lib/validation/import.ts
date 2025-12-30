@@ -20,21 +20,24 @@ export function sanitizeText(text: string, maxLength: number): string {
   // This prevents bypasses like: <script >alert(1)</script >, <scr<script>ipt>, etc.
 
   // Remove script blocks (tag + content) with multiple passes to handle all variations
+  // We use robust patterns that:
+  // - Match normal pairs like <script ...>...</script ...>
+  // - Match malformed/whitespace-heavy closing tags like </script\t\n bar>
+  // - Remove unterminated/malformed opening tags (remove to next '>' or to EOL)
   let previousLength;
   do {
     previousLength = cleaned.length;
-    // Match <script with any attributes (including malformed ones) until </script>
-    // Use [\s\S] to match across newlines
-    cleaned = cleaned.replace(/<script\b[^>]*>[\s\S]*?<\/script\s*>/gi, '');
-    // Handle script tags without proper closing (remove from <script to end of next >)
-    cleaned = cleaned.replace(/<script\b[^>]*>/gi, '');
+    // Match complete <script> ... </script> blocks, allowing attributes on the closing tag
+    cleaned = cleaned.replace(/<script\b[^>]*>[\s\S]*?<\/script\b[^>]*>/gi, '');
+    // Remove any remaining opening <script until the next '>' (or to end-of-string) to handle malformed tags
+    cleaned = cleaned.replace(/<script\b[\s\S]*?(>|$)/gi, '');
   } while (cleaned.length !== previousLength);
 
   // Remove style blocks (tag + content) with multiple passes
   do {
     previousLength = cleaned.length;
-    cleaned = cleaned.replace(/<style\b[^>]*>[\s\S]*?<\/style\s*>/gi, '');
-    cleaned = cleaned.replace(/<style\b[^>]*>/gi, '');
+    cleaned = cleaned.replace(/<style\b[^>]*>[\s\S]*?<\/style\b[^>]*>/gi, '');
+    cleaned = cleaned.replace(/<style\b[\s\S]*?(>|$)/gi, '');
   } while (cleaned.length !== previousLength);
 
   // Remove all other HTML tags (but keep their text content)
