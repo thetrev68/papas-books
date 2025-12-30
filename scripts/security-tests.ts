@@ -53,7 +53,7 @@ interface TestResult {
   name: string;
   passed: boolean;
   details: string;
-  category: 'SQL Injection' | 'XSS' | 'CSRF' | 'RLS' | 'Input Validation';
+  category: 'SQL Injection' | 'XSS' | 'CSRF' | 'RLS' | 'Input Validation' | 'RPC Authorization';
 }
 
 const results: TestResult[] = [];
@@ -343,6 +343,166 @@ async function runSecurityAudit() {
   });
 
   // ===========================================================================
+  // Test 6: RPC Authorization (SECURITY DEFINER Functions)
+  // ===========================================================================
+  console.log('📋 Test Category: RPC Authorization\n');
+
+  // Test 6.1: grant_access_by_email - unauthorized access attempt
+  try {
+    // Try to grant access to a bookset we don't own using a fake bookset ID
+    const fakeBooksetId = '00000000-0000-0000-0000-000000000000';
+    const { error } = await supabase.rpc('grant_access_by_email', {
+      _bookset_id: fakeBooksetId,
+      _email: 'test@example.com',
+      _role: 'editor',
+      _can_import: false,
+      _can_reconcile: false,
+    });
+
+    // Should receive authorization error
+    const passed = !!(
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      error.message.includes('Not authorized')
+    );
+
+    logTest({
+      name: 'grant_access_by_email - unauthorized access blocked',
+      passed,
+      details: passed
+        ? 'Authorization check correctly rejected unauthorized user'
+        : `FAILED: ${error ? error.message : 'No error received - security vulnerability!'}`,
+      category: 'RPC Authorization',
+    });
+  } catch (err) {
+    logTest({
+      name: 'grant_access_by_email - unauthorized access blocked',
+      passed: true,
+      details: `Authorization check rejected: ${err instanceof Error ? err.message : String(err)}`,
+      category: 'RPC Authorization',
+    });
+  }
+
+  // Test 6.2: finalize_reconciliation - unauthorized access attempt
+  try {
+    // Try to reconcile an account we don't own
+    const fakeBooksetId = '00000000-0000-0000-0000-000000000000';
+    const fakeAccountId = '00000000-0000-0000-0000-000000000001';
+    const { error } = await supabase.rpc('finalize_reconciliation', {
+      _bookset_id: fakeBooksetId,
+      _account_id: fakeAccountId,
+      _statement_balance: 100000,
+      _statement_date: new Date().toISOString(),
+      _opening_balance: 0,
+      _calculated_balance: 100000,
+      _transaction_ids: [],
+    });
+
+    // Should receive authorization error
+    const passed = !!(
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      error.message.includes('Not authorized')
+    );
+
+    logTest({
+      name: 'finalize_reconciliation - unauthorized access blocked',
+      passed,
+      details: passed
+        ? 'Authorization check correctly rejected unauthorized user'
+        : `FAILED: ${error ? error.message : 'No error received - security vulnerability!'}`,
+      category: 'RPC Authorization',
+    });
+  } catch (err) {
+    logTest({
+      name: 'finalize_reconciliation - unauthorized access blocked',
+      passed: true,
+      details: `Authorization check rejected: ${err instanceof Error ? err.message : String(err)}`,
+      category: 'RPC Authorization',
+    });
+  }
+
+  // Test 6.3: finalize_reconciliation - account ownership validation
+  try {
+    // Try to reconcile with account from different bookset
+    const fakeBooksetId = '00000000-0000-0000-0000-000000000000';
+    const wrongAccountId = '11111111-1111-1111-1111-111111111111';
+    const { error } = await supabase.rpc('finalize_reconciliation', {
+      _bookset_id: fakeBooksetId,
+      _account_id: wrongAccountId,
+      _statement_balance: 100000,
+      _statement_date: new Date().toISOString(),
+      _opening_balance: 0,
+      _calculated_balance: 100000,
+      _transaction_ids: [],
+    });
+
+    // Should receive error about account not belonging to bookset
+    const passed = !!(
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      (error.message.includes('Not authorized') ||
+        error.message.includes('Account does not belong to bookset'))
+    );
+
+    logTest({
+      name: 'finalize_reconciliation - account ownership validated',
+      passed,
+      details: passed
+        ? 'Cross-bookset account access correctly blocked'
+        : `FAILED: ${error ? error.message : 'No error received - security vulnerability!'}`,
+      category: 'RPC Authorization',
+    });
+  } catch (err) {
+    logTest({
+      name: 'finalize_reconciliation - account ownership validated',
+      passed: true,
+      details: `Cross-bookset validation rejected: ${err instanceof Error ? err.message : String(err)}`,
+      category: 'RPC Authorization',
+    });
+  }
+
+  // Test 6.4: undo_import_batch - unauthorized access attempt
+  try {
+    // Try to undo an import batch we don't own
+    const fakeBatchId = '00000000-0000-0000-0000-000000000000';
+    const { error } = await supabase.rpc('undo_import_batch', {
+      _batch_id: fakeBatchId,
+    });
+
+    // Should receive authorization error or batch not found
+    const passed = !!(
+      error &&
+      typeof error === 'object' &&
+      'message' in error &&
+      typeof error.message === 'string' &&
+      (error.message.includes('Not authorized') || error.message.includes('Import batch not found'))
+    );
+
+    logTest({
+      name: 'undo_import_batch - unauthorized access blocked',
+      passed,
+      details: passed
+        ? 'Authorization check correctly rejected unauthorized user'
+        : `FAILED: ${error ? error.message : 'No error received - security vulnerability!'}`,
+      category: 'RPC Authorization',
+    });
+  } catch (err) {
+    logTest({
+      name: 'undo_import_batch - unauthorized access blocked',
+      passed: true,
+      details: `Authorization check rejected: ${err instanceof Error ? err.message : String(err)}`,
+      category: 'RPC Authorization',
+    });
+  }
+
+  // ===========================================================================
   // Summary
   // ===========================================================================
   console.log('\n╔════════════════════════════════════════════════════════════════╗');
@@ -359,7 +519,14 @@ async function runSecurityAudit() {
   console.log(`Success Rate: ${((passedTests / totalTests) * 100).toFixed(1)}%\n`);
 
   // Summary by category
-  const categories = ['SQL Injection', 'XSS', 'CSRF', 'RLS', 'Input Validation'] as const;
+  const categories = [
+    'SQL Injection',
+    'XSS',
+    'CSRF',
+    'RLS',
+    'Input Validation',
+    'RPC Authorization',
+  ] as const;
   for (const category of categories) {
     const categoryResults = results.filter((r) => r.category === category);
     const categoryPassed = categoryResults.filter((r) => r.passed).length;

@@ -692,6 +692,28 @@ AS $$
 DECLARE
   _difference bigint;
 BEGIN
+  -- Authorization: Only owner (or admin) can reconcile
+  IF NOT (user_owns_bookset(_bookset_id) OR user_is_admin()) THEN
+    RAISE EXCEPTION 'Not authorized to reconcile this bookset';
+  END IF;
+
+  -- Ensure account belongs to bookset
+  IF NOT EXISTS (
+    SELECT 1 FROM accounts
+    WHERE id = _account_id AND bookset_id = _bookset_id
+  ) THEN
+    RAISE EXCEPTION 'Account does not belong to bookset';
+  END IF;
+
+  -- Ensure all transactions belong to bookset and account
+  IF EXISTS (
+    SELECT 1 FROM transactions
+    WHERE id = ANY(_transaction_ids)
+      AND (bookset_id != _bookset_id OR account_id != _account_id)
+  ) THEN
+    RAISE EXCEPTION 'One or more transactions do not belong to bookset/account';
+  END IF;
+
   -- Calculate difference (trust but verify)
   _difference := _statement_balance - _calculated_balance;
 
@@ -745,6 +767,11 @@ DECLARE
   _user_id uuid;
   _grant_id uuid;
 BEGIN
+  -- Authorization: Only owner (or admin) can grant access
+  IF NOT (user_owns_bookset(_bookset_id) OR user_is_admin()) THEN
+    RAISE EXCEPTION 'Not authorized to grant access for this bookset';
+  END IF;
+
   -- Find user by email
   SELECT id INTO _user_id FROM users WHERE email = _email;
 
@@ -785,10 +812,21 @@ SECURITY DEFINER
 SET search_path = public, pg_temp
 AS $$
 DECLARE
-  _user_id uuid;
+  _bookset_id uuid;
 BEGIN
-  -- Get current user ID once
-  _user_id := auth.uid();
+  -- Resolve bookset for the batch
+  SELECT bookset_id INTO _bookset_id
+  FROM import_batches
+  WHERE id = _batch_id;
+
+  IF _bookset_id IS NULL THEN
+    RAISE EXCEPTION 'Import batch not found';
+  END IF;
+
+  -- Authorization: Only owner (or admin) can undo imports
+  IF NOT (user_owns_bookset(_bookset_id) OR user_is_admin()) THEN
+    RAISE EXCEPTION 'Not authorized to undo imports for this bookset';
+  END IF;
 
   -- Check if any transaction in this batch is reconciled
   IF EXISTS (
@@ -803,14 +841,14 @@ BEGIN
   UPDATE transactions
   SET is_archived = true,
       updated_at = now(),
-      last_modified_by = _user_id
+      last_modified_by = auth.uid()
   WHERE source_batch_id = _batch_id;
 
   -- Mark batch as undone
   UPDATE import_batches
   SET is_undone = true,
       undone_at = now(),
-      undone_by = _user_id,
+      undone_by = auth.uid(),
       updated_at = now()
   WHERE id = _batch_id;
 END;
