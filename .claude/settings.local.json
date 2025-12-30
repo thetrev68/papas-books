@@ -13,7 +13,11 @@
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
       "Bash(find:*)",
-      "Bash(npx tsx:*)"
+      "Bash(npx tsx:*)",
+      "Bash(npm run test:coverage:*)",
+      "Bash(npx vitest:*)",
+      "Bash(dos2unix:*)",
+      "Bash(tee:*)"
     ]
   }
 }

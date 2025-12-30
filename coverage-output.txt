@@ -1,0 +1,704 @@
+
+> papas-books@1.0.0 test:coverage
+> vitest --coverage
+
+
+[1m[46m RUN [49m[22m [36mv4.0.16 [39m[90mC:/Repos/papas-books[39m
+      [2mCoverage enabled with [22m[33mistanbul[39m
+
+ [32m✓[39m src/hooks/useTransactionMutations-v2.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 4[2mms[22m[39m
+ [32m✓[39m src/lib/audit/format.test.ts [2m([22m[2m21 tests[22m[2m)[22m[32m 40[2mms[22m[39m
+ [32m✓[39m src/lib/workbenchDataManager.test.ts [2m([22m[2m13 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+ [32m✓[39m src/lib/reports.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 29[2mms[22m[39m
+[90mstderr[2m | src/lib/supabase/categories.test.ts[2m > [22m[2mfetchCategories[2m > [22m[2mshould throw DatabaseError on Supabase error
+[22m[39mSupabase error: { message: [32m'Database error'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/rules.test.ts[2m > [22m[2mfetchRules[2m > [22m[2mshould throw DatabaseError on Supabase error
+[22m[39mSupabase error: { message: [32m'Database error'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mfetchAccounts[2m > [22m[2mshould throw DatabaseError on Supabase error
+[22m[39mSupabase error: { message: [32m'Database error'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mfetchAccounts[2m > [22m[2mshould throw DatabaseError with permission message on RLS violation
+[22m[39mSupabase error: { message: [32m'RLS violation'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/categories.test.ts[2m > [22m[2mcreateCategory[2m > [22m[2mshould throw DatabaseError on creation failure
+[22m[39mSupabase error: { message: [32m'Duplicate name'[39m, code: [32m'23505'[39m }
+
+[90mstderr[2m | src/lib/supabase/categories.test.ts[2m > [22m[2mcreateCategory[2m > [22m[2mshould throw DatabaseError on foreign key violation for parent
+[22m[39mSupabase error: { message: [32m'Foreign key violation'[39m, code: [32m'23503'[39m }
+
+[90mstderr[2m | src/lib/supabase/rules.test.ts[2m > [22m[2mcreateRule[2m > [22m[2mshould throw DatabaseError on creation failure
+[22m[39mSupabase error: { message: [32m'Foreign key violation'[39m, code: [32m'23503'[39m }
+
+[90mstderr[2m | src/lib/supabase/transactions.test.ts[2m > [22m[2mfetchTransactions[2m > [22m[2mshould throw DatabaseError on Supabase error
+[22m[39mSupabase error: { message: [32m'Database error'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mcreateAccount[2m > [22m[2mshould throw DatabaseError on creation failure
+[22m[39mSupabase error: { message: [32m'Duplicate name'[39m, code: [32m'23505'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mcreateAccount[2m > [22m[2mshould throw DatabaseError with duplicate message on unique violation
+[22m[39mSupabase error: { message: [32m'Unique violation'[39m, code: [32m'23505'[39m }
+
+[90mstderr[2m | src/lib/supabase/categories.test.ts[2m > [22m[2mupdateCategory[2m > [22m[2mshould handle foreign key violation when setting invalid parent
+[22m[39mSupabase error: { code: [32m'23503'[39m, message: [32m'Foreign key violation'[39m }
+
+[90mstderr[2m | src/lib/supabase/transactions.test.ts[2m > [22m[2mcreateTransaction[2m > [22m[2mshould throw DatabaseError on creation failure
+[22m[39mSupabase error: { message: [32m'Unique constraint violation'[39m, code: [32m'23505'[39m }
+
+[90mstderr[2m | src/lib/supabase/categories.test.ts[2m > [22m[2mdeleteCategory[2m > [22m[2mshould throw DatabaseError on deletion failure
+[22m[39mSupabase error: { message: [32m'Not found'[39m, code: [32m'PGRST116'[39m }
+
+[90mstderr[2m | src/lib/supabase/categories.test.ts[2m > [22m[2mdeleteCategory[2m > [22m[2mshould throw DatabaseError on permission error
+[22m[39mSupabase error: { message: [32m'Permission denied'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mupdateAccount[2m > [22m[2mshould handle foreign key violation error
+[22m[39mSupabase error: { code: [32m'23503'[39m, message: [32m'Foreign key violation'[39m }
+
+[90mstderr[2m | src/lib/supabase/rules.test.ts[2m > [22m[2mupdateRule[2m > [22m[2mshould handle foreign key violation when updating category
+[22m[39mSupabase error: { code: [32m'23503'[39m, message: [32m'Foreign key violation'[39m }
+
+[90mstderr[2m | src/lib/supabase/transactions.test.ts[2m > [22m[2mdeleteTransaction[2m > [22m[2mshould throw DatabaseError on deletion failure
+[22m[39mSupabase error: { message: [32m'Not found'[39m, code: [32m'PGRST116'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mdeleteAccount[2m > [22m[2mshould throw DatabaseError on deletion failure
+[22m[39mSupabase error: { message: [32m'Not found'[39m, code: [32m'PGRST116'[39m }
+
+[90mstderr[2m | src/lib/supabase/rules.test.ts[2m > [22m[2mdeleteRule[2m > [22m[2mshould throw DatabaseError on deletion failure
+[22m[39mSupabase error: { message: [32m'Not found'[39m, code: [32m'PGRST116'[39m }
+
+[90mstderr[2m | src/lib/supabase/transactions.test.ts[2m > [22m[2mbulkUpdateReviewed[2m > [22m[2mshould throw DatabaseError on bulk update failure
+[22m[39mSupabase error: { message: [32m'Permission denied'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mdeleteAccount[2m > [22m[2mshould throw DatabaseError on permission error
+[22m[39mSupabase error: { message: [32m'Permission denied'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/rules.test.ts[2m > [22m[2mdeleteRule[2m > [22m[2mshould throw DatabaseError on permission error
+[22m[39mSupabase error: { message: [32m'Permission denied'[39m, code: [32m'42501'[39m }
+
+ [32m✓[39m src/lib/supabase/categories.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 41[2mms[22m[39m
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mupdateAccountMapping[2m > [22m[2mshould throw DatabaseError on update failure
+[22m[39mSupabase error: { message: [32m'Update failed'[39m, code: [32m'42501'[39m }
+
+[90mstderr[2m | src/lib/supabase/accounts.test.ts[2m > [22m[2mupdateAccountMapping[2m > [22m[2mshould handle account not found error
+[22m[39mSupabase error: { message: [32m'Not found'[39m, code: [32m'PGRST116'[39m }
+
+ [32m✓[39m src/lib/rules/applicator.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+ [32m✓[39m src/lib/supabase/transactions.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 39[2mms[22m[39m
+ [32m✓[39m src/lib/supabase/rules.test.ts [2m([22m[2m27 tests[22m[2m)[22m[32m 51[2mms[22m[39m
+ [32m✓[39m src/lib/supabase/accounts.test.ts [2m([22m[2m23 tests[22m[2m)[22m[32m 46[2mms[22m[39m
+[90mstderr[2m | src/hooks/useApplyRules.test.ts[2m > [22m[2museApplyRules[2m > [22m[2mbatch fetching[2m > [22m[2mshould handle single batch when under 100 transactions
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (C:\Repos\papas-books\node_modules\@testing-library\react\dist\pure.js:307:5)
+    at QueryClientProvider (file:///C:/Repos/papas-books/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:20:3)
+    at C:/Repos/papas-books/src/test-utils/queryWrapper.tsx:206:5
+
+[90mstderr[2m | src/hooks/useApplyRules.test.ts[2m > [22m[2museApplyRules[2m > [22m[2mrule application[2m > [22m[2mshould apply rules with correct options
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (C:\Repos\papas-books\node_modules\@testing-library\react\dist\pure.js:307:5)
+    at QueryClientProvider (file:///C:/Repos/papas-books/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:20:3)
+    at C:/Repos/papas-books/src/test-utils/queryWrapper.tsx:206:5
+
+[90mstderr[2m | src/hooks/useApplyRules.test.ts[2m > [22m[2museApplyRules[2m > [22m[2mrule application[2m > [22m[2mshould store result in state
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (C:\Repos\papas-books\node_modules\@testing-library\react\dist\pure.js:307:5)
+    at QueryClientProvider (file:///C:/Repos/papas-books/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:20:3)
+    at C:/Repos/papas-books/src/test-utils/queryWrapper.tsx:206:5
+
+[90mstderr[2m | src/hooks/useApplyRules.test.ts[2m > [22m[2museApplyRules[2m > [22m[2mquery invalidation[2m > [22m[2mshould invalidate transaction queries on success
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (C:\Repos\papas-books\node_modules\@testing-library\react\dist\pure.js:307:5)
+    at QueryClientProvider (file:///C:/Repos/papas-books/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:20:3)
+    at C:/Repos/papas-books/src/test-utils/queryWrapper.tsx:206:5
+
+[90mstderr[2m | src/hooks/useApplyRules.test.ts[2m > [22m[2museApplyRules[2m > [22m[2mquery invalidation[2m > [22m[2mshould invalidate account queries on success
+[22m[39mWarning: An update to TestComponent inside a test was not wrapped in act(...).
+
+When testing, code that causes React state updates should be wrapped into act(...):
+
+act(() => {
+  /* fire events that update state */
+});
+/* assert on the output */
+
+This ensures that you're testing the behavior the user would see in the browser. Learn more at https://reactjs.org/link/wrap-tests-with-act
+    at TestComponent (C:\Repos\papas-books\node_modules\@testing-library\react\dist\pure.js:307:5)
+    at QueryClientProvider (file:///C:/Repos/papas-books/node_modules/@tanstack/react-query/build/modern/QueryClientProvider.js:20:3)
+    at C:/Repos/papas-books/src/test-utils/queryWrapper.tsx:206:5
+
+[90mstderr[2m | src/lib/import/parser.test.ts[2m > [22m[2mpreviewCsv[2m > [22m[2mshould handle empty column names from trailing commas
+[22m[39mDuplicate headers found and renamed.
+
+ [31m❯[39m src/hooks/useApplyRules.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m1 failed[39m[2m)[22m[33m 370[2mms[22m[39m
+       [32m✓[39m should fetch transactions in batches to avoid URL length limits[32m 42[2mms[22m[39m
+       [32m✓[39m should handle single batch when under 100 transactions[32m 13[2mms[22m[39m
+[31m       [31m×[31m should throw error when Supabase fetch fails[39m[32m 15[2mms[22m[39m
+       [32m✓[39m should throw error when no transactions found[32m 5[2mms[22m[39m
+       [32m✓[39m should apply rules with correct options[32m 9[2mms[22m[39m
+       [32m✓[39m should store result in state[32m 63[2mms[22m[39m
+       [32m✓[39m should invalidate transaction queries on success[32m 7[2mms[22m[39m
+       [32m✓[39m should invalidate account queries on success[32m 8[2mms[22m[39m
+       [32m✓[39m should not invalidate on error[32m 6[2mms[22m[39m
+       [32m✓[39m should set isApplying to true while mutation is pending[32m 126[2mms[22m[39m
+       [32m✓[39m should set error on failure[32m 66[2mms[22m[39m
+       [32m✓[39m should handle empty transaction ID array[32m 2[2mms[22m[39m
+       [32m✓[39m should handle partial batch failures gracefully[32m 3[2mms[22m[39m
+ [32m✓[39m src/lib/import/fingerprint.test.ts [2m([22m[2m16 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/lib/import/parser.test.ts [2m([22m[2m14 tests[22m[2m)[22m[33m 1677[2mms[22m[39m
+     [33m[2m✓[22m[39m should reject files larger than 10MB [33m 732[2mms[22m[39m
+     [33m[2m✓[22m[39m should reject files larger than 10MB [33m 624[2mms[22m[39m
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles RLS policy violation (42501)
+[22m[39mSupabase error: { code: [32m'42501'[39m, message: [32m'RLS policy violation'[39m }
+Supabase error: { code: [32m'42501'[39m, message: [32m'RLS policy violation'[39m }
+Supabase error: { code: [32m'42501'[39m, message: [32m'RLS policy violation'[39m }
+
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles unique violation (23505)
+[22m[39mSupabase error: { code: [32m'23505'[39m, message: [32m'Unique constraint violation'[39m }
+Supabase error: { code: [32m'23505'[39m, message: [32m'Unique constraint violation'[39m }
+
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles foreign key violation (23503)
+[22m[39mSupabase error: { code: [32m'23503'[39m, message: [32m'Foreign key constraint violation'[39m }
+
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles record not found (PGRST116)
+[22m[39mSupabase error: { code: [32m'PGRST116'[39m, message: [32m'No rows returned'[39m }
+
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles unknown error codes
+[22m[39mSupabase error: { code: [32m'UNKNOWN_CODE'[39m, message: [32m'Unknown error'[39m }
+
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles errors without code
+[22m[39mSupabase error: Error: Generic error
+    at C:/Repos/papas-books/src/lib/errors.test.ts:100:21
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+Supabase error: Error: Generic error
+    at C:/Repos/papas-books/src/lib/errors.test.ts:100:21
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+    at Traces.$ [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4mvitest[24m/dist/chunks/traces.U4xDYhzZ.js:115:27[90m)[39m
+    at trace [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4mvitest[24m/dist/chunks/test.B8ej_ZHS.js:239:21[90m)[39m
+    at runTest [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:12[90m)[39m
+
+[90mstderr[2m | src/lib/errors.test.ts[2m > [22m[2merrors[2m > [22m[2mhandleSupabaseError[2m > [22m[2mhandles non-object errors
+[22m[39mSupabase error: string error
+Supabase error: [1mnull[22m
+Supabase error: [90mundefined[39m
+Supabase error: [33m42[39m
+
+ [32m✓[39m src/lib/import/mapper.test.ts [2m([22m[2m28 tests[22m[2m)[22m[32m 35[2mms[22m[39m
+ [32m✓[39m src/lib/errors.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 28[2mms[22m[39m
+[90mstderr[2m | src/lib/rules/matcher.test.ts[2m > [22m[2mmatchesRule[2m > [22m[2mshould handle invalid regex gracefully
+[22m[39mInvalid regex in rule test-id: SyntaxError: Invalid regular expression: /[invalid(regex/i: Unterminated character class
+    at new RegExp (<anonymous>)
+    at basicMatch (C:/Repos/papas-books/src/lib/rules/matcher.ts:42:23)
+    at matchesRule (C:/Repos/papas-books/src/lib/rules/matcher.ts:70:8)
+    at C:/Repos/papas-books/src/lib/rules/matcher.test.ts:74:12
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:145:11
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:915:26
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1243:20
+    at new Promise (<anonymous>)
+    at runWithTimeout [90m(file:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1209:10[90m)[39m
+    at [90mfile:///C:/Repos/papas-books/[39mnode_modules/[4m@vitest[24m/runner/dist/index.js:1653:37
+
+ [32m✓[39m src/lib/rules/matcher.test.ts [2m([22m[2m14 tests[22m[2m)[22m[32m 24[2mms[22m[39m
+ [31m❯[39m src/hooks/useTransactionMutations.test.ts [2m([22m[2m13 tests[22m[2m | [22m[31m2 failed[39m[2m)[22m[33m 1421[2mms[22m[39m
+       [32m✓[39m should create transaction and invalidate cache on success[32m 38[2mms[22m[39m
+       [32m✓[39m should show error message on create failure[32m 9[2mms[22m[39m
+       [32m✓[39m should show generic error for non-DatabaseError[32m 7[2mms[22m[39m
+[31m       [31m×[31m should perform optimistic update and confirm on success[39m[33m 1042[2mms[22m[39m
+[31m       [31m×[31m should rollback on error[39m[32m 6[2mms[22m[39m
+       [32m✓[39m should invalidate queries after settled[32m 5[2mms[22m[39m
+       [32m✓[39m should delete transaction and invalidate cache on success[32m 21[2mms[22m[39m
+       [32m✓[39m should show error message on delete failure[32m 16[2mms[22m[39m
+       [32m✓[39m should mark transactions as reviewed[32m 15[2mms[22m[39m
+       [32m✓[39m should mark transactions as unreviewed[32m 21[2mms[22m[39m
+       [32m✓[39m should throw error for applyRules operation[32m 12[2mms[22m[39m
+       [32m✓[39m should handle bulk update errors[32m 16[2mms[22m[39m
+       [32m✓[39m should be true when any mutation is pending[32m 210[2mms[22m[39m
+[90mstderr[2m | src/hooks/useWorkbenchData.test.ts[2m > [22m[2museWorkbenchData[2m > [22m[2medge cases[2m > [22m[2mshould handle undefined data gracefully
+[22m[39mQuery data cannot be undefined. Please make sure to return a value other than undefined from your query function. Affected query key: ["transactions","test-bookset-id"]
+
+ [32m✓[39m src/lib/validation/splits.test.ts [2m([22m[2m12 tests[22m[2m)[22m[32m 17[2mms[22m[39m
+ [32m✓[39m src/lib/validation/import-schema.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 12[2mms[22m[39m
+ [32m✓[39m src/hooks/useWorkbenchData.test.ts [2m([22m[2m19 tests[22m[2m)[22m[33m 1710[2mms[22m[39m
+ [32m✓[39m src/lib/validation/rules.test.ts [2m([22m[2m17 tests[22m[2m)[22m[32m 21[2mms[22m[39m
+ [32m✓[39m src/lib/splitCalculator.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 9[2mms[22m[39m
+ [32m✓[39m src/lib/validation/password.test.ts [2m([22m[2m15 tests[22m[2m)[22m[32m 13[2mms[22m[39m
+ [32m✓[39m src/lib/import/fuzzy-matcher.test.ts [2m([22m[2m11 tests[22m[2m)[22m[32m 11[2mms[22m[39m
+ [32m✓[39m src/lib/transactionOperations.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [31m❯[39m src/hooks/useAccounts.test.ts [2m([22m[2m18 tests[22m[2m | [22m[31m6 failed[39m[2m)[22m[33m 2448[2mms[22m[39m
+       [32m✓[39m should fetch accounts for active bookset[32m 110[2mms[22m[39m
+       [32m✓[39m should return empty array when no accounts[32m 74[2mms[22m[39m
+       [32m✓[39m should handle fetch errors[32m 92[2mms[22m[39m
+       [32m✓[39m should set up real-time subscription[32m 8[2mms[22m[39m
+       [32m✓[39m should clean up subscription on unmount[32m 5[2mms[22m[39m
+[31m     [31m×[31m should create account and invalidate cache on success[39m[32m 20[2mms[22m[39m
+     [32m✓[39m should show error message on create failure[32m 15[2mms[22m[39m
+     [32m✓[39m should show generic error for non-DatabaseError[32m 15[2mms[22m[39m
+     [32m✓[39m should support async mutation[32m 5[2mms[22m[39m
+[31m     [31m×[31m should perform optimistic update and confirm on success[39m[33m 1031[2mms[22m[39m
+[31m     [31m×[31m should rollback on error[39m[32m 5[2mms[22m[39m
+     [32m✓[39m should invalidate queries after settled[32m 16[2mms[22m[39m
+     [32m✓[39m should support async mutation[32m 3[2mms[22m[39m
+[31m     [31m×[31m should handle multiple field updates[39m[33m 1010[2mms[22m[39m
+[31m     [31m×[31m should delete account and invalidate cache on success[39m[32m 14[2mms[22m[39m
+     [32m✓[39m should show error message on delete failure[32m 15[2mms[22m[39m
+[31m     [31m×[31m should support async mutation[39m[32m 2[2mms[22m[39m
+     [32m✓[39m should invalidate cache after delete[32m 5[2mms[22m[39m
+ [32m✓[39m src/lib/validation/import.test.ts [2m([22m[2m8 tests[22m[2m)[22m[32m 6[2mms[22m[39m
+ [32m✓[39m src/lib/validation/accounts.test.ts [2m([22m[2m7 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/lib/reconciler.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/lib/import/reconciler.test.ts [2m([22m[2m6 tests[22m[2m)[22m[32m 7[2mms[22m[39m
+ [32m✓[39m src/lib/validation/categories.test.ts [2m([22m[2m5 tests[22m[2m)[22m[32m 5[2mms[22m[39m
+ [32m✓[39m src/lib/supabase/config.test.ts [2m([22m[2m1 test[22m[2m)[22m[32m 2[2mms[22m[39m
+ [31m❯[39m src/hooks/useCategories.test.ts [2m([22m[2m20 tests[22m[2m | [22m[31m7 failed[39m[2m)[22m[33m 3490[2mms[22m[39m
+       [32m✓[39m should fetch categories for active bookset[32m 111[2mms[22m[39m
+       [32m✓[39m should return empty array when no categories[32m 73[2mms[22m[39m
+       [32m✓[39m should handle fetch errors[32m 91[2mms[22m[39m
+       [32m✓[39m should set up real-time subscription[32m 7[2mms[22m[39m
+       [32m✓[39m should clean up subscription on unmount[32m 6[2mms[22m[39m
+[31m     [31m×[31m should create category and invalidate cache on success[39m[32m 31[2mms[22m[39m
+     [32m✓[39m should show error message on create failure[32m 20[2mms[22m[39m
+     [32m✓[39m should show generic error for non-DatabaseError[32m 16[2mms[22m[39m
+     [32m✓[39m should support async mutation[32m 5[2mms[22m[39m
+[31m     [31m×[31m should perform optimistic update and confirm on success[39m[33m 1032[2mms[22m[39m
+[31m     [31m×[31m should rollback on error[39m[32m 5[2mms[22m[39m
+     [32m✓[39m should invalidate queries after settled[32m 6[2mms[22m[39m
+     [32m✓[39m should support async mutation[32m 3[2mms[22m[39m
+[31m     [31m×[31m should handle hierarchical updates[39m[33m 1019[2mms[22m[39m
+[31m     [31m×[31m should handle sort order updates[39m[33m 1015[2mms[22m[39m
+[31m     [31m×[31m should delete category and invalidate cache on success[39m[32m 15[2mms[22m[39m
+     [32m✓[39m should show error message on delete failure[32m 2[2mms[22m[39m
+     [32m✓[39m should show error when deleting category with children[32m 13[2mms[22m[39m
+[31m     [31m×[31m should support async mutation[39m[32m 2[2mms[22m[39m
+     [32m✓[39m should invalidate cache after delete[32m 14[2mms[22m[39m
+
+[31m⎯⎯⎯⎯⎯⎯[39m[1m[41m Failed Tests 16 [49m[22m[31m⎯⎯⎯⎯⎯⎯⎯[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useAccounts.test.ts[2m > [22museCreateAccount[2m > [22mshould create account and invalidate cache on success
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ { id: undefined, …(13) } ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[33m@@ -20,6 +20,11 @@[90m
+[2m      "opening_balance": 100000,[22m
+[2m      "opening_balance_date": "2024-01-01",[22m
+[2m      "type": "Asset",[22m
+[2m      "updated_at": "2025-12-30T15:47:33.670Z",[22m
+[2m    },[22m
+[31m+   {[90m
+[31m+     "client": QueryClient {},[90m
+[31m+     "meta": undefined,[90m
+[31m+     "mutationKey": undefined,[90m
+[31m+   },[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/hooks/useAccounts.test.ts:[2m138:39[22m[39m
+    [90m136| [39m    })[33m;[39m
+    [90m137| [39m
+    [90m138| [39m    [34mexpect[39m(accountsLib[33m.[39mcreateAccount)[33m.[39m[34mtoHaveBeenCalledWith[39m(newAccount)[33m;[39m
+    [90m   | [39m                                      [31m^[39m
+    [90m139| [39m    [34mexpect[39m(mockShowSuccess)[33m.[39m[34mtoHaveBeenCalledWith[39m([32m'Account created'[39m)[33m;[39m
+    [90m140| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[1/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useAccounts.test.ts[2m > [22museUpdateAccount[2m > [22mshould perform optimistic update and confirm on success
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div />[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/hooks/useAccounts.test.ts:[2m219:33[22m[39m
+    [90m217| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m218| [39m      const cached = queryClient.getQueryData(['accounts', 'test-books…
+    [90m219| [39m      [35mconst[39m updatedAcc [33m=[39m cached[33m.[39m[34mfind[39m((acc) [33m=>[39m acc[33m.[39mid [33m===[39m accountId)[33m;[39m
+    [90m   | [39m                                [31m^[39m
+    [90m220| [39m      [34mexpect[39m(updatedAcc[33m?.[39mname)[33m.[39m[34mtoBe[39m([32m'Updated Checking'[39m)[33m;[39m
+    [90m221| [39m    })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[2/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useAccounts.test.ts[2m > [22museUpdateAccount[2m > [22mshould rollback on error
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')[39m
+[36m [2m❯[22m src/hooks/useAccounts.test.ts:[2m254:34[22m[39m
+    [90m252| [39m    [90m// Should rollback to original data[39m
+    [90m253| [39m    const cached = queryClient.getQueryData(['accounts', 'test-bookset…
+    [90m254| [39m    [35mconst[39m rolledBackAcc [33m=[39m cached[33m.[39m[34mfind[39m((acc) [33m=>[39m acc[33m.[39mid [33m===[39m accountId)[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m255| [39m    [34mexpect[39m(rolledBackAcc[33m?.[39mname)[33m.[39m[34mtoBe[39m([32m'Original Checking'[39m)[33m;[39m
+    [90m256| [39m    expect(mockShowError).toHaveBeenCalledWith('Concurrent edit detect…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[3/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useAccounts.test.ts[2m > [22museUpdateAccount[2m > [22mshould handle multiple field updates
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div />[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/hooks/useAccounts.test.ts:[2m325:33[22m[39m
+    [90m323| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m324| [39m      const cached = queryClient.getQueryData(['accounts', 'test-books…
+    [90m325| [39m      [35mconst[39m updatedAcc [33m=[39m cached[33m.[39m[34mfind[39m((acc) [33m=>[39m acc[33m.[39mid [33m===[39m accountId)[33m;[39m
+    [90m   | [39m                                [31m^[39m
+    [90m326| [39m      [34mexpect[39m(updatedAcc[33m?.[39mname)[33m.[39m[34mtoBe[39m([32m'Updated Name'[39m)[33m;[39m
+    [90m327| [39m      [34mexpect[39m(updatedAcc[33m?.[39mopening_balance)[33m.[39m[34mtoBe[39m([34m500000[39m)[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[4/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useAccounts.test.ts[2m > [22museDeleteAccount[2m > [22mshould delete account and invalidate cache on success
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ 'acc-to-delete' ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[2m    "acc-to-delete",[22m
+[31m+   {[90m
+[31m+     "client": QueryClient {},[90m
+[31m+     "meta": undefined,[90m
+[31m+     "mutationKey": undefined,[90m
+[31m+   },[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/hooks/useAccounts.test.ts:[2m350:39[22m[39m
+    [90m348| [39m    })[33m;[39m
+    [90m349| [39m
+    [90m350| [39m    [34mexpect[39m(accountsLib[33m.[39mdeleteAccount)[33m.[39m[34mtoHaveBeenCalledWith[39m(accountId)[33m;[39m
+    [90m   | [39m                                      [31m^[39m
+    [90m351| [39m    [34mexpect[39m(mockShowSuccess)[33m.[39m[34mtoHaveBeenCalledWith[39m([32m'Account deleted'[39m)[33m;[39m
+    [90m352| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[5/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useAccounts.test.ts[2m > [22museDeleteAccount[2m > [22mshould support async mutation
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ 'acc-to-delete' ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[2m    "acc-to-delete",[22m
+[31m+   {[90m
+[31m+     "client": QueryClient {},[90m
+[31m+     "meta": undefined,[90m
+[31m+     "mutationKey": undefined,[90m
+[31m+   },[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/hooks/useAccounts.test.ts:[2m383:39[22m[39m
+    [90m381| [39m    [35mawait[39m promise[33m;[39m
+    [90m382| [39m
+    [90m383| [39m    [34mexpect[39m(accountsLib[33m.[39mdeleteAccount)[33m.[39m[34mtoHaveBeenCalledWith[39m(accountId)[33m;[39m
+    [90m   | [39m                                      [31m^[39m
+    [90m384| [39m    [34mexpect[39m(mockShowSuccess)[33m.[39m[34mtoHaveBeenCalledWith[39m([32m'Account deleted'[39m)[33m;[39m
+    [90m385| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[6/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useApplyRules.test.ts[2m > [22museApplyRules[2m > [22mbatch fetching[2m > [22mshould throw error when Supabase fetch fails
+[31m[1mAssertionError[22m: expected null to be truthy[39m
+
+[32m- Expected:[39m 
+true
+
+[31m+ Received:[39m 
+null
+
+[36m [2m❯[22m src/hooks/useApplyRules.test.ts:[2m141:36[22m[39m
+    [90m139| [39m      await expect(result.current.applyRules(transactionIds)).rejects.…
+    [90m140| [39m
+    [90m141| [39m      [34mexpect[39m(result[33m.[39mcurrent[33m.[39merror)[33m.[39m[34mtoBeTruthy[39m()[33m;[39m
+    [90m   | [39m                                   [31m^[39m
+    [90m142| [39m    })[33m;[39m
+    [90m143| [39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[7/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museCreateCategory[2m > [22mshould create category and invalidate cache on success
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ { id: undefined, …(11) } ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[33m@@ -11,6 +11,11 @@[90m
+[2m      "parent_category_id": null,[22m
+[2m      "sort_order": 0,[22m
+[2m      "tax_line_item": null,[22m
+[2m      "updated_at": "2025-12-30T15:47:33.668Z",[22m
+[2m    },[22m
+[31m+   {[90m
+[31m+     "client": QueryClient {},[90m
+[31m+     "meta": undefined,[90m
+[31m+     "mutationKey": undefined,[90m
+[31m+   },[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m143:42[22m[39m
+    [90m141| [39m    })[33m;[39m
+    [90m142| [39m
+    [90m143| [39m    expect(categoriesLib.createCategory).toHaveBeenCalledWith(newCateg…
+    [90m   | [39m                                         [31m^[39m
+    [90m144| [39m    [34mexpect[39m(mockShowSuccess)[33m.[39m[34mtoHaveBeenCalledWith[39m([32m'Category created'[39m)[33m;[39m
+    [90m145| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[8/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museUpdateCategory[2m > [22mshould perform optimistic update and confirm on success
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div />[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m224:33[22m[39m
+    [90m222| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m223| [39m      const cached = queryClient.getQueryData(['categories', 'test-boo…
+    [90m224| [39m      [35mconst[39m updatedCat [33m=[39m cached[33m.[39m[34mfind[39m((cat) [33m=>[39m cat[33m.[39mid [33m===[39m categoryId)[33m;[39m
+    [90m   | [39m                                [31m^[39m
+    [90m225| [39m      [34mexpect[39m(updatedCat[33m?.[39mname)[33m.[39m[34mtoBe[39m([32m'Updated Category'[39m)[33m;[39m
+    [90m226| [39m    })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[9/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museUpdateCategory[2m > [22mshould rollback on error
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m259:34[22m[39m
+    [90m257| [39m    [90m// Should rollback to original data[39m
+    [90m258| [39m    const cached = queryClient.getQueryData(['categories', 'test-books…
+    [90m259| [39m    [35mconst[39m rolledBackCat [33m=[39m cached[33m.[39m[34mfind[39m((cat) [33m=>[39m cat[33m.[39mid [33m===[39m categoryId)[33m;[39m
+    [90m   | [39m                                 [31m^[39m
+    [90m260| [39m    [34mexpect[39m(rolledBackCat[33m?.[39mname)[33m.[39m[34mtoBe[39m([32m'Original Category'[39m)[33m;[39m
+    [90m261| [39m    expect(mockShowError).toHaveBeenCalledWith('Concurrent edit detect…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[10/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museUpdateCategory[2m > [22mshould handle hierarchical updates
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div />[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m331:33[22m[39m
+    [90m329| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m330| [39m      const cached = queryClient.getQueryData(['categories', 'test-boo…
+    [90m331| [39m      [35mconst[39m updatedCat [33m=[39m cached[33m.[39m[34mfind[39m((cat) [33m=>[39m cat[33m.[39mid [33m===[39m categoryId)[33m;[39m
+    [90m   | [39m                                [31m^[39m
+    [90m332| [39m      [34mexpect[39m(updatedCat[33m?.[39mname)[33m.[39m[34mtoBe[39m([32m'Updated Category'[39m)[33m;[39m
+    [90m333| [39m      [34mexpect[39m(updatedCat[33m?.[39mparent_category_id)[33m.[39m[34mtoBe[39m([32m'parent-cat-id'[39m)[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[11/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museUpdateCategory[2m > [22mshould handle sort order updates
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div />[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m355:33[22m[39m
+    [90m353| [39m    [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m354| [39m      const cached = queryClient.getQueryData(['categories', 'test-boo…
+    [90m355| [39m      [35mconst[39m updatedCat [33m=[39m cached[33m.[39m[34mfind[39m((cat) [33m=>[39m cat[33m.[39mid [33m===[39m categoryId)[33m;[39m
+    [90m   | [39m                                [31m^[39m
+    [90m356| [39m      [34mexpect[39m(updatedCat[33m?.[39msort_order)[33m.[39m[34mtoBe[39m([34m5[39m)[33m;[39m
+    [90m357| [39m    })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[12/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museDeleteCategory[2m > [22mshould delete category and invalidate cache on success
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ 'cat-to-delete' ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[2m    "cat-to-delete",[22m
+[31m+   {[90m
+[31m+     "client": QueryClient {},[90m
+[31m+     "meta": undefined,[90m
+[31m+     "mutationKey": undefined,[90m
+[31m+   },[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m379:42[22m[39m
+    [90m377| [39m    })[33m;[39m
+    [90m378| [39m
+    [90m379| [39m    expect(categoriesLib.deleteCategory).toHaveBeenCalledWith(category…
+    [90m   | [39m                                         [31m^[39m
+    [90m380| [39m    [34mexpect[39m(mockShowSuccess)[33m.[39m[34mtoHaveBeenCalledWith[39m([32m'Category deleted'[39m)[33m;[39m
+    [90m381| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[13/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useCategories.test.ts[2m > [22museDeleteCategory[2m > [22mshould support async mutation
+[31m[1mAssertionError[22m: expected "vi.fn()" to be called with arguments: [ 'cat-to-delete' ][90m
+
+Received: 
+
+[1m  1st vi.fn() call:
+
+[22m[2m  [[22m
+[2m    "cat-to-delete",[22m
+[31m+   {[90m
+[31m+     "client": QueryClient {},[90m
+[31m+     "meta": undefined,[90m
+[31m+     "mutationKey": undefined,[90m
+[31m+   },[90m
+[2m  ][22m
+[31m[90m
+
+Number of calls: [1m1[22m
+[31m[39m
+[36m [2m❯[22m src/hooks/useCategories.test.ts:[2m430:42[22m[39m
+    [90m428| [39m    [35mawait[39m promise[33m;[39m
+    [90m429| [39m
+    [90m430| [39m    expect(categoriesLib.deleteCategory).toHaveBeenCalledWith(category…
+    [90m   | [39m                                         [31m^[39m
+    [90m431| [39m    [34mexpect[39m(mockShowSuccess)[33m.[39m[34mtoHaveBeenCalledWith[39m([32m'Category deleted'[39m)[33m;[39m
+    [90m432| [39m  })[33m;[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[14/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useTransactionMutations.test.ts[2m > [22museTransactionMutations[2m > [22mupdateTransaction[2m > [22mshould perform optimistic update and confirm on success
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')
+
+Ignored nodes: comments, script, style
+[36m<html>[31m
+  [36m<head />[31m
+  [36m<body>[31m
+    [36m<div />[31m
+  [36m</body>[31m
+[36m</html>[31m[39m
+[36m [2m❯[22m src/hooks/useTransactionMutations.test.ts:[2m116:34[22m[39m
+    [90m114| [39m      [35mawait[39m [34mwaitFor[39m(() [33m=>[39m {
+    [90m115| [39m        const cached = queryClient.getQueryData(['transactions', books…
+    [90m116| [39m        const updatedTx = cached.find((tx) => tx.id === transaction.id…
+    [90m   | [39m                                 [31m^[39m
+    [90m117| [39m        [34mexpect[39m(updatedTx[33m?.[39mpayee)[33m.[39m[34mtoBe[39m([32m'Updated Payee'[39m)[33m;[39m
+    [90m118| [39m      })[33m;[39m
+[90m [2m❯[22m runWithExpensiveErrorDiagnosticsDisabled node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/config.js:[2m47:12[22m[39m
+[90m [2m❯[22m checkCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m124:77[22m[39m
+[90m [2m❯[22m Timeout.checkRealTimersCallback node_modules/@testing-library/react/node_modules/@testing-library/dom/dist/wait-for.js:[2m118:16[22m[39m
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[15/16]⎯[22m[39m
+
+[41m[1m FAIL [22m[49m src/hooks/useTransactionMutations.test.ts[2m > [22museTransactionMutations[2m > [22mupdateTransaction[2m > [22mshould rollback on error
+[31m[1mTypeError[22m: Cannot read properties of undefined (reading 'find')[39m
+[36m [2m❯[22m src/hooks/useTransactionMutations.test.ts:[2m153:35[22m[39m
+    [90m151| [39m      [90m// Should rollback to original data[39m
+    [90m152| [39m      const cached = queryClient.getQueryData(['transactions', bookset…
+    [90m153| [39m      const rolledBackTx = cached.find((tx) => tx.id === transaction.i…
+    [90m   | [39m                                  [31m^[39m
+    [90m154| [39m      [34mexpect[39m(rolledBackTx[33m?.[39mpayee)[33m.[39m[34mtoBe[39m([32m'Original Payee'[39m)[33m;[39m
+    [90m155| [39m      expect(mockShowError).toHaveBeenCalledWith('Concurrent edit dete…
+
+[31m[2m⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯⎯[16/16]⎯[22m[39m
+
+
+[2m Test Files [22m [1m[31m4 failed[39m[22m[2m | [22m[1m[32m28 passed[39m[22m[90m (32)[39m
+[2m      Tests [22m [1m[31m16 failed[39m[22m[2m | [22m[1m[32m423 passed[39m[22m[90m (439)[39m
+[2m   Start at [22m 09:47:29
+[2m   Duration [22m 6.93s[2m (transform 12.17s, setup 0ms, import 18.19s, tests 11.67s, environment 41.75s)[22m
+
