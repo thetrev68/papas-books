@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.0](https://github.com/thetrev68/papas-books/compare/v0.3.5...v1.0.0) (2025-12-30)
+
+### Bug Fixes
+
+- scope transaction cache invalidation to bookset ([5106f7e](https://github.com/thetrev68/papas-books/commit/5106f7ef0e8c4810df8a91d453d3863a9117702c))
+- **ux:** replace native browser dialogs with custom UI components in CreateTransactionModal ([0e57f4a](https://github.com/thetrev68/papas-books/commit/0e57f4aad60dc4bb92fcccd734de587e670380ed))
+
 ## [0.3.5](https://github.com/thetrev68/papas-books/compare/v0.3.4...v0.3.5) (2025-12-30)
 
 ### Features
