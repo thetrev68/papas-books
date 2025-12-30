@@ -224,8 +224,12 @@ async function runSecurityAudit() {
     const { data, error } = await unauthClient.from('transactions').select('*').limit(1);
 
     // Should return empty array or RLS policy violation
-    const hasRLSError =
-      error && typeof error === 'object' && 'code' in error && error.code === '42501';
+    const hasRLSError = !!(
+      error &&
+      typeof error === 'object' &&
+      'code' in error &&
+      error.code === '42501'
+    );
     const passed = !data || data.length === 0 || hasRLSError;
 
     logTest({
@@ -270,8 +274,12 @@ async function runSecurityAudit() {
       const unauthClient = createClient(url, key);
       const { data, error } = await unauthClient.from(table).select('id').limit(1);
 
-      const hasRLSError =
-        error && typeof error === 'object' && 'code' in error && error.code === '42501';
+      const hasRLSError = !!(
+        error &&
+        typeof error === 'object' &&
+        'code' in error &&
+        error.code === '42501'
+      );
       const passed = !data || data.length === 0 || hasRLSError;
 
       logTest({
