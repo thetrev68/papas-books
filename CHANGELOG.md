@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.0.3](https://github.com/thetrev68/papas-books/compare/v1.0.2...v1.0.3) (2025-12-30)
+
+### Bug Fixes
+
+- resolve TypeScript errors in test files after TanStack Query v5 migration ([8f84d06](https://github.com/thetrev68/papas-books/commit/8f84d06e9998dae48caec9867257bda607af8265))
+
 ## [1.0.2](https://github.com/thetrev68/papas-books/compare/v1.0.1...v1.0.2) (2025-12-30)
 
 ### Bug Fixes
