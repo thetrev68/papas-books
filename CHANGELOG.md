@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.0](https://github.com/thetrev68/papas-books/compare/v1.0.3...v1.1.0) (2025-12-30)
+
+### Features
+
+- add comprehensive CodeQL security analysis system ([8d64291](https://github.com/thetrev68/papas-books/commit/8d64291eed4e03e4b751a49006c17ccd06619432))
+
+### Bug Fixes
+
+- add bookset_id filters to import queries for RLS compliance ([8b92b50](https://github.com/thetrev68/papas-books/commit/8b92b50e9cdc4f5fe6abd1a5902bf3c18133ed92))
+- strengthen HTML sanitization to prevent XSS bypasses ([418696b](https://github.com/thetrev68/papas-books/commit/418696b9409316c89869d2b0bda9dd1f56ae66ed))
+
+### Maintenance
+
+- archiving completed docs ([d21e908](https://github.com/thetrev68/papas-books/commit/d21e9080d51c4ed6eab4cdfe7e73ad1ee27dba4f))
+
 ## [1.0.3](https://github.com/thetrev68/papas-books/compare/v1.0.2...v1.0.3) (2025-12-30)
 
 ### Bug Fixes
