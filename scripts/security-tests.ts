@@ -43,7 +43,11 @@ if (!supabaseUrl || !supabaseAnonKey) {
   process.exit(1);
 }
 
-const supabase = createClient(supabaseUrl, supabaseAnonKey);
+// Assert non-null after the check
+const url: string = supabaseUrl;
+const key: string = supabaseAnonKey;
+
+const supabase = createClient(url, key);
 
 interface TestResult {
   name: string;
@@ -215,16 +219,18 @@ async function runSecurityAudit() {
 
   // Test 3.2: Verify unauthenticated requests are rejected
   try {
-    const unauthClient = createClient(supabaseUrl, supabaseAnonKey);
+    const unauthClient = createClient(url, key);
     // Don't authenticate - try to access protected data
     const { data, error } = await unauthClient.from('transactions').select('*').limit(1);
 
     // Should return empty array or RLS policy violation
-    const passed = !data || data.length === 0 || (error && error.code === '42501');
+    const hasRLSError =
+      error && typeof error === 'object' && 'code' in error && error.code === '42501';
+    const passed = !data || data.length === 0 || hasRLSError;
 
     logTest({
       name: 'Unauthenticated data access blocked',
-      passed,
+      passed: passed,
       details: passed
         ? 'RLS policies prevent unauthenticated access'
         : `FAILED: Unauthenticated user received data: ${JSON.stringify(data)}`,
@@ -261,14 +267,16 @@ async function runSecurityAudit() {
   for (const table of tables) {
     try {
       // Try to access table without auth - should be blocked by RLS
-      const unauthClient = createClient(supabaseUrl, supabaseAnonKey);
+      const unauthClient = createClient(url, key);
       const { data, error } = await unauthClient.from(table).select('id').limit(1);
 
-      const passed = !data || data.length === 0 || (error && error.code === '42501');
+      const hasRLSError =
+        error && typeof error === 'object' && 'code' in error && error.code === '42501';
+      const passed = !data || data.length === 0 || hasRLSError;
 
       logTest({
         name: `RLS enabled on "${table}" table`,
-        passed,
+        passed: passed,
         details: passed
           ? 'Table is protected by RLS policies'
           : `FAILED: Unauthenticated access allowed to ${table}`,
