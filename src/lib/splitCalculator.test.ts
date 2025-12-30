@@ -130,6 +130,34 @@ describe('splitCalculator', () => {
       const result = validateSplitTransaction(tx);
       expect(result.isValid).toBe(true);
     });
+
+    it('validates exact 1 cent difference', () => {
+      const tx: Transaction = {
+        id: '1',
+        bookset_id: 'bs1',
+        account_id: 'acc1',
+        date: '2024-01-01',
+        payee: 'Test Payee',
+        payee_id: null,
+        original_description: 'Test',
+        amount: 100,
+        is_split: true,
+        lines: [{ category_id: 'cat1', amount: 99, memo: 'Part 1' }],
+        is_reviewed: false,
+        reconciled: false,
+        is_archived: false,
+        source_batch_id: null,
+        import_date: '2024-01-01T00:00:00Z',
+        fingerprint: 'fp',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: 'user1',
+        last_modified_by: 'user1',
+      };
+
+      const result = validateSplitTransaction(tx);
+      expect(result.isValid).toBe(true);
+    });
   });
 
   describe('calculateSplitRemainder', () => {
@@ -190,6 +218,37 @@ describe('splitCalculator', () => {
 
       const remainder = calculateSplitRemainder(tx);
       expect(remainder).toBe(3000); // 10000 - 3000 - 4000
+    });
+
+    it('handles missing line amounts', () => {
+      const tx: Transaction = {
+        id: '1',
+        bookset_id: 'bs1',
+        account_id: 'acc1',
+        date: '2024-01-01',
+        payee: 'Test Payee',
+        payee_id: null,
+        original_description: 'Test',
+        amount: 10000,
+        is_split: true,
+        lines: [
+          { category_id: 'cat1', amount: 3000, memo: 'Part 1' },
+          { category_id: 'cat2', memo: 'Part 2' } as unknown as SplitLine, // Missing amount
+        ],
+        is_reviewed: false,
+        reconciled: false,
+        is_archived: false,
+        source_batch_id: null,
+        import_date: '2024-01-01T00:00:00Z',
+        fingerprint: 'fp',
+        created_at: '2024-01-01T00:00:00Z',
+        updated_at: '2024-01-01T00:00:00Z',
+        created_by: 'user1',
+        last_modified_by: 'user1',
+      };
+
+      const remainder = calculateSplitRemainder(tx);
+      expect(remainder).toBe(7000); // 10000 - 3000 - 0
     });
   });
 

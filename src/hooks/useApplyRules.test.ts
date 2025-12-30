@@ -435,5 +435,21 @@ describe('useApplyRules', () => {
       // Should have attempted both batches
       expect(mockIn).toHaveBeenCalledTimes(2);
     });
+
+    it('should handle null data from Supabase without error', async () => {
+      const transactionIds = ['tx-1'];
+      // Mock Supabase returning null data and no error
+      const mockIn = vi.fn().mockResolvedValue({ data: null, error: null });
+      const mockSelect = vi.fn().mockReturnValue({ in: mockIn });
+      vi.mocked(supabase.from).mockReturnValue({ select: mockSelect } as any);
+
+      const wrapper = createQueryWrapper();
+      const { result } = renderHook(() => useApplyRules(), { wrapper });
+
+      // Expect it to throw 'No transactions found' because no data was pushed
+      await expect(result.current.applyRules(transactionIds)).rejects.toThrow(
+        'No transactions found'
+      );
+    });
   });
 });

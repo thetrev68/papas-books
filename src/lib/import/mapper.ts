@@ -124,6 +124,14 @@ export function mapRowToTransaction(
         errors.push(issue.message);
       }
     });
+
+    // When using separate inflow/outflow columns, prefer the more specific
+    // message generated later in the parsing logic instead of the generic
+    // 'Amount is required' message from the generic CSV schema validation.
+    if (mapping.amountMode === 'separate') {
+      const idx = errors.indexOf('Amount is required');
+      if (idx !== -1) errors.splice(idx, 1);
+    }
   }
 
   const shouldParse = errors.length === 0;

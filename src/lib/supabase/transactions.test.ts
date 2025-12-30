@@ -89,6 +89,21 @@ describe('fetchTransactions', () => {
 
     await expect(fetchTransactions('test-bookset-id')).rejects.toThrow(DatabaseError);
   });
+
+  it('should wrap unexpected errors in DatabaseError', async () => {
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockRejectedValue(new Error('Unexpected system error')),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await expect(fetchTransactions('test-bookset-id')).rejects.toThrow(DatabaseError);
+    await expect(fetchTransactions('test-bookset-id')).rejects.toThrow(
+      'Failed to fetch transactions'
+    );
+  });
 });
 
 describe('createTransaction', () => {
@@ -131,6 +146,21 @@ describe('createTransaction', () => {
     (supabase.from as any).mockReturnValue(mockQuery);
 
     await expect(createTransaction(mockTransaction())).rejects.toThrow(DatabaseError);
+  });
+
+  it('should wrap unexpected errors in DatabaseError', async () => {
+    const mockQuery = {
+      insert: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockRejectedValue(new Error('Unexpected system error')),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await expect(createTransaction(mockTransaction())).rejects.toThrow(DatabaseError);
+    await expect(createTransaction(mockTransaction())).rejects.toThrow(
+      'Failed to create transaction'
+    );
   });
 });
 
@@ -242,6 +272,53 @@ describe('updateTransaction', () => {
       splitTransaction.bookset_id
     );
   });
+
+  it('should throw error on invalid split lines', async () => {
+    const splitTransaction = mockSplitTransaction();
+
+    // Mock validation failure
+    const { validateSplitLines } = await import('../validation/splits');
+    vi.mocked(validateSplitLines).mockResolvedValueOnce({
+      valid: false,
+      errors: ['Total amount mismatch'],
+    });
+
+    await expect(updateTransaction(splitTransaction)).rejects.toThrow(/Invalid split lines/);
+  });
+
+  it('should not use optimistic locking if updated_at is missing', async () => {
+    const transaction = mockTransaction({ updated_at: undefined }); // No updated_at
+
+    const mockQuery = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockResolvedValue({ data: transaction, error: null }),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await updateTransaction(transaction);
+
+    // Should only have one eq call (for id), not for updated_at
+    expect(mockQuery.eq).toHaveBeenCalledTimes(1);
+    expect(mockQuery.eq).toHaveBeenCalledWith('id', transaction.id);
+  });
+
+  it('should wrap unexpected errors in DatabaseError', async () => {
+    const transaction = mockTransaction();
+    const mockQuery = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      select: vi.fn().mockReturnThis(),
+      single: vi.fn().mockRejectedValue(new Error('Unexpected system error')),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await expect(updateTransaction(transaction)).rejects.toThrow(DatabaseError);
+    await expect(updateTransaction(transaction)).rejects.toThrow('Failed to update transaction');
+  });
 });
 
 describe('deleteTransaction', () => {
@@ -279,6 +356,18 @@ describe('deleteTransaction', () => {
     (supabase.from as any).mockReturnValue(mockQuery);
 
     await expect(deleteTransaction('nonexistent-id')).rejects.toThrow(DatabaseError);
+  });
+
+  it('should wrap unexpected errors in DatabaseError', async () => {
+    const mockQuery = {
+      update: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockRejectedValue(new Error('Unexpected system error')),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await expect(deleteTransaction('id')).rejects.toThrow(DatabaseError);
+    await expect(deleteTransaction('id')).rejects.toThrow('Failed to delete transaction');
   });
 });
 
@@ -336,5 +425,19 @@ describe('bulkUpdateReviewed', () => {
     (supabase.from as any).mockReturnValue(mockQuery);
 
     await expect(bulkUpdateReviewed(['id-1'], true)).rejects.toThrow(DatabaseError);
+  });
+
+  it('should wrap unexpected errors in DatabaseError', async () => {
+    const mockQuery = {
+      update: vi.fn().mockReturnThis(),
+      in: vi.fn().mockRejectedValue(new Error('Unexpected system error')),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await expect(bulkUpdateReviewed(['id-1'], true)).rejects.toThrow(DatabaseError);
+    await expect(bulkUpdateReviewed(['id-1'], true)).rejects.toThrow(
+      'Failed to update transactions'
+    );
   });
 });

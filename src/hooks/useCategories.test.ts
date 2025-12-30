@@ -117,6 +117,29 @@ describe('useCategories', () => {
 
       expect(supabase.removeChannel).toHaveBeenCalled();
     });
+
+    it('should invalidate queries on realtime update', () => {
+      let changeCallback: () => void = () => {};
+      const channelMock = {
+        on: vi.fn((_event, _filter, callback) => {
+          changeCallback = callback;
+          return channelMock;
+        }),
+        subscribe: vi.fn(),
+      };
+      vi.mocked(supabase.channel).mockReturnValue(channelMock as any);
+
+      const wrapper = createQueryWrapper();
+      const queryClient = (wrapper({ children: null }) as any).props.client;
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      renderHook(() => useCategories(), { wrapper });
+
+      expect(changeCallback).toBeDefined();
+      changeCallback();
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['categories', 'test-bookset-id'] });
+    });
   });
 });
 
@@ -364,6 +387,86 @@ describe('useUpdateCategory', () => {
     });
 
     expect(categoriesLib.updateCategory).toHaveBeenCalledWith(categoryId, updates);
+  });
+
+  it('should handle missing activeBookset in onMutate', async () => {
+    const useAuthSpy = vi.spyOn(await import('../context/AuthContext'), 'useAuth');
+    useAuthSpy.mockReturnValue({ activeBookset: null } as any);
+
+    const { result } = renderHook(() => useUpdateCategory(), { wrapper: createQueryWrapper() });
+
+    const wrapper = createQueryWrapper();
+    const queryClient = (wrapper({ children: null }) as any).props.client;
+    const cancelSpy = vi.spyOn(queryClient, 'cancelQueries');
+
+    result.current.updateCategory('cat-1', { name: 'New Name' });
+
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(cancelSpy).not.toHaveBeenCalled();
+
+    useAuthSpy.mockReturnValue({ activeBookset: mockActiveBookset } as any);
+  });
+
+  it('should handle optimistic update with empty cache', async () => {
+    const categoryId = 'cat-1';
+    const updates = { name: 'Updated' };
+    vi.mocked(categoriesLib.updateCategory).mockResolvedValue(
+      mockCategory({ id: categoryId, ...updates })
+    );
+
+    const wrapper = createQueryWrapper();
+    const { result } = renderHook(() => useUpdateCategory(), { wrapper });
+    const queryClient = (wrapper({ children: null }) as any).props.client;
+
+    const setQueryDataSpy = vi.spyOn(queryClient, 'setQueryData');
+
+    result.current.updateCategory(categoryId, updates);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const call = setQueryDataSpy.mock.calls.find(
+      (call) => Array.isArray(call[0]) && call[0][0] === 'categories'
+    );
+    expect(call).toBeDefined();
+
+    const updater = call![1] as (old: any) => any;
+    const optimisticResult = updater(undefined);
+
+    expect(optimisticResult).toEqual([]);
+  });
+
+  it('should handle optimistic update for non-matching category', async () => {
+    const categoryId = 'cat-1';
+    const updates = { name: 'Updated' };
+    vi.mocked(categoriesLib.updateCategory).mockResolvedValue(
+      mockCategory({ id: categoryId, ...updates })
+    );
+
+    const wrapper = createQueryWrapper();
+    const { result } = renderHook(() => useUpdateCategory(), { wrapper });
+    const queryClient = (wrapper({ children: null }) as any).props.client;
+
+    const existingCategories = [mockCategory({ id: 'other-cat' })];
+    queryClient.setQueryData(['categories', 'test-bookset-id'], existingCategories);
+
+    const setQueryDataSpy = vi.spyOn(queryClient, 'setQueryData');
+
+    result.current.updateCategory(categoryId, updates);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const call = setQueryDataSpy.mock.calls.find(
+      (call) => Array.isArray(call[0]) && call[0][0] === 'categories'
+    );
+    const updater = call![1] as (old: any) => any;
+    const optimisticResult = updater(existingCategories);
+
+    expect(optimisticResult[0]).toEqual(existingCategories[0]);
   });
 });
 

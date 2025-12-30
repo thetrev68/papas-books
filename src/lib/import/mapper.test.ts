@@ -146,6 +146,63 @@ describe('mapRowToTransaction', () => {
     expect(result.amount).toBe(-5000); // Negative outflow
   });
 
+  it('should return error when both inflow and outflow are missing in separate mode', () => {
+    const row = { Date: '1/15/2024', Credit: '', Debit: '', Description: 'Test' };
+    const mapping: CsvMapping = {
+      dateColumn: 'Date',
+      amountColumn: '',
+      descriptionColumn: 'Description',
+      dateFormat: 'MM/dd/yyyy' as DateFormat,
+      hasHeaderRow: true,
+      amountMode: 'separate' as AmountMode,
+      inflowColumn: 'Credit',
+      outflowColumn: 'Debit',
+    };
+
+    const result = mapRowToTransaction(row, mapping, 0);
+
+    expect(result.isValid).toBe(false);
+    expect(result.errors).toContain('Missing amount in both inflow and outflow columns');
+  });
+
+  it('should prioritize non-zero inflow over zero outflow in separate mode', () => {
+    const row = { Date: '1/15/2024', Credit: '$100.00', Debit: '0.00', Description: 'Test' };
+    const mapping: CsvMapping = {
+      dateColumn: 'Date',
+      amountColumn: '',
+      descriptionColumn: 'Description',
+      dateFormat: 'MM/dd/yyyy' as DateFormat,
+      hasHeaderRow: true,
+      amountMode: 'separate' as AmountMode,
+      inflowColumn: 'Credit',
+      outflowColumn: 'Debit',
+    };
+
+    const result = mapRowToTransaction(row, mapping, 0);
+
+    expect(result.isValid).toBe(true);
+    expect(result.amount).toBe(10000);
+  });
+
+  it('should prioritize non-zero outflow over zero inflow in separate mode', () => {
+    const row = { Date: '1/15/2024', Credit: '0.00', Debit: '$50.00', Description: 'Test' };
+    const mapping: CsvMapping = {
+      dateColumn: 'Date',
+      amountColumn: '',
+      descriptionColumn: 'Description',
+      dateFormat: 'MM/dd/yyyy' as DateFormat,
+      hasHeaderRow: true,
+      amountMode: 'separate' as AmountMode,
+      inflowColumn: 'Credit',
+      outflowColumn: 'Debit',
+    };
+
+    const result = mapRowToTransaction(row, mapping, 0);
+
+    expect(result.isValid).toBe(true);
+    expect(result.amount).toBe(-5000);
+  });
+
   it('should return errors for invalid date', () => {
     const row = { Date: 'invalid', Amount: '$100', Description: 'Test' };
     const mapping: CsvMapping = {

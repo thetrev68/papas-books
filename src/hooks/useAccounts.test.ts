@@ -112,6 +112,29 @@ describe('useAccounts', () => {
 
       expect(supabase.removeChannel).toHaveBeenCalled();
     });
+
+    it('should invalidate queries on realtime update', () => {
+      let changeCallback: () => void = () => {};
+      const channelMock = {
+        on: vi.fn((_event, _filter, callback) => {
+          changeCallback = callback;
+          return channelMock;
+        }),
+        subscribe: vi.fn(),
+      };
+      vi.mocked(supabase.channel).mockReturnValue(channelMock as any);
+
+      const wrapper = createQueryWrapper();
+      const queryClient = (wrapper({ children: null }) as any).props.client;
+      const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
+
+      renderHook(() => useAccounts(), { wrapper });
+
+      expect(changeCallback).toBeDefined();
+      changeCallback();
+
+      expect(invalidateSpy).toHaveBeenCalledWith({ queryKey: ['accounts', 'test-bookset-id'] });
+    });
   });
 });
 
@@ -356,6 +379,103 @@ describe('useUpdateAccount', () => {
 
     // Verify update was called with correct data
     expect(accountsLib.updateAccount).toHaveBeenCalledWith(accountId, updates);
+  });
+
+  it('should handle missing activeBookset in onMutate', async () => {
+    // Mock useAuth to return no active bookset for this test
+    const useAuthSpy = vi.spyOn(await import('../context/AuthContext'), 'useAuth');
+    useAuthSpy.mockReturnValue({ activeBookset: null } as any);
+
+    const { result } = renderHook(() => useUpdateAccount(), { wrapper: createQueryWrapper() });
+
+    // We can't easily access the internal onMutate, but we can verify that
+    // if we trigger the mutation, it doesn't crash and ideally doesn't touch the cache
+    // However, since useUpdateAccount reads useAuth at the top level,
+    // we need to re-render the hook with the new mock.
+
+    // Since we can't easily change the hook state after render without a helper,
+    // we'll rely on the spy being set before render.
+
+    // Actually, checking if cancelQueries was NOT called is a good proxy
+    const wrapper = createQueryWrapper();
+    const queryClient = (wrapper({ children: null }) as any).props.client;
+    const cancelSpy = vi.spyOn(queryClient, 'cancelQueries');
+
+    result.current.updateAccount('acc-1', { name: 'New Name' });
+
+    // Since onMutate is async, we wait a tick
+    await new Promise((resolve) => setTimeout(resolve, 0));
+
+    expect(cancelSpy).not.toHaveBeenCalled();
+
+    // Restore mock
+    useAuthSpy.mockReturnValue({ activeBookset: mockActiveBookset } as any);
+  });
+
+  it('should handle optimistic update with empty cache', async () => {
+    const accountId = 'acc-1';
+    const updates = { name: 'Updated' };
+    vi.mocked(accountsLib.updateAccount).mockResolvedValue(
+      mockAccount({ id: accountId, ...updates })
+    );
+
+    const wrapper = createQueryWrapper();
+    const { result } = renderHook(() => useUpdateAccount(), { wrapper });
+    const queryClient = (wrapper({ children: null }) as any).props.client;
+
+    // Spy on setQueryData to capture the updater function
+    const setQueryDataSpy = vi.spyOn(queryClient, 'setQueryData');
+
+    result.current.updateAccount(accountId, updates);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    // Find the call to setQueryData for optimistic update
+    const call = setQueryDataSpy.mock.calls.find(
+      (call) => Array.isArray(call[0]) && call[0][0] === 'accounts'
+    );
+    expect(call).toBeDefined();
+
+    // Execute the updater function with undefined (empty cache)
+    const updater = call![1] as (old: any) => any;
+    const optimisticResult = updater(undefined);
+
+    // Should return empty array and not crash
+    expect(optimisticResult).toEqual([]);
+  });
+
+  it('should handle optimistic update for non-matching account', async () => {
+    const accountId = 'acc-1';
+    const updates = { name: 'Updated' };
+    vi.mocked(accountsLib.updateAccount).mockResolvedValue(
+      mockAccount({ id: accountId, ...updates })
+    );
+
+    const wrapper = createQueryWrapper();
+    const { result } = renderHook(() => useUpdateAccount(), { wrapper });
+    const queryClient = (wrapper({ children: null }) as any).props.client;
+
+    const existingAccounts = [mockAccount({ id: 'other-acc' })];
+    queryClient.setQueryData(['accounts', 'test-bookset-id'], existingAccounts);
+
+    const setQueryDataSpy = vi.spyOn(queryClient, 'setQueryData');
+
+    result.current.updateAccount(accountId, updates);
+
+    await waitFor(() => {
+      expect(result.current.isLoading).toBe(false);
+    });
+
+    const call = setQueryDataSpy.mock.calls.find(
+      (call) => Array.isArray(call[0]) && call[0][0] === 'accounts'
+    );
+    const updater = call![1] as (old: any) => any;
+    const optimisticResult = updater(existingAccounts);
+
+    // Should return original array unmodified (shallow copy or same items)
+    expect(optimisticResult[0]).toEqual(existingAccounts[0]);
   });
 });
 

@@ -62,6 +62,18 @@ describe('previewCsv', () => {
     expect(result.meta.fields).toEqual(['0', '1', '2']);
   });
 
+  it('should verify index-based keys generation when no header', async () => {
+    const csvContent = 'A,B,C\nD,E,F';
+    const file = new File([csvContent], 'test.csv', { type: 'text/csv' });
+
+    const result = await previewCsv(file, { hasHeaderRow: false });
+
+    // Explicitly check the structure to confirm the branch for data mapping was taken
+    expect(result.data[0]).toHaveProperty('0', 'A');
+    expect(result.data[0]).toHaveProperty('1', 'B');
+    expect(result.data[0]).toHaveProperty('2', 'C');
+  });
+
   it('should handle empty column names from trailing commas', async () => {
     const csvContent = 'Date,Amount,Description,,,\n1/1/2024,$100,Test,,,\n1/2/2024,$200,Test2,,,';
     const file = new File([csvContent], 'test.csv', { type: 'text/csv' });
@@ -130,6 +142,18 @@ describe('parseFullCsv', () => {
     expect(result.data[0]['0']).toBe('1/1/2024');
     expect(result.data[0]['1']).toBe('100');
     expect(result.data[0]['2']).toBe('Test');
+  });
+
+  it('should verify index-based keys generation when no header in full parse', async () => {
+    const csvContent = 'A,B,C\nD,E,F';
+    const file = new File([csvContent], 'test.csv', { type: 'text/csv' });
+
+    const result = await parseFullCsv(file, { hasHeaderRow: false });
+
+    // Explicitly check the structure
+    expect(result.data[0]).toHaveProperty('0', 'A');
+    expect(result.data[0]).toHaveProperty('1', 'B');
+    expect(result.data[0]).toHaveProperty('2', 'C');
   });
 
   it('should handle empty CSV file', async () => {

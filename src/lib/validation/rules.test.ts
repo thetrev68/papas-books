@@ -146,5 +146,18 @@ describe('validation/rules', () => {
       expect(result.valid).toBe(false);
       expect(result.error).toContain('Unterminated character class');
     });
+
+    it('handles non-Error objects thrown during regex validation', () => {
+      const originalRegExp = global.RegExp;
+      global.RegExp = vi.fn(() => {
+        throw 'String Error';
+      }) as unknown as typeof RegExp;
+
+      const result = validateRegex('foo');
+      expect(result.valid).toBe(false);
+      expect(result.error).toBe('Invalid regex pattern');
+
+      global.RegExp = originalRegExp;
+    });
   });
 });

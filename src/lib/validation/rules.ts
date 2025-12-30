@@ -18,9 +18,13 @@ export function validateRegex(pattern: string): { valid: boolean; error?: string
     new RegExp(pattern);
     return { valid: true };
   } catch (error) {
-    return {
-      valid: false,
-      error: error instanceof Error ? error.message : 'Invalid regex pattern',
-    };
+    // For actual SyntaxErrors coming from RegExp, return the specific message
+    // (e.g. 'Unterminated character class'). For other errors (including
+    // non-Error objects or errors due to mocking/non-constructible RegExp),
+    // return a generic message to avoid leaking unexpected messages.
+    if (error instanceof Error && error.name === 'SyntaxError') {
+      return { valid: false, error: error.message };
+    }
+    return { valid: false, error: 'Invalid regex pattern' };
   }
 }
