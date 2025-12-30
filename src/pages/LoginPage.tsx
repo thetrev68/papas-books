@@ -39,36 +39,47 @@ export default function LoginPage() {
         <p className="text-lg text-neutral-600 dark:text-gray-400 mb-6">
           Welcome back. Let&apos;s get you in.
         </p>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form onSubmit={handleSubmit} className="space-y-4" aria-label="Sign in form">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            <label
+              htmlFor="email"
+              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+            >
               Email
             </label>
             <input
+              id="email"
               type="email"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
               autoComplete="email"
+              aria-required="true"
               className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
             />
           </div>
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            <label
+              htmlFor="password"
+              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+            >
               Password
             </label>
             <input
+              id="password"
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
               autoComplete="current-password"
+              aria-required="true"
               className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
             />
           </div>
           <button
             type="submit"
             disabled={loading}
+            aria-busy={loading}
             className="w-full px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
           >
             {loading ? 'Signing in...' : 'Sign In'}

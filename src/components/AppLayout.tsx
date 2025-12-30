@@ -136,6 +136,14 @@ export default function AppLayout() {
 
   return (
     <div className="min-h-screen flex flex-col md:flex-row bg-neutral-50 dark:bg-gray-900 text-neutral-800 dark:text-gray-100 font-sans">
+      {/* Skip to main content link for accessibility */}
+      <a
+        href="#main-content"
+        className="sr-only focus:not-sr-only focus:absolute focus:top-4 focus:left-4 focus:z-50 focus:px-4 focus:py-2 focus:bg-blue-600 focus:text-white focus:rounded focus:shadow-lg"
+      >
+        Skip to main content
+      </a>
+
       {/* Mobile Header - UPDATED with safe area support */}
       <div
         className={`bg-brand-700 dark:bg-brand-800 text-white p-4 flex justify-between items-center md:hidden shadow-lg sticky top-0 z-20 ${isInstalled ? 'pt-safe' : ''}`}
@@ -147,6 +155,7 @@ export default function AppLayout() {
               className="bg-white text-neutral-900 text-sm rounded border-none p-1"
               value={activeBookset?.id || ''}
               onChange={(e) => switchBookset(e.target.value)}
+              aria-label="Switch bookset"
             >
               {myBooksets.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -155,14 +164,21 @@ export default function AppLayout() {
               ))}
             </select>
           )}
-          <button onClick={handleSignOut} className="text-xs bg-brand-800 p-1 rounded">
+          <button
+            onClick={handleSignOut}
+            className="text-xs bg-brand-800 p-1 rounded"
+            aria-label="Sign out"
+          >
             Sign Out
           </button>
         </div>
       </div>
 
       {/* Desktop Sidebar - UPDATED with version display */}
-      <nav className="hidden md:flex flex-col w-72 bg-white dark:bg-gray-800 border-r border-neutral-200 dark:border-gray-700 h-screen sticky top-0 overflow-y-auto">
+      <nav
+        className="hidden md:flex flex-col w-72 bg-white dark:bg-gray-800 border-r border-neutral-200 dark:border-gray-700 h-screen sticky top-0 overflow-y-auto"
+        aria-label="Main navigation"
+      >
         <div className="p-6 bg-brand-700 dark:bg-brand-800 text-white">
           <h1 className="text-2xl font-bold">Papa&apos;s Books</h1>
           <p className="text-brand-100 mt-2 text-base">
@@ -170,11 +186,15 @@ export default function AppLayout() {
           </p>
 
           <div className="mt-4">
-            <label className="block text-brand-100 text-sm font-bold mb-1">Bookset</label>
+            <label htmlFor="bookset-select" className="block text-brand-100 text-sm font-bold mb-1">
+              Bookset
+            </label>
             <select
+              id="bookset-select"
               className="w-full bg-white dark:bg-gray-700 text-neutral-900 dark:text-gray-100 p-2 rounded border border-brand-600 dark:border-brand-500 focus:outline-none focus:ring-2 focus:ring-brand-200 dark:focus:ring-brand-800"
               value={activeBookset?.id || ''}
               onChange={(e) => switchBookset(e.target.value)}
+              aria-label="Switch bookset"
             >
               {myBooksets.map((b) => (
                 <option key={b.id} value={b.id}>
@@ -197,8 +217,12 @@ export default function AppLayout() {
                     ? 'bg-brand-50 dark:bg-brand-900 text-brand-900 dark:text-brand-100 border border-brand-200 dark:border-brand-700'
                     : 'text-neutral-600 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 hover:text-neutral-900 dark:hover:text-gray-100'
                 }`}
+                aria-label={`Navigate to ${link.name}`}
+                aria-current={active ? 'page' : undefined}
               >
-                <div className={active ? 'text-brand-600' : 'text-neutral-500'}>{link.icon}</div>
+                <div className={active ? 'text-brand-600' : 'text-neutral-500'} aria-hidden="true">
+                  {link.icon}
+                </div>
                 {link.name}
               </Link>
             );
@@ -209,8 +233,15 @@ export default function AppLayout() {
           <button
             onClick={handleSignOut}
             className="flex items-center gap-4 p-4 w-full rounded-xl text-neutral-600 dark:text-gray-300 hover:bg-danger-50 dark:hover:bg-red-900 hover:text-danger-700 dark:hover:text-red-200 font-bold transition-colors"
+            aria-label="Sign out of Papa's Books"
           >
-            <svg className="w-8 h-8" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <svg
+              className="w-8 h-8"
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
+              aria-hidden="true"
+            >
               <path
                 strokeLinecap="round"
                 strokeLinejoin="round"
@@ -231,12 +262,20 @@ export default function AppLayout() {
       </nav>
 
       {/* Main Content */}
-      <main className="flex-1 overflow-y-auto h-[calc(100vh-64px)] md:h-screen">
+      <main
+        id="main-content"
+        className="flex-1 overflow-y-auto h-[calc(100vh-64px)] md:h-screen"
+        role="main"
+        aria-label="Main content"
+      >
         <Outlet />
       </main>
 
       {/* Mobile Bottom Nav - UPDATED with safe area support */}
-      <nav className="md:hidden sticky bottom-0 bg-white dark:bg-gray-800 border-t border-neutral-200 dark:border-gray-700 flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20">
+      <nav
+        className="md:hidden sticky bottom-0 bg-white dark:bg-gray-800 border-t border-neutral-200 dark:border-gray-700 flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20"
+        aria-label="Mobile navigation"
+      >
         {navLinks.slice(0, 5).map((link) => {
           const active = isActive(link.path);
           return (
@@ -244,8 +283,12 @@ export default function AppLayout() {
               key={link.path}
               to={link.path}
               className={`flex flex-col items-center p-2 touch-target ${active ? 'text-brand-600' : 'text-neutral-400'}`}
+              aria-label={`Navigate to ${link.name}`}
+              aria-current={active ? 'page' : undefined}
             >
-              <div className="scale-75 origin-bottom">{link.icon}</div>
+              <div className="scale-75 origin-bottom" aria-hidden="true">
+                {link.icon}
+              </div>
               <span className="text-xs font-bold mt-1">{link.name}</span>
             </Link>
           );

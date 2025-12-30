@@ -14,9 +14,10 @@ export default {
           50: '#f0f9ff',
           100: '#e0f2fe',
           500: '#0ea5e9', // Sky 500 - Clear Blue
-          600: '#0284c7', // Sky 600
-          700: '#0369a1', // Sky 700 - High Contrast Text
-          900: '#0c4a6e', // Sky 900
+          600: '#0369a1', // Sky 700 - Updated for WCAG AA contrast (4.5:1 with white)
+          700: '#075985', // Sky 800 - High Contrast Text
+          800: '#0c4a6e', // Sky 900
+          900: '#082f49', // Sky 950
         },
         success: {
           100: '#dcfce7',
