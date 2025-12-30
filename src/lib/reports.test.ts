@@ -157,4 +157,96 @@ describe('Reporting Logic', () => {
       expect(lines[2]).toBe('Rent,500,1');
     });
   });
+
+  describe('generateCategoryReport - edge cases', () => {
+    it('should handle transactions with empty lines as uncategorized', () => {
+      const txs = [mockTx('1', 100, '2023-01-01', '', false, [])];
+
+      const result = generateCategoryReport(txs, categories);
+
+      const uncategorized = result.find((r) => r.categoryId === 'uncategorized');
+      expect(uncategorized?.totalAmount).toBe(100);
+      expect(uncategorized?.categoryName).toBe('Uncategorized');
+    });
+
+    it('should handle unknown category IDs', () => {
+      const txs = [mockTx('1', 100, '2023-01-01', 'unknown-cat')];
+
+      const result = generateCategoryReport(txs, categories);
+
+      const unknown = result.find((r) => r.categoryId === 'unknown-cat');
+      expect(unknown?.categoryName).toBe('Unknown Category');
+    });
+
+    it('should mark negative amounts as expenses (isIncome=false)', () => {
+      const txs = [mockTx('1', -100, '2023-01-01', 'c1')];
+
+      const result = generateCategoryReport(txs, categories);
+
+      const food = result.find((r) => r.categoryId === 'c1');
+      expect(food?.isIncome).toBe(false);
+      expect(food?.totalAmount).toBe(-100);
+    });
+  });
+
+  describe('filterTransactionsForReport - edge cases', () => {
+    const txs = [
+      mockTx('1', 100, '2023-01-01', 'c1'),
+      mockTx('2', 100, '2023-02-01', 'c1'),
+      mockTx('3', 100, '2023-01-15', '', false, []), // Empty lines
+    ];
+
+    it('should filter by account IDs', () => {
+      const filter: ReportFilter = {
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+        accountIds: ['a1'],
+      };
+      const result = filterTransactionsForReport(txs, filter);
+      expect(result).toHaveLength(3);
+    });
+
+    it('should exclude transactions without matching account ID', () => {
+      const txWithDifferentAccount = {
+        ...mockTx('4', 100, '2023-01-01', 'c1'),
+        account_id: 'a2',
+      };
+      const allTxs = [...txs, txWithDifferentAccount];
+
+      const filter: ReportFilter = {
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+        accountIds: ['a1'],
+      };
+      const result = filterTransactionsForReport(allTxs, filter);
+      expect(result).toHaveLength(3);
+      expect(result.find((t) => t.id === '4')).toBeUndefined();
+    });
+
+    it('should exclude transactions with empty lines when filtering by category', () => {
+      const filter: ReportFilter = {
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+        categoryId: 'c1',
+      };
+      const result = filterTransactionsForReport(txs, filter);
+      expect(result).toHaveLength(2); // Only tx1 and tx2, not tx3 with empty lines
+    });
+
+    it('should handle split transactions when filtering by category', () => {
+      const splitTx = mockTx('4', 100, '2023-01-01', '', true, [
+        { category_id: 'c1', amount: 60 },
+        { category_id: 'c2', amount: 40 },
+      ]);
+      const allTxs = [...txs, splitTx];
+
+      const filter: ReportFilter = {
+        startDate: '2023-01-01',
+        endDate: '2023-12-31',
+        categoryId: 'c2',
+      };
+      const result = filterTransactionsForReport(allTxs, filter);
+      expect(result.find((t) => t.id === '4')).toBeDefined(); // Split tx has c2
+    });
+  });
 });

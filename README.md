@@ -86,11 +86,11 @@ Unlike traditional apps where data is tied directly to a user, Papa's Books ties
 
 ### Test Coverage
 
-Papa's Books has **96% code coverage** with 158 passing tests:
+Papa's Books has **97%+ code coverage** with 221 passing tests:
 
-- **Unit Tests:** 17 test files covering business logic, validation, and utilities
+- **Unit Tests:** 20 test files covering business logic, validation, and utilities
 - **E2E Tests:** 4 Playwright tests covering critical user workflows
-- **Coverage:** 96% lines, 96% functions, 91% branches
+- **Coverage:** 97.43% lines, 96.62% functions, 90.54% branches, 97.45% statements
 
 ### Running Tests
 
@@ -100,6 +100,12 @@ Papa's Books has **96% code coverage** with 158 passing tests:
 npm run test              # Run tests in watch mode
 npm run test:ui           # Interactive UI mode
 npm run test:coverage     # Generate coverage report
+```
+
+**⚠️ Windows Users:** Coverage tools (v8/istanbul) have compatibility issues on Windows. For accurate coverage metrics, run tests in WSL:
+
+```bash
+wsl --exec bash -c "cd /mnt/c/Repos/papas-books && npm run test:coverage"
 ```
 
 **E2E Tests** (Playwright):

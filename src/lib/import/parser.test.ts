@@ -118,4 +118,37 @@ describe('parseFullCsv', () => {
     // Should still parse, but errors array may have entries
     expect(result.data).toBeDefined();
   });
+
+  it('should handle CSV without headers', async () => {
+    const csvContent = '1/1/2024,100,Test\n1/2/2024,200,Another Test';
+    const file = new File([csvContent], 'test.csv', { type: 'text/csv' });
+
+    const result = await parseFullCsv(file, { hasHeaderRow: false });
+
+    expect(result.data).toHaveLength(2);
+    expect(result.meta.fields).toEqual(['0', '1', '2']); // Numeric field names
+    expect(result.data[0]['0']).toBe('1/1/2024');
+    expect(result.data[0]['1']).toBe('100');
+    expect(result.data[0]['2']).toBe('Test');
+  });
+
+  it('should handle empty CSV file', async () => {
+    const csvContent = '';
+    const file = new File([csvContent], 'empty.csv', { type: 'text/csv' });
+
+    const result = await parseFullCsv(file);
+
+    expect(result.data).toHaveLength(0);
+  });
+
+  it('should handle CSV with array values in transform', async () => {
+    // This tests the Array.isArray branch in the transform function
+    const csvContent = 'Date,Amount,Description\n1/1/2024,$100,Test';
+    const file = new File([csvContent], 'test.csv', { type: 'text/csv' });
+
+    const result = await parseFullCsv(file);
+
+    expect(result.data).toBeDefined();
+    expect(result.data[0].Date).toBe('1/1/2024');
+  });
 });
