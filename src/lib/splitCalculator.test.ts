@@ -3,7 +3,7 @@ import {
   calculateSplitRemainder,
   validateSplitLineAmount,
 } from './splitCalculator';
-import type { Transaction } from '../types/database';
+import type { Transaction, SplitLine } from '../types/database';
 
 describe('splitCalculator', () => {
   describe('validateSplitTransaction', () => {
