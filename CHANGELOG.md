@@ -2,6 +2,18 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [0.3.5](https://github.com/thetrev68/papas-books/compare/v0.3.4...v0.3.5) (2025-12-30)
+
+### Features
+
+- complete security audit (Task 3.7) - production ready ([f392284](https://github.com/thetrev68/papas-books/commit/f3922843357030d1351a8f1075b7f3ceb9bac30f))
+- implement password strength requirements (Task 3.5) ([ecadbfb](https://github.com/thetrev68/papas-books/commit/ecadbfb26ceb4f6dd51a6513b771af7192cde0ac))
+- implement WCAG 2.1 AA accessibility improvements (Task 3.3) ([38bc1c2](https://github.com/thetrev68/papas-books/commit/38bc1c2479735a5f89f7295fae7a58e3eb2e1a49)), closes [#0284c7](https://github.com/thetrev68/papas-books/issues/0284c7) [#0369a1](https://github.com/thetrev68/papas-books/issues/0369a1)
+
+### Maintenance
+
+- clean up code quality issues ([a1fe5df](https://github.com/thetrev68/papas-books/commit/a1fe5dfcc729505faeeb923f001ca2db902863f2))
+
 ## [0.3.4](https://github.com/thetrev68/papas-books/compare/v0.3.3...v0.3.4) (2025-12-30)
 
 ## [0.3.3](https://github.com/thetrev68/papas-books/compare/v0.3.2...v0.3.3) (2025-12-29)
