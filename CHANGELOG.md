@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.1.1](https://github.com/thetrev68/papas-books/compare/v1.1.0...v1.1.1) (2025-12-30)
+
+### Bug Fixes
+
+- remove redundant SARIF upload step in CodeQL workflow ([1dbbd7b](https://github.com/thetrev68/papas-books/commit/1dbbd7ba7c1a682f188c1b88f6b496bbeb30908d))
+- resolve CodeQL workflow configuration errors ([3d80a66](https://github.com/thetrev68/papas-books/commit/3d80a66547ad30828a025fc717d2566f40c74a75))
+
+### Maintenance
+
+- upgrade CodeQL action from v3 to v4 ([81d455c](https://github.com/thetrev68/papas-books/commit/81d455c2bda300b2759569735537c713646ee840))
+
 ## [1.1.0](https://github.com/thetrev68/papas-books/compare/v1.0.3...v1.1.0) (2025-12-30)
 
 ### Features
