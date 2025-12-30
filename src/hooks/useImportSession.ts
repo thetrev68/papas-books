@@ -177,7 +177,7 @@ export function useImportSession(): UseImportSessionResult {
 
   // Action: Check for duplicates
   const checkDuplicates = async () => {
-    if (!state.selectedAccountId || state.stagedTransactions.length === 0) return;
+    if (!state.selectedAccountId || !activeBookset || state.stagedTransactions.length === 0) return;
 
     setIsProcessing(true);
     try {
@@ -185,13 +185,19 @@ export function useImportSession(): UseImportSessionResult {
       const withFingerprints = await addFingerprints(state.stagedTransactions);
 
       // Fetch existing fingerprints
-      const existingFingerprints = await fetchExistingFingerprints(state.selectedAccountId);
+      const existingFingerprints = await fetchExistingFingerprints(
+        activeBookset.id,
+        state.selectedAccountId
+      );
 
       // Detect exact duplicates
       let processed = detectExactDuplicates(withFingerprints, existingFingerprints);
 
       // Fetch existing transactions for fuzzy matching
-      const existingTransactions = await fetchExistingTransactions(state.selectedAccountId);
+      const existingTransactions = await fetchExistingTransactions(
+        activeBookset.id,
+        state.selectedAccountId
+      );
 
       // Detect fuzzy duplicates
       processed = detectFuzzyDuplicates(processed, existingTransactions);

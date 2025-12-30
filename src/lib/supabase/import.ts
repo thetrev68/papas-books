@@ -7,14 +7,19 @@ import { handleSupabaseError, DatabaseError } from '../errors';
  *
  * Used for duplicate detection (O(1) lookups via Map).
  *
+ * @param booksetId - Bookset UUID
  * @param accountId - Account UUID
  * @returns Map<fingerprint, transactionId>
  */
-export async function fetchExistingFingerprints(accountId: string): Promise<Map<string, string>> {
+export async function fetchExistingFingerprints(
+  booksetId: string,
+  accountId: string
+): Promise<Map<string, string>> {
   try {
     const { data, error } = await supabase
       .from('transactions')
       .select('id, fingerprint')
+      .eq('bookset_id', booksetId)
       .eq('account_id', accountId)
       .not('fingerprint', 'is', null); // Exclude transactions without fingerprints
 
@@ -38,11 +43,13 @@ export async function fetchExistingFingerprints(accountId: string): Promise<Map<
 /**
  * Fetches all transactions for an account (for fuzzy matching).
  *
+ * @param booksetId - Bookset UUID
  * @param accountId - Account UUID
  * @param dateRange - Optional date range filter (start/end ISO dates)
  * @returns Array of transactions
  */
 export async function fetchExistingTransactions(
+  booksetId: string,
   accountId: string,
   dateRange?: { start: string; end: string }
 ): Promise<Transaction[]> {
@@ -50,6 +57,7 @@ export async function fetchExistingTransactions(
     let query = supabase
       .from('transactions')
       .select('*')
+      .eq('bookset_id', booksetId)
       .eq('account_id', accountId)
       .order('date', { ascending: false });
 
