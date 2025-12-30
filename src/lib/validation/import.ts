@@ -15,6 +15,12 @@ export function sanitizeText(text: string, maxLength: number): string {
   // Remove remaining HTML tags
   cleaned = cleaned.replace(/<[^>]*>/g, '');
 
+  // Remove dangerous protocols (javascript:, data:, vbscript:, etc.)
+  // This prevents XSS via protocol handlers
+  cleaned = cleaned.replace(/javascript:/gi, '');
+  cleaned = cleaned.replace(/data:/gi, '');
+  cleaned = cleaned.replace(/vbscript:/gi, '');
+
   // Remove control characters (except newlines/tabs)
   // \x00-\x08: Null, Start of Heading, Start of Text, End of Text, End of Transmission, Enquiry, Acknowledge, Bell, Backspace
   // \x0B-\x0C: Vertical Tab, Form Feed

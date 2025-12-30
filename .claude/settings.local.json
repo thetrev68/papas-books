@@ -12,7 +12,8 @@
       "Bash(cp:*)",
       "Bash(npm run lint)",
       "Bash(npm run build:*)",
-      "Bash(find:*)"
+      "Bash(find:*)",
+      "Bash(npx tsx:*)"
     ]
   }
 }
