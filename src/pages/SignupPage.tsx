@@ -2,6 +2,8 @@ import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { useToast } from '../components/GlobalToastProvider';
+import PasswordStrengthIndicator from '../components/auth/PasswordStrengthIndicator';
+import { passwordSchema } from '../lib/validation/password';
 
 export default function SignupPage() {
   const [email, setEmail] = useState('');
@@ -14,6 +16,15 @@ export default function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+
+    // Validate password strength
+    const passwordValidation = passwordSchema.safeParse(password);
+    if (!passwordValidation.success) {
+      const errors = passwordValidation.error.errors.map((err) => err.message).join('. ');
+      showError(errors);
+      return;
+    }
+
     setLoading(true);
     try {
       await signUp(email, password, displayName);
@@ -87,8 +98,17 @@ export default function SignupPage() {
               required
               autoComplete="new-password"
               aria-required="true"
+              aria-describedby="password-requirements"
               className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
             />
+            <PasswordStrengthIndicator password={password} />
+            <div
+              id="password-requirements"
+              className="mt-2 text-xs text-neutral-600 dark:text-gray-400"
+            >
+              Password must be at least 12 characters and include uppercase, lowercase, number, and
+              special character.
+            </div>
           </div>
           <button
             type="submit"
