@@ -32,8 +32,7 @@ jobs:
       uses: github/codeql-action/init@v3
       with:
         languages: ${{ matrix.language }}
-        # Use both standard security queries and custom queries
-        queries: +security-extended,+./.codeql/queries/papas-books-suite.qls
+        # Configuration includes both standard and custom security queries
         config-file: ./.codeql/codeql-config.yml
 
     - name: Autobuild

@@ -3,22 +3,20 @@
 # specific to the Papa's Books application
 
 - description: Papa's Books Security and Quality Suite
+
+# Import security-extended queries from the standard JavaScript pack
+- import: codeql-suites/javascript-security-extended.qls
+  from: codeql/javascript-queries
+
+# Include all problem and path-problem queries with security tags
 - queries: .
-- apply: security-extended
-- from: codeql/javascript-queries
-- queries:
-  - include:
-      kind: problem
-      tags contain:
-        - security
-        - external/cwe
-- queries:
-  - include:
-      kind: path-problem
-      tags contain:
-        - security
-- queries: custom
+  from: codeql/javascript-queries
 - include:
     kind:
       - problem
       - path-problem
+    tags contain: security
+
+# Include CWE-tagged queries for comprehensive coverage
+- include:
+    tags contain: external/cwe
