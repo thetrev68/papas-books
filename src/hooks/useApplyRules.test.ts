@@ -139,7 +139,10 @@ describe('useApplyRules', () => {
 
       await expect(result.current.applyRules(transactionIds)).rejects.toThrow();
 
-      expect(result.current.error).toBeTruthy();
+      // Wait for error state to be updated
+      await waitFor(() => {
+        expect(result.current.error).toBeTruthy();
+      });
     });
 
     it('should throw error when no transactions found', async () => {

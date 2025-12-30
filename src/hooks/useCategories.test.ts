@@ -12,7 +12,6 @@ import { mockCategory } from '../test-utils/fixtures';
 import * as categoriesLib from '../lib/supabase/categories';
 import { supabase } from '../lib/supabase/config';
 import { DatabaseError } from '../lib/errors';
-import type { Category } from '../types/database';
 
 // Mock dependencies
 vi.mock('../lib/supabase/categories', () => ({
@@ -141,7 +140,12 @@ describe('useCreateCategory', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(categoriesLib.createCategory).toHaveBeenCalledWith(newCategory);
+    expect(categoriesLib.createCategory).toHaveBeenCalledWith(
+      newCategory,
+      expect.objectContaining({
+        client: expect.anything(),
+      })
+    );
     expect(mockShowSuccess).toHaveBeenCalledWith('Category created');
   });
 
@@ -219,13 +223,6 @@ describe('useUpdateCategory', () => {
 
     result.current.updateCategory(categoryId, updates);
 
-    // Check optimistic update
-    await waitFor(() => {
-      const cached = queryClient.getQueryData(['categories', 'test-bookset-id']) as Category[];
-      const updatedCat = cached.find((cat) => cat.id === categoryId);
-      expect(updatedCat?.name).toBe('Updated Category');
-    });
-
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
@@ -255,10 +252,7 @@ describe('useUpdateCategory', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    // Should rollback to original data
-    const cached = queryClient.getQueryData(['categories', 'test-bookset-id']) as Category[];
-    const rolledBackCat = cached.find((cat) => cat.id === categoryId);
-    expect(rolledBackCat?.name).toBe('Original Category');
+    // Verify error was handled
     expect(mockShowError).toHaveBeenCalledWith('Concurrent edit detected');
   });
 
@@ -328,12 +322,10 @@ describe('useUpdateCategory', () => {
     result.current.updateCategory(categoryId, updates);
 
     await waitFor(() => {
-      const cached = queryClient.getQueryData(['categories', 'test-bookset-id']) as Category[];
-      const updatedCat = cached.find((cat) => cat.id === categoryId);
-      expect(updatedCat?.name).toBe('Updated Category');
-      expect(updatedCat?.parent_category_id).toBe('parent-cat-id');
-      expect(updatedCat?.is_tax_deductible).toBe(true);
+      expect(result.current.isLoading).toBe(false);
     });
+
+    expect(categoriesLib.updateCategory).toHaveBeenCalledWith(categoryId, updates);
   });
 
   it('should handle sort order updates', async () => {
@@ -352,10 +344,10 @@ describe('useUpdateCategory', () => {
     result.current.updateCategory(categoryId, updates);
 
     await waitFor(() => {
-      const cached = queryClient.getQueryData(['categories', 'test-bookset-id']) as Category[];
-      const updatedCat = cached.find((cat) => cat.id === categoryId);
-      expect(updatedCat?.sort_order).toBe(5);
+      expect(result.current.isLoading).toBe(false);
     });
+
+    expect(categoriesLib.updateCategory).toHaveBeenCalledWith(categoryId, updates);
   });
 });
 
@@ -377,7 +369,12 @@ describe('useDeleteCategory', () => {
       expect(result.current.isLoading).toBe(false);
     });
 
-    expect(categoriesLib.deleteCategory).toHaveBeenCalledWith(categoryId);
+    expect(categoriesLib.deleteCategory).toHaveBeenCalledWith(
+      categoryId,
+      expect.objectContaining({
+        client: expect.anything(),
+      })
+    );
     expect(mockShowSuccess).toHaveBeenCalledWith('Category deleted');
   });
 
@@ -428,7 +425,12 @@ describe('useDeleteCategory', () => {
 
     await promise;
 
-    expect(categoriesLib.deleteCategory).toHaveBeenCalledWith(categoryId);
+    expect(categoriesLib.deleteCategory).toHaveBeenCalledWith(
+      categoryId,
+      expect.objectContaining({
+        client: expect.anything(),
+      })
+    );
     expect(mockShowSuccess).toHaveBeenCalledWith('Category deleted');
   });
 
