@@ -126,7 +126,11 @@ describe('useCreateCategory', () => {
   });
 
   it('should create category and invalidate cache on success', async () => {
-    const newCategory = mockCategory({ id: undefined as any });
+    const newCategoryData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Category',
+      isTaxDeductible: false,
+    };
     const createdCategory = mockCategory();
 
     vi.mocked(categoriesLib.createCategory).mockResolvedValue(createdCategory);
@@ -134,14 +138,14 @@ describe('useCreateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateCategory(), { wrapper });
 
-    result.current.createCategory(newCategory);
+    result.current.createCategory(newCategoryData);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
     expect(categoriesLib.createCategory).toHaveBeenCalledWith(
-      newCategory,
+      newCategoryData,
       expect.objectContaining({
         client: expect.anything(),
       })
@@ -150,7 +154,11 @@ describe('useCreateCategory', () => {
   });
 
   it('should show error message on create failure', async () => {
-    const newCategory = mockCategory({ id: undefined as any });
+    const newCategoryData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Category',
+      isTaxDeductible: false,
+    };
     const dbError = new DatabaseError('Duplicate category name', 'DUPLICATE_ENTRY');
 
     vi.mocked(categoriesLib.createCategory).mockRejectedValue(dbError);
@@ -158,7 +166,7 @@ describe('useCreateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateCategory(), { wrapper });
 
-    result.current.createCategory(newCategory);
+    result.current.createCategory(newCategoryData);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -168,13 +176,17 @@ describe('useCreateCategory', () => {
   });
 
   it('should show generic error for non-DatabaseError', async () => {
-    const newCategory = mockCategory({ id: undefined as any });
+    const newCategoryData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Category',
+      isTaxDeductible: false,
+    };
     vi.mocked(categoriesLib.createCategory).mockRejectedValue(new Error('Network error'));
 
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateCategory(), { wrapper });
 
-    result.current.createCategory(newCategory);
+    result.current.createCategory(newCategoryData);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -184,7 +196,11 @@ describe('useCreateCategory', () => {
   });
 
   it('should support async mutation', async () => {
-    const newCategory = mockCategory({ id: undefined as any });
+    const newCategoryData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Category',
+      isTaxDeductible: false,
+    };
     const createdCategory = mockCategory();
 
     vi.mocked(categoriesLib.createCategory).mockResolvedValue(createdCategory);
@@ -192,7 +208,7 @@ describe('useCreateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateCategory(), { wrapper });
 
-    const promise = result.current.createCategoryAsync(newCategory);
+    const promise = result.current.createCategoryAsync(newCategoryData);
 
     const response = await promise;
 
@@ -217,7 +233,7 @@ describe('useUpdateCategory', () => {
     const { result } = renderHook(() => useUpdateCategory(), { wrapper });
 
     // Pre-populate cache
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     const initialCategories = [mockCategory({ id: categoryId, name: 'Original Category' })];
     queryClient.setQueryData(['categories', 'test-bookset-id'], initialCategories);
 
@@ -242,7 +258,7 @@ describe('useUpdateCategory', () => {
     const { result } = renderHook(() => useUpdateCategory(), { wrapper });
 
     // Pre-populate cache
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     const initialCategories = [mockCategory({ id: categoryId, name: 'Original Category' })];
     queryClient.setQueryData(['categories', 'test-bookset-id'], initialCategories);
 
@@ -266,7 +282,7 @@ describe('useUpdateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateCategory(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['categories', 'test-bookset-id'], [mockCategory({ id: categoryId })]);
 
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
@@ -290,7 +306,7 @@ describe('useUpdateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateCategory(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['categories', 'test-bookset-id'], [mockCategory({ id: categoryId })]);
 
     const promise = result.current.updateCategoryAsync(categoryId, updates);
@@ -316,7 +332,7 @@ describe('useUpdateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateCategory(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['categories', 'test-bookset-id'], [mockCategory({ id: categoryId })]);
 
     result.current.updateCategory(categoryId, updates);
@@ -330,7 +346,7 @@ describe('useUpdateCategory', () => {
 
   it('should handle sort order updates', async () => {
     const categoryId = 'cat-1';
-    const updates = { sort_order: 5 };
+    const updates = { sortOrder: 5 };
     const updatedCategory = mockCategory({ id: categoryId, sort_order: 5 });
 
     vi.mocked(categoriesLib.updateCategory).mockResolvedValue(updatedCategory);
@@ -338,7 +354,7 @@ describe('useUpdateCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateCategory(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['categories', 'test-bookset-id'], [mockCategory({ id: categoryId })]);
 
     result.current.updateCategory(categoryId, updates);
@@ -441,7 +457,7 @@ describe('useDeleteCategory', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useDeleteCategory(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
     result.current.deleteCategory(categoryId);

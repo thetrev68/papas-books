@@ -121,7 +121,13 @@ describe('useCreateAccount', () => {
   });
 
   it('should create account and invalidate cache on success', async () => {
-    const newAccount = mockAccount({ id: undefined as any });
+    const newAccountData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Checking Account',
+      type: 'Asset' as const,
+      openingBalance: 100000,
+      openingBalanceDate: '2024-01-01',
+    };
     const createdAccount = mockAccount();
 
     vi.mocked(accountsLib.createAccount).mockResolvedValue(createdAccount);
@@ -129,14 +135,14 @@ describe('useCreateAccount', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateAccount(), { wrapper });
 
-    result.current.createAccount(newAccount);
+    result.current.createAccount(newAccountData);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
     });
 
     expect(accountsLib.createAccount).toHaveBeenCalledWith(
-      newAccount,
+      newAccountData,
       expect.objectContaining({
         client: expect.anything(),
       })
@@ -145,7 +151,13 @@ describe('useCreateAccount', () => {
   });
 
   it('should show error message on create failure', async () => {
-    const newAccount = mockAccount({ id: undefined as any });
+    const newAccountData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Checking Account',
+      type: 'Asset' as const,
+      openingBalance: 100000,
+      openingBalanceDate: '2024-01-01',
+    };
     const dbError = new DatabaseError('Duplicate account name', 'DUPLICATE_ENTRY');
 
     vi.mocked(accountsLib.createAccount).mockRejectedValue(dbError);
@@ -153,7 +165,7 @@ describe('useCreateAccount', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateAccount(), { wrapper });
 
-    result.current.createAccount(newAccount);
+    result.current.createAccount(newAccountData);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -163,13 +175,19 @@ describe('useCreateAccount', () => {
   });
 
   it('should show generic error for non-DatabaseError', async () => {
-    const newAccount = mockAccount({ id: undefined as any });
+    const newAccountData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Checking Account',
+      type: 'Asset' as const,
+      openingBalance: 100000,
+      openingBalanceDate: '2024-01-01',
+    };
     vi.mocked(accountsLib.createAccount).mockRejectedValue(new Error('Network error'));
 
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateAccount(), { wrapper });
 
-    result.current.createAccount(newAccount);
+    result.current.createAccount(newAccountData);
 
     await waitFor(() => {
       expect(result.current.isLoading).toBe(false);
@@ -179,7 +197,13 @@ describe('useCreateAccount', () => {
   });
 
   it('should support async mutation', async () => {
-    const newAccount = mockAccount({ id: undefined as any });
+    const newAccountData = {
+      booksetId: 'test-bookset-id',
+      name: 'Test Checking Account',
+      type: 'Asset' as const,
+      openingBalance: 100000,
+      openingBalanceDate: '2024-01-01',
+    };
     const createdAccount = mockAccount();
 
     vi.mocked(accountsLib.createAccount).mockResolvedValue(createdAccount);
@@ -187,7 +211,7 @@ describe('useCreateAccount', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useCreateAccount(), { wrapper });
 
-    const promise = result.current.createAccountAsync(newAccount);
+    const promise = result.current.createAccountAsync(newAccountData);
 
     const response = await promise;
 
@@ -212,7 +236,7 @@ describe('useUpdateAccount', () => {
     const { result } = renderHook(() => useUpdateAccount(), { wrapper });
 
     // Pre-populate cache
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     const initialAccounts = [mockAccount({ id: accountId, name: 'Original Checking' })];
     queryClient.setQueryData(['accounts', 'test-bookset-id'], initialAccounts);
 
@@ -242,7 +266,7 @@ describe('useUpdateAccount', () => {
     const { result } = renderHook(() => useUpdateAccount(), { wrapper });
 
     // Pre-populate cache
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     const initialAccounts = [mockAccount({ id: accountId, name: 'Original Checking' })];
     queryClient.setQueryData(['accounts', 'test-bookset-id'], initialAccounts);
 
@@ -269,7 +293,7 @@ describe('useUpdateAccount', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateAccount(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['accounts', 'test-bookset-id'], [mockAccount({ id: accountId })]);
 
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
@@ -293,7 +317,7 @@ describe('useUpdateAccount', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateAccount(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['accounts', 'test-bookset-id'], [mockAccount({ id: accountId })]);
 
     const promise = result.current.updateAccountAsync(accountId, updates);
@@ -308,17 +332,20 @@ describe('useUpdateAccount', () => {
     const accountId = 'acc-1';
     const updates = {
       name: 'Updated Name',
-      opening_balance: 500000,
-      csv_mapping: { dateColumn: 'Date', amountColumn: 'Amount', descriptionColumn: 'Desc' },
+      openingBalance: 500000,
     };
-    const updatedAccount = mockAccount({ id: accountId, ...updates });
+    const updatedAccount = mockAccount({
+      id: accountId,
+      name: 'Updated Name',
+      opening_balance: 500000,
+    });
 
     vi.mocked(accountsLib.updateAccount).mockResolvedValue(updatedAccount);
 
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useUpdateAccount(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     queryClient.setQueryData(['accounts', 'test-bookset-id'], [mockAccount({ id: accountId })]);
 
     result.current.updateAccount(accountId, updates);
@@ -404,7 +431,7 @@ describe('useDeleteAccount', () => {
     const wrapper = createQueryWrapper();
     const { result } = renderHook(() => useDeleteAccount(), { wrapper });
 
-    const queryClient = (wrapper({}) as any).props.client;
+    const queryClient = (wrapper({ children: null }) as any).props.client;
     const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
     result.current.deleteAccount(accountId);

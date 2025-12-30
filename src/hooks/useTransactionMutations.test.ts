@@ -101,7 +101,7 @@ describe('useTransactionMutations', () => {
       const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
 
       // Pre-populate cache
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       const initialTransactions = [
         mockTransaction({ id: transaction.id, payee: 'Original Payee' }),
         mockTransaction({ id: 'other-id', payee: 'Other' }),
@@ -129,7 +129,7 @@ describe('useTransactionMutations', () => {
       const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
 
       // Pre-populate cache
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       const initialTransactions = [
         mockTransaction({ id: transaction.id, payee: 'Original Payee' }),
       ];
@@ -152,7 +152,7 @@ describe('useTransactionMutations', () => {
       const wrapper = createQueryWrapper();
       const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
 
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
       result.current.updateTransaction(transaction);

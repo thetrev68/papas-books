@@ -401,7 +401,7 @@ describe('useWorkbenchData', () => {
       vi.mocked(transactionsLib.fetchTransactions).mockResolvedValue(updatedData);
 
       // Trigger refetch by invalidating cache
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       queryClient.invalidateQueries({ queryKey: ['transactions', booksetId] });
 
       rerender();

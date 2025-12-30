@@ -1,4 +1,13 @@
-import type { Transaction, Account, Category, Bookset, User, Rule, Payee } from '../types/database';
+import type {
+  Transaction,
+  Account,
+  Category,
+  Bookset,
+  User,
+  Rule as DBRule,
+  Payee,
+} from '../types/database';
+import type { Rule } from '../types/rules';
 
 /**
  * Mock transaction factory
@@ -110,7 +119,30 @@ export const mockCategoryHierarchy = () => {
 };
 
 /**
- * Mock rule factory
+ * Mock rule factory (database type)
+ */
+export const mockDBRule = (overrides: Partial<DBRule> = {}): DBRule => ({
+  id: 'test-rule-id',
+  bookset_id: 'test-bookset-id',
+  keyword: 'walmart',
+  match_type: 'contains',
+  case_sensitive: false,
+  target_category_id: 'test-category-id',
+  payee_id: 'test-payee-id',
+  suggested_payee: null,
+  priority: 0,
+  is_enabled: true,
+  use_count: 0,
+  last_used_at: null,
+  created_at: new Date().toISOString(),
+  updated_at: new Date().toISOString(),
+  created_by: 'test-user-id',
+  last_modified_by: 'test-user-id',
+  ...overrides,
+});
+
+/**
+ * Mock rule factory (typed with RuleConditions)
  */
 export const mockRule = (overrides: Partial<Rule> = {}): Rule => ({
   id: 'test-rule-id',
@@ -129,6 +161,7 @@ export const mockRule = (overrides: Partial<Rule> = {}): Rule => ({
   updated_at: new Date().toISOString(),
   created_by: 'test-user-id',
   last_modified_by: 'test-user-id',
+  conditions: undefined,
   ...overrides,
 });
 

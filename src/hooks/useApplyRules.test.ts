@@ -260,7 +260,7 @@ describe('useApplyRules', () => {
       const wrapper = createQueryWrapper();
       const { result } = renderHook(() => useApplyRules(), { wrapper });
 
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
       await result.current.applyRules(transactionIds);
@@ -293,7 +293,7 @@ describe('useApplyRules', () => {
       const wrapper = createQueryWrapper();
       const { result } = renderHook(() => useApplyRules(), { wrapper });
 
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
       await result.current.applyRules(transactionIds);
@@ -317,7 +317,7 @@ describe('useApplyRules', () => {
       const wrapper = createQueryWrapper();
       const { result } = renderHook(() => useApplyRules(), { wrapper });
 
-      const queryClient = (wrapper({}) as any).props.client;
+      const queryClient = (wrapper({ children: null }) as any).props.client;
       const invalidateSpy = vi.spyOn(queryClient, 'invalidateQueries');
 
       await expect(result.current.applyRules(transactionIds)).rejects.toThrow();
