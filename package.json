@@ -21,6 +21,7 @@
     "test:e2e:report": "playwright show-report",
     "codeql:scan": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/codeql-scan.ps1",
     "knip": "knip",
+    "quality": "node scripts/code-quality-check.js",
     "prepare": "husky install",
     "release": "standard-version",
     "release:minor": "standard-version --release-as minor",

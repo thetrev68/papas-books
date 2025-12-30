@@ -429,6 +429,126 @@ NODE_OPTIONS=--max-old-space-size=4096 npx tsx scripts/generate-large-csv.ts
 
 ---
 
+## Code Quality Check
+
+Runs all code quality tools sequentially and saves the output to a timestamped file in `tmp/`.
+
+### Usage
+
+**Using npm script (recommended):**
+
+```bash
+# Run all standard checks (fast)
+npm run quality
+
+# Include CodeQL security scan (slower, requires CodeQL installation)
+npm run quality -- --codeql
+```
+
+**Using Node.js directly:**
+
+```bash
+node scripts/code-quality-check.js
+node scripts/code-quality-check.js --codeql  # Include CodeQL
+```
+
+**Using Windows batch file:**
+
+```cmd
+scripts\code-quality-check.bat
+```
+
+**Note:** The Windows batch file does not currently support the CodeQL option. Use the npm script or Node.js command for CodeQL scans.
+
+### What it checks
+
+The script runs the following tools in order:
+
+1. **TypeScript Type Check** (`npx tsc --noEmit`) - Validates TypeScript types without emitting files
+2. **ESLint** (`npm run lint`) - Lints JavaScript/TypeScript code for errors and style issues
+3. **Markdown Lint** (`npm run lint:md`) - Lints markdown files for formatting consistency
+4. **Prettier Format Check** (`npm run format:check`) - Checks code formatting without modifying files
+5. **Knip** (`npm run knip`) - Finds unused files, dependencies, and exports
+6. **Build Check** (`npm run build`) - Tests that the production build completes successfully
+7. **CodeQL Security Scan** (`npm run codeql:scan`) - **OPTIONAL** - Static security analysis (only runs with `--codeql` flag)
+
+#### About CodeQL
+
+CodeQL is a static analysis tool that finds security vulnerabilities. It's optional because:
+
+- **Slower**: Takes several minutes vs seconds for other checks
+- **Requires installation**: Must have CodeQL CLI installed separately
+- **Creates artifacts**: Generates `.codeql-db/` directory and `codeql-results.sarif` file
+- **Best for**: Pre-release security audits, not everyday development
+
+**Custom Queries**: Papa's Books includes custom CodeQL queries tailored to our architecture:
+
+- Missing bookset_id filters (RLS bypass detection)
+- XSS vulnerabilities via dangerouslySetInnerHTML
+- Hardcoded Supabase credentials
+- Floating-point currency arithmetic
+- CSV injection vulnerabilities
+- Missing input validation
+- React key prop issues
+- Incomplete authentication checks
+
+See [.codeql/README.md](../.codeql/README.md) for detailed documentation on custom queries and how to run them.
+
+To install CodeQL: See [CodeQL CLI documentation](https://docs.github.com/en/code-security/codeql-cli/getting-started-with-the-codeql-cli)
+
+### Output
+
+Results are saved to `tmp/code-quality-{timestamp}.txt` with:
+
+- Full output from each tool
+- Pass/fail status for each check
+- Timestamps for when each check was run
+- Summary at the end
+
+The script exits with code 0 if all checks pass, or 1 if any check fails.
+
+### Example Output File
+
+```text
+Papa's Books - Code Quality Report
+Generated: 12/30/2025, 3:45:22 PM
+Working Directory: C:\Repos\papas-books
+
+================================================================================
+TypeScript Type Check
+================================================================================
+Command: npx tsc --noEmit
+Started: 12/30/2025, 3:45:22 PM
+================================================================================
+
+✓ No output (success)
+
+✓ TypeScript Type Check passed
+
+================================================================================
+ESLint
+================================================================================
+Command: npm run lint
+Started: 12/30/2025, 3:45:35 PM
+================================================================================
+
+> papas-books@1.0.3 lint
+> eslint . --report-unused-disable-directives --max-warnings 0
+
+✓ ESLint passed
+
+...
+```
+
+### Tips
+
+- Run this before committing to catch issues early
+- Review the output file to see detailed error messages
+- Fix issues and re-run to verify fixes
+- The `tmp/` directory is gitignored, so output files won't be committed
+
+---
+
 ## Contributing
 
 When adding new scripts:

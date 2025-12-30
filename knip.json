@@ -4,12 +4,12 @@
     "src/**/*.test.{ts,tsx}",
     "src/components/audit/**",
     "src/lib/audit/**",
-    "src/types/audit.ts"
+    "src/types/audit.ts",
+    "src/test-utils/**"
   ],
   "project": ["src/**/*.{ts,tsx}"],
   "ignoreDependencies": [
     "@testing-library/jest-dom",
-    "@testing-library/react",
     "@testing-library/user-event",
     "@typescript-eslint/eslint-plugin",
     "@typescript-eslint/parser",

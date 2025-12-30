@@ -1,0 +1,45 @@
+# CodeQL Configuration for Papa's Books
+name: "Papa's Books Security Config"
+
+# Disable default queries (we'll use our custom suite)
+disable-default-queries: false
+
+# Additional query packs to use
+packs:
+  - codeql/javascript-queries
+
+# Custom queries
+queries:
+  - name: Papa's Books Custom Security Queries
+    uses: ./.codeql/queries/papas-books-suite.qls
+
+# Paths to include in analysis
+paths:
+  - src
+
+# Paths to exclude from analysis
+paths-ignore:
+  - node_modules
+  - dist
+  - build
+  - .codeql-db
+  - tmp
+  - coverage
+  - '**/*.test.ts'
+  - '**/*.test.tsx'
+  - 'src/test-utils/**'
+  - '**/*.spec.ts'
+  - '**/*.spec.tsx'
+
+# Query filters
+query-filters:
+  - include:
+      kind:
+        - problem
+        - path-problem
+      tags contain:
+        - security
+  - exclude:
+      id:
+        # Exclude overly noisy queries (customize as needed)
+        - js/unused-local-variable

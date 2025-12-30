@@ -1,0 +1,7 @@
+name: papas-books/security-queries
+version: 1.0.0
+library: false
+suites: papas-books-suite
+dependencies:
+  codeql/javascript-all: "*"
+  codeql/javascript-queries: "*"

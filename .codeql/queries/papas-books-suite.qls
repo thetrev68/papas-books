@@ -1,0 +1,24 @@
+# CodeQL Query Suite for Papa's Books
+# This suite includes both standard security queries and custom queries
+# specific to the Papa's Books application
+
+- description: Papa's Books Security and Quality Suite
+- queries: .
+- apply: security-extended
+- from: codeql/javascript-queries
+- queries:
+  - include:
+      kind: problem
+      tags contain:
+        - security
+        - external/cwe
+- queries:
+  - include:
+      kind: path-problem
+      tags contain:
+        - security
+- queries: custom
+- include:
+    kind:
+      - problem
+      - path-problem
