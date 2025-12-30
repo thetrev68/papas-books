@@ -10,14 +10,14 @@ import type { BulkOperation } from '../lib/transactionOperations';
 import { useToast } from '../components/GlobalToastProvider';
 import { DatabaseError } from '../lib/errors';
 
-export function useTransactionMutations() {
+export function useTransactionMutations(booksetId: string) {
   const queryClient = useQueryClient();
   const { showError, showSuccess } = useToast();
 
   const createTransactionMutation = useMutation({
     mutationFn: (transaction: Transaction) => createTransaction(transaction),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', booksetId] });
       showSuccess('Transaction created');
     },
     onError: (error) => {
@@ -30,16 +30,16 @@ export function useTransactionMutations() {
   const updateTransactionMutation = useMutation({
     mutationFn: (transaction: Transaction) => updateTransaction(transaction),
     onMutate: async (newTransaction) => {
-      await queryClient.cancelQueries({ queryKey: ['transactions'] });
-      const previousTransactions = queryClient.getQueryData(['transactions']);
-      queryClient.setQueryData(['transactions'], (old: Transaction[] = []) => {
+      await queryClient.cancelQueries({ queryKey: ['transactions', booksetId] });
+      const previousTransactions = queryClient.getQueryData(['transactions', booksetId]);
+      queryClient.setQueryData(['transactions', booksetId], (old: Transaction[] = []) => {
         return old.map((tx) => (tx.id === newTransaction.id ? newTransaction : tx));
       });
       return { previousTransactions };
     },
     onError: (error, _newTransaction, context) => {
       if (context?.previousTransactions) {
-        queryClient.setQueryData(['transactions'], context.previousTransactions);
+        queryClient.setQueryData(['transactions', booksetId], context.previousTransactions);
       }
       const message =
         error instanceof DatabaseError ? error.message : 'Failed to update transaction';
@@ -49,14 +49,14 @@ export function useTransactionMutations() {
       showSuccess('Transaction updated');
     },
     onSettled: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', booksetId] });
     },
   });
 
   const deleteTransactionMutation = useMutation({
     mutationFn: (transactionId: string) => deleteTransaction(transactionId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', booksetId] });
       showSuccess('Transaction deleted');
     },
     onError: (error) => {
@@ -79,7 +79,7 @@ export function useTransactionMutations() {
       throw new Error('Unknown bulk operation type');
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['transactions'] });
+      queryClient.invalidateQueries({ queryKey: ['transactions', booksetId] });
       showSuccess('Transactions updated');
     },
     onError: (error) => {

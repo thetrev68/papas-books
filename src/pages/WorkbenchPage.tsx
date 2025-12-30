@@ -28,7 +28,9 @@ export default function WorkbenchPage() {
   const [historyTransaction, setHistoryTransaction] = useState<Transaction | null>(null);
 
   const { transactions, isLoading, filter, setFilter } = useWorkbenchData(activeBookset?.id || '');
-  const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations();
+  const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations(
+    activeBookset?.id || ''
+  );
 
   // Optimistic locking for concurrent edit detection
   const { conflictData, checkForConflict, resolveConflict, hasConflict, clearConflict } =
