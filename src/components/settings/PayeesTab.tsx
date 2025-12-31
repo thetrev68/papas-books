@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import {
@@ -12,7 +12,7 @@ import {
 } from '@tanstack/react-table';
 import { fetchPayees, deletePayee, updatePayee } from '../../lib/supabase/payees';
 import { fetchCategories } from '../../lib/supabase/categories';
-import type { Payee } from '../../types/database';
+import type { Payee, Category } from '../../types/database';
 import PayeeFormModal from './PayeeFormModal';
 import { useToast } from '../GlobalToastProvider';
 
@@ -39,6 +39,47 @@ export default function PayeesTab() {
     queryFn: () => fetchCategories(activeBookset!.id),
     enabled: !!activeBookset,
   });
+
+  // Helper to process categories with parent:child format
+  const sortedCategories = useMemo(() => {
+    if (!categories) return [];
+
+    const categoryMap = new Map(categories.map((c) => [c.id, c]));
+
+    const getRoot = (cat: Category): Category => {
+      let current = cat;
+      const seen = new Set<string>();
+      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
+        if (seen.has(current.id)) break;
+        seen.add(current.id);
+        current = categoryMap.get(current.parent_category_id)!;
+      }
+      return current;
+    };
+
+    const getFullName = (cat: Category) => {
+      if (!cat.parent_category_id) return cat.name;
+      const parent = categoryMap.get(cat.parent_category_id);
+      return parent ? `${parent.name}: ${cat.name}` : cat.name;
+    };
+
+    return [...categories]
+      .sort((a, b) => {
+        const rootA = getRoot(a);
+        const rootB = getRoot(b);
+        const isIncomeA = rootA.name === 'Income';
+        const isIncomeB = rootB.name === 'Income';
+
+        if (isIncomeA && !isIncomeB) return -1;
+        if (!isIncomeA && isIncomeB) return 1;
+
+        return getFullName(a).localeCompare(getFullName(b));
+      })
+      .map((cat) => ({
+        ...cat,
+        displayName: getFullName(cat),
+      }));
+  }, [categories]);
 
   const updateMutation = useMutation({
     mutationFn: ({ id, data }: { id: string; data: Partial<Payee> }) => updatePayee(id, data),
@@ -108,12 +149,12 @@ export default function PayeesTab() {
               data: { default_category_id: e.target.value || null },
             })
           }
-          className="w-full bg-transparent border-b border-transparent hover:border-neutral-300 dark:hover:border-gray-600 dark:border-gray-600 focus:border-brand-500 focus:outline-none py-1"
+          className="w-full p-2 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
         >
           <option value="">No default category</option>
-          {categories?.map((cat) => (
+          {sortedCategories.map((cat) => (
             <option key={cat.id} value={cat.id}>
-              {cat.name}
+              {cat.displayName}
             </option>
           ))}
         </select>
