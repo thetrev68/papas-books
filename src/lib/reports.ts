@@ -53,6 +53,18 @@ export interface YearComparisonRow {
   isIncome: boolean; // True if category is income-based (positive amounts)
 }
 
+/**
+ * Returns a full category name in "Parent: Child" format
+ */
+export function getCategoryFullName(category: Category, allCategories: Category[]): string {
+  const categoryMap = new Map(allCategories.map((c) => [c.id, c]));
+
+  if (!category.parent_category_id) return category.name;
+
+  const parent = categoryMap.get(category.parent_category_id);
+  return parent ? `${parent.name}: ${category.name}` : category.name;
+}
+
 export function generateCategoryReport(
   transactions: Transaction[],
   categories: Category[]
@@ -91,7 +103,7 @@ export function generateCategoryReport(
     const category = categoryLookup.get(categoryId);
     // If category is not found (e.g. 'uncategorized'), handle gracefully
     const categoryName = category
-      ? category.name
+      ? getCategoryFullName(category, categories)
       : categoryId === 'uncategorized'
         ? 'Uncategorized'
         : 'Unknown Category';
@@ -209,7 +221,10 @@ export function generateTaxLineReport(
       transactionCount: data.count,
       isIncome: data.amount > 0,
       categoryNames: Array.from(data.categoryIds)
-        .map((id) => categoryMap.get(id)?.name || 'Unknown')
+        .map((id) => {
+          const cat = categoryMap.get(id);
+          return cat ? getCategoryFullName(cat, categories) : 'Unknown';
+        })
         .sort(),
     }))
     .sort((a, b) => a.taxLineItem.localeCompare(b.taxLineItem));
@@ -262,7 +277,7 @@ export function generateCpaExport(
     // Helper to create a row for each line item
     const createRow = (categoryId: string, amount: number, memo?: string): CpaExportRow => {
       const category = categoryMap.get(categoryId);
-      const categoryName = category?.name || 'Uncategorized';
+      const categoryName = category ? getCategoryFullName(category, categories) : 'Uncategorized';
       const taxLineItem = category?.tax_line_item || '';
 
       return {
