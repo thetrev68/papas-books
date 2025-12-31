@@ -6,6 +6,9 @@ import {
   exportTaxReportToCsv,
   generateCpaExport,
   exportCpaExportToCsv,
+  generateQuarterlyReport,
+  exportQuarterlyReportToCsv,
+  QuarterlySummary,
 } from './reports';
 import { Transaction, Category, Account, Payee } from '../types/database';
 import { ReportFilter } from '../types/reconcile';
@@ -890,6 +893,315 @@ describe('Reporting Logic', () => {
       const lines = csv.split('\n');
 
       expect(lines[1]).toBe('2024-01-15,Checking,,Unknown,Uncategorized,,-50.00,');
+    });
+  });
+
+  describe('generateQuarterlyReport', () => {
+    // Helper to create mock transaction for quarterly tests
+    const mockQuarterlyTx = (id: string, date: string, amount: number): Transaction => ({
+      id,
+      bookset_id: 'test-bookset',
+      account_id: 'test-account',
+      date, // ISO format: "2024-01-15"
+      amount, // In cents
+      payee_id: null,
+      payee: null,
+      original_description: 'Test',
+      is_split: false,
+      is_reviewed: false,
+      is_archived: false,
+      reconciled: false,
+      lines: [{ category_id: 'test-cat', amount, memo: '' }], // Must have at least one line
+      created_by: 'user',
+      last_modified_by: 'user',
+      created_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
+      source_batch_id: null,
+      fingerprint: 'fp',
+      import_date: '2024-01-01',
+    });
+
+    it('should correctly assign transactions to quarters', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000), // Q1 income
+        mockQuarterlyTx('2', '2024-02-01', -5000), // Q1 expense
+        mockQuarterlyTx('3', '2024-04-10', 20000), // Q2 income
+        mockQuarterlyTx('4', '2024-07-01', 15000), // Q3 income
+        mockQuarterlyTx('5', '2024-10-31', -8000), // Q4 expense
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result).toHaveLength(4);
+      expect(result[0]).toMatchObject({
+        quarter: 1,
+        year: 2024,
+        totalIncome: 10000,
+        totalExpenses: 5000,
+        transactionCount: 2,
+      });
+      expect(result[1]).toMatchObject({
+        quarter: 2,
+        totalIncome: 20000,
+        totalExpenses: 0,
+        transactionCount: 1,
+      });
+      expect(result[2]).toMatchObject({
+        quarter: 3,
+        totalIncome: 15000,
+        totalExpenses: 0,
+        transactionCount: 1,
+      });
+      expect(result[3]).toMatchObject({
+        quarter: 4,
+        totalIncome: 0,
+        totalExpenses: 8000,
+        transactionCount: 1,
+      });
+    });
+
+    it('should calculate net income correctly', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000), // $100 income
+        mockQuarterlyTx('2', '2024-01-20', -3000), // $30 expense
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].netIncome).toBe(7000); // $70 net
+    });
+
+    it('should calculate estimated tax at specified rate', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000), // $100 income
+        mockQuarterlyTx('2', '2024-01-20', -3000), // $30 expense
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.3); // 30% rate
+
+      expect(result[0].netIncome).toBe(7000); // $70 net
+      expect(result[0].estimatedTax).toBe(2100); // $70 * 0.30 = $21
+    });
+
+    it('should clamp negative tax to zero (net loss)', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 5000), // $50 income
+        mockQuarterlyTx('2', '2024-01-20', -8000), // $80 expense
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].netIncome).toBe(-3000); // -$30 net (loss)
+      expect(result[0].estimatedTax).toBe(0); // No tax on loss
+    });
+
+    it('should handle empty quarters gracefully', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000), // Only Q1
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result).toHaveLength(4);
+      expect(result[0].transactionCount).toBe(1);
+      expect(result[1].transactionCount).toBe(0);
+      expect(result[2].transactionCount).toBe(0);
+      expect(result[3].transactionCount).toBe(0);
+
+      expect(result[1].totalIncome).toBe(0);
+      expect(result[1].totalExpenses).toBe(0);
+      expect(result[1].netIncome).toBe(0);
+      expect(result[1].estimatedTax).toBe(0);
+    });
+
+    it('should skip transactions without lines', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000),
+        {
+          ...mockQuarterlyTx('2', '2024-01-20', 5000),
+          lines: [], // No lines (uncategorized)
+        },
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].transactionCount).toBe(1); // Only first transaction counted
+      expect(result[0].totalIncome).toBe(10000);
+    });
+
+    it('should handle transactions on quarter boundaries', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-03-31', 10000), // Last day of Q1
+        mockQuarterlyTx('2', '2024-04-01', 20000), // First day of Q2
+        mockQuarterlyTx('3', '2024-06-30', 15000), // Last day of Q2
+        mockQuarterlyTx('4', '2024-07-01', 5000), // First day of Q3
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].totalIncome).toBe(10000); // Q1: March 31
+      expect(result[1].totalIncome).toBe(35000); // Q2: April 1 + June 30
+      expect(result[2].totalIncome).toBe(5000); // Q3: July 1
+    });
+
+    it('should count income and expense transactions separately', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-05', 10000), // Income
+        mockQuarterlyTx('2', '2024-01-10', 8000), // Income
+        mockQuarterlyTx('3', '2024-01-15', -3000), // Expense
+        mockQuarterlyTx('4', '2024-01-20', -2000), // Expense
+        mockQuarterlyTx('5', '2024-01-25', -1000), // Expense
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].transactionCount).toBe(5);
+      expect(result[0].incomeTransactionCount).toBe(2);
+      expect(result[0].expenseTransactionCount).toBe(3);
+    });
+
+    it('should skip zero-amount transactions', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000), // Income
+        mockQuarterlyTx('2', '2024-01-20', 0), // Zero (transfer?)
+        mockQuarterlyTx('3', '2024-01-25', -5000), // Expense
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].transactionCount).toBe(3); // All counted
+      expect(result[0].incomeTransactionCount).toBe(1);
+      expect(result[0].expenseTransactionCount).toBe(1);
+      expect(result[0].totalIncome).toBe(10000);
+      expect(result[0].totalExpenses).toBe(5000);
+    });
+
+    it('should generate correct quarter labels and date ranges', () => {
+      const transactions = [
+        mockQuarterlyTx('1', '2024-01-15', 10000),
+        mockQuarterlyTx('2', '2024-04-15', 10000),
+        mockQuarterlyTx('3', '2024-07-15', 10000),
+        mockQuarterlyTx('4', '2024-10-15', 10000),
+      ];
+
+      const result = generateQuarterlyReport(transactions, 0.25);
+
+      expect(result[0].quarterLabel).toBe('Q1 2024');
+      expect(result[0].dateRange).toBe('Jan 1 - Mar 31, 2024');
+
+      expect(result[1].quarterLabel).toBe('Q2 2024');
+      expect(result[1].dateRange).toBe('Apr 1 - Jun 30, 2024');
+
+      expect(result[2].quarterLabel).toBe('Q3 2024');
+      expect(result[2].dateRange).toBe('Jul 1 - Sep 30, 2024');
+
+      expect(result[3].quarterLabel).toBe('Q4 2024');
+      expect(result[3].dateRange).toBe('Oct 1 - Dec 31, 2024');
+    });
+
+    it('should handle different tax rates', () => {
+      const transactions = [mockQuarterlyTx('1', '2024-01-15', 10000)]; // $100 income
+
+      const result10 = generateQuarterlyReport(transactions, 0.1); // 10%
+      const result25 = generateQuarterlyReport(transactions, 0.25); // 25%
+      const result40 = generateQuarterlyReport(transactions, 0.4); // 40%
+
+      expect(result10[0].estimatedTax).toBe(1000); // $10
+      expect(result25[0].estimatedTax).toBe(2500); // $25
+      expect(result40[0].estimatedTax).toBe(4000); // $40
+    });
+
+    it('should use default tax rate of 25% when not specified', () => {
+      const transactions = [mockQuarterlyTx('1', '2024-01-15', 10000)]; // $100 income
+
+      const result = generateQuarterlyReport(transactions); // No rate specified
+
+      expect(result[0].estimatedTax).toBe(2500); // $100 * 0.25 = $25
+    });
+  });
+
+  describe('exportQuarterlyReportToCsv', () => {
+    it('should export quarterly data to CSV format', () => {
+      const summary: QuarterlySummary[] = [
+        {
+          quarter: 1,
+          year: 2024,
+          quarterLabel: 'Q1 2024',
+          dateRange: 'Jan 1 - Mar 31, 2024',
+          totalIncome: 10000,
+          totalExpenses: 3000,
+          netIncome: 7000,
+          estimatedTax: 1750,
+          transactionCount: 5,
+          incomeTransactionCount: 3,
+          expenseTransactionCount: 2,
+        },
+        {
+          quarter: 2,
+          year: 2024,
+          quarterLabel: 'Q2 2024',
+          dateRange: 'Apr 1 - Jun 30, 2024',
+          totalIncome: 15000,
+          totalExpenses: 5000,
+          netIncome: 10000,
+          estimatedTax: 2500,
+          transactionCount: 8,
+          incomeTransactionCount: 5,
+          expenseTransactionCount: 3,
+        },
+      ];
+
+      const csv = exportQuarterlyReportToCsv(summary);
+
+      expect(csv).toContain(
+        'Quarter,Date Range,Total Income,Total Expenses,Net Income,Estimated Tax,Transaction Count'
+      );
+      expect(csv).toContain('"Q1 2024","Jan 1 - Mar 31, 2024",100.00,30.00,70.00,17.50,5');
+      expect(csv).toContain('"Q2 2024","Apr 1 - Jun 30, 2024",150.00,50.00,100.00,25.00,8');
+    });
+
+    it('should format amounts as decimals with two places', () => {
+      const summary: QuarterlySummary[] = [
+        {
+          quarter: 1,
+          year: 2024,
+          quarterLabel: 'Q1 2024',
+          dateRange: 'Jan 1 - Mar 31, 2024',
+          totalIncome: 12345, // $123.45
+          totalExpenses: 6789, // $67.89
+          netIncome: 5556, // $55.56
+          estimatedTax: 1389, // $13.89
+          transactionCount: 10,
+          incomeTransactionCount: 6,
+          expenseTransactionCount: 4,
+        },
+      ];
+
+      const csv = exportQuarterlyReportToCsv(summary);
+
+      expect(csv).toContain('123.45,67.89,55.56,13.89');
+    });
+
+    it('should handle negative net income', () => {
+      const summary: QuarterlySummary[] = [
+        {
+          quarter: 1,
+          year: 2024,
+          quarterLabel: 'Q1 2024',
+          dateRange: 'Jan 1 - Mar 31, 2024',
+          totalIncome: 5000,
+          totalExpenses: 8000,
+          netIncome: -3000, // Loss
+          estimatedTax: 0, // Clamped to 0
+          transactionCount: 5,
+          incomeTransactionCount: 2,
+          expenseTransactionCount: 3,
+        },
+      ];
+
+      const csv = exportQuarterlyReportToCsv(summary);
+
+      expect(csv).toContain('50.00,80.00,-30.00,0.00,5');
     });
   });
 });

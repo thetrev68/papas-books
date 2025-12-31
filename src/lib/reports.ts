@@ -21,6 +21,23 @@ export interface CpaExportRow {
   memo: string;
 }
 
+/**
+ * Summary of income, expenses, and estimated tax for a single quarter
+ */
+export interface QuarterlySummary {
+  quarter: 1 | 2 | 3 | 4; // Quarter number
+  year: number; // Year (e.g., 2024)
+  quarterLabel: string; // Display label: "Q1 2024"
+  dateRange: string; // Human-readable: "Jan 1 - Mar 31, 2024"
+  totalIncome: number; // In cents (sum of all positive amounts)
+  totalExpenses: number; // In cents (sum of all negative amounts, stored as positive)
+  netIncome: number; // In cents (totalIncome - totalExpenses)
+  estimatedTax: number; // In cents (netIncome * taxRate, clamped to 0 if negative)
+  transactionCount: number; // Total transactions in quarter
+  incomeTransactionCount: number; // Count of income transactions
+  expenseTransactionCount: number; // Count of expense transactions
+}
+
 export function generateCategoryReport(
   transactions: Transaction[],
   categories: Category[]
@@ -304,4 +321,136 @@ export function exportCpaExportToCsv(rows: CpaExportRow[]): string {
   );
 
   return [headerRow, ...dataRows].join('\n');
+}
+
+/**
+ * Generates quarterly estimated tax report
+ * Groups transactions by calendar quarter and calculates income, expenses, and estimated tax
+ *
+ * @param transactions - All transactions to analyze (should be pre-filtered by date/account)
+ * @param taxRate - Estimated tax rate as decimal (e.g., 0.25 = 25%)
+ * @returns Array of 4 quarterly summaries, one per quarter, sorted Q1-Q4
+ *
+ * @example
+ * const summary = generateQuarterlyReport(transactions, 0.30); // 30% tax rate
+ */
+export function generateQuarterlyReport(
+  transactions: Transaction[],
+  taxRate: number = 0.25
+): QuarterlySummary[] {
+  // 1. Initialize accumulators for each quarter
+  const quarterData: Record<
+    1 | 2 | 3 | 4,
+    {
+      income: number;
+      expenses: number;
+      totalCount: number;
+      incomeCount: number;
+      expenseCount: number;
+      year: number | null; // Track year for mixed-year datasets
+    }
+  > = {
+    1: { income: 0, expenses: 0, totalCount: 0, incomeCount: 0, expenseCount: 0, year: null },
+    2: { income: 0, expenses: 0, totalCount: 0, incomeCount: 0, expenseCount: 0, year: null },
+    3: { income: 0, expenses: 0, totalCount: 0, incomeCount: 0, expenseCount: 0, year: null },
+    4: { income: 0, expenses: 0, totalCount: 0, incomeCount: 0, expenseCount: 0, year: null },
+  };
+
+  // 2. Process transactions
+  for (const tx of transactions) {
+    // Skip transactions without lines (uncategorized imports, etc.)
+    if (!tx.lines || tx.lines.length === 0) {
+      continue;
+    }
+
+    // Parse date to determine quarter
+    // tx.date is in YYYY-MM-DD format, parse as local date to avoid timezone issues
+    const [yearStr, monthStr] = tx.date.split('-');
+    const year = parseInt(yearStr, 10);
+    const month = parseInt(monthStr, 10) - 1; // Convert to 0-indexed (1-12 -> 0-11)
+    const quarter = (Math.floor(month / 3) + 1) as 1 | 2 | 3 | 4;
+
+    // Track year (use first transaction's year for each quarter)
+    if (quarterData[quarter].year === null) {
+      quarterData[quarter].year = year;
+    }
+
+    // Accumulate amounts
+    quarterData[quarter].totalCount += 1;
+
+    if (tx.amount > 0) {
+      // Income (positive amount)
+      quarterData[quarter].income += tx.amount;
+      quarterData[quarter].incomeCount += 1;
+    } else if (tx.amount < 0) {
+      // Expense (negative amount - convert to positive for storage)
+      quarterData[quarter].expenses += Math.abs(tx.amount);
+      quarterData[quarter].expenseCount += 1;
+    }
+    // Skip zero-amount transactions (transfers, etc.)
+  }
+
+  // 3. Helper to get quarter date range string
+  const getQuarterDateRange = (q: 1 | 2 | 3 | 4, year: number): string => {
+    const ranges: Record<1 | 2 | 3 | 4, string> = {
+      1: `Jan 1 - Mar 31, ${year}`,
+      2: `Apr 1 - Jun 30, ${year}`,
+      3: `Jul 1 - Sep 30, ${year}`,
+      4: `Oct 1 - Dec 31, ${year}`,
+    };
+    return ranges[q];
+  };
+
+  // 4. Convert to summary array
+  const currentYear = new Date().getFullYear(); // Fallback if no transactions
+
+  return ([1, 2, 3, 4] as const).map((q) => {
+    const data = quarterData[q];
+    const year = data.year ?? currentYear;
+    const netIncome = data.income - data.expenses;
+    const estimatedTax = Math.max(0, Math.round(netIncome * taxRate));
+
+    return {
+      quarter: q,
+      year,
+      quarterLabel: `Q${q} ${year}`,
+      dateRange: getQuarterDateRange(q, year),
+      totalIncome: data.income,
+      totalExpenses: data.expenses,
+      netIncome,
+      estimatedTax,
+      transactionCount: data.totalCount,
+      incomeTransactionCount: data.incomeCount,
+      expenseTransactionCount: data.expenseCount,
+    };
+  });
+}
+
+/**
+ * Export quarterly report to CSV format
+ * @param summary - Array of quarterly summaries
+ * @returns CSV string with headers and data rows
+ */
+export function exportQuarterlyReportToCsv(summary: QuarterlySummary[]): string {
+  const header =
+    'Quarter,Date Range,Total Income,Total Expenses,Net Income,Estimated Tax,Transaction Count';
+
+  const rows = summary.map((q) => {
+    const income = (q.totalIncome / 100).toFixed(2);
+    const expenses = (q.totalExpenses / 100).toFixed(2);
+    const net = (q.netIncome / 100).toFixed(2);
+    const tax = (q.estimatedTax / 100).toFixed(2);
+
+    return [
+      `"${q.quarterLabel}"`,
+      `"${q.dateRange}"`,
+      income,
+      expenses,
+      net,
+      tax,
+      q.transactionCount,
+    ].join(',');
+  });
+
+  return [header, ...rows].join('\n');
 }
