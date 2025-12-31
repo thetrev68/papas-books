@@ -2,6 +2,17 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.2.0](https://github.com/thetrev68/papas-books/compare/v1.1.3...v1.2.0) (2025-12-31)
+
+### Features
+
+- implement tax form report with tax line item grouping ([70802e5](https://github.com/thetrev68/papas-books/commit/70802e52d3790ebcd6aeec2c0436c3e5d25f5f7c))
+
+### Documentation
+
+- add tax preparation feature recommendations and implementation plans ([66792cd](https://github.com/thetrev68/papas-books/commit/66792cdeb2296e7110dbae203b29b69d9e3212a0))
+- create comprehensive implementation plans for tax features ([8c01f39](https://github.com/thetrev68/papas-books/commit/8c01f397fb5a1f264e661423333b553113d92a1f))
+
 ## [1.1.3](https://github.com/thetrev68/papas-books/compare/v1.1.2...v1.1.3) (2025-12-30)
 
 ## [1.1.2](https://github.com/thetrev68/papas-books/compare/v1.1.1...v1.1.2) (2025-12-30)
