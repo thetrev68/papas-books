@@ -2,6 +2,16 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.0](https://github.com/thetrev68/papas-books/compare/v1.7.0...v1.8.0) (2025-12-31)
+
+### Features
+
+- **settings:** format default category as Parent: Child in PayeesTab and update dropdown style ([39e9e2e](https://github.com/thetrev68/papas-books/commit/39e9e2e0db87c28184641b8ac262b2165647c0cf))
+
+### Code Improvements
+
+- **ui:** replace all browser dialogs with toast confirmations ([9374d6e](https://github.com/thetrev68/papas-books/commit/9374d6ed84a53ba64cb8bf5d58c5bac8e2d106b3))
+
 ## [1.7.0](https://github.com/thetrev68/papas-books/compare/v1.6.0...v1.7.0) (2025-12-31)
 
 ### Features
