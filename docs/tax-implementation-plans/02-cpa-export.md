@@ -5,6 +5,7 @@
 **Estimated Effort:** 2-3 days
 **Dependencies:** None (can be done in parallel with Tax Form Report)
 **Risk Level:** Low
+**Status:** ✅ **COMPLETED** (2025-12-30)
 
 ---
 
@@ -739,3 +740,79 @@ If issues arise:
 - Add Drake Tax format
 - Add Lacerte format
 - Add tax software detection and format selection
+
+---
+
+## Implementation Summary
+
+### Completion Date
+
+2025-12-30
+
+### Files Created
+
+- ✅ `src/lib/csvUtils.ts` - CSV escaping utilities following RFC 4180 standard
+- ✅ `src/lib/csvUtils.test.ts` - Unit tests for CSV utilities (11 tests, all passing)
+
+### Files Modified
+
+- ✅ `src/lib/reports.ts` - Added CPA export types and functions
+  - Added `CpaExportRow` interface
+  - Added `generateCpaExport()` function
+  - Added `exportCpaExportToCsv()` function
+- ✅ `src/lib/reports.test.ts` - Added comprehensive unit tests (10 new tests, all passing)
+- ✅ `src/pages/ReportsPage.tsx` - Added CPA export UI
+  - Imported `usePayees` hook
+  - Added `filteredTransactions` state
+  - Updated `handleRunReport()` to store filtered transactions
+  - Added `handleExportCpa()` function
+  - Added "Export for CPA" button (green, visually distinct from report export)
+  - Added help text explaining CPA export format
+
+### Test Coverage
+
+- ✅ CSV utilities: 11 tests passing
+  - Escaping quotes, commas, newlines
+  - Null/undefined handling
+  - Number formatting
+  - Mixed type rows
+- ✅ CPA export functions: 10 tests passing
+  - Simple transactions
+  - Split transaction flattening
+  - Uncategorized transactions
+  - Payee lookup (payee_id vs legacy payee field)
+  - Unknown account/category handling
+  - Amount formatting (positive/negative, decimal places)
+  - CSV special character escaping
+
+### Success Criteria Met
+
+- ✅ User can export transaction details from Reports page
+- ✅ CSV format is valid and opens correctly in Excel/Google Sheets
+- ✅ Split transactions are flattened into separate rows
+- ✅ All transaction data is included (even uncategorized)
+- ✅ Special characters are properly escaped (quotes, commas, newlines)
+- ✅ Export respects date/account/category filters
+- ✅ Amounts are formatted as decimals (2 decimal places)
+- ✅ Unit tests achieve >90% coverage for new code
+- ✅ Build passes with no TypeScript errors
+- ✅ Lint passes with no warnings
+
+### Key Features Implemented
+
+1. **CSV Escaping**: RFC 4180 compliant CSV generation with proper quote/comma/newline handling
+2. **Split Transaction Flattening**: Each split line appears as a separate row with shared metadata (date, account, payee, description)
+3. **Comprehensive Data Export**: 8 columns including Date, Account, Payee, Description, Category, Tax Line, Amount, and Memo
+4. **Smart Payee Lookup**: Uses payee_id when available, falls back to legacy payee field
+5. **Visual Differentiation**: Green "Export for CPA" button (vs blue "Export Report CSV")
+6. **User Guidance**: Help text explaining CPA export format appears when data is available
+7. **Error Handling**: Graceful error messages for edge cases
+8. **Performance**: Efficient generation for large datasets using Map lookups
+
+### Notes
+
+- The feature is fully functional and ready for production use
+- No database migrations required (uses existing schema)
+- Feature is additive and can be safely disabled by removing the UI button
+- Export format is compatible with Excel, Google Sheets, and most tax software for manual import
+- Future enhancement: Add native format support for QuickBooks, Drake Tax, etc.

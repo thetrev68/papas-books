@@ -4,8 +4,10 @@ import {
   exportReportToCsv,
   generateTaxLineReport,
   exportTaxReportToCsv,
+  generateCpaExport,
+  exportCpaExportToCsv,
 } from './reports';
-import { Transaction, Category } from '../types/database';
+import { Transaction, Category, Account, Payee } from '../types/database';
 import { ReportFilter } from '../types/reconcile';
 
 describe('Reporting Logic', () => {
@@ -15,7 +17,7 @@ describe('Reporting Logic', () => {
     date: string,
     categoryId: string,
     isSplit = false,
-    lines: { category_id: string; amount: number }[] = []
+    lines: { category_id: string; amount: number; memo?: string }[] = []
   ): Transaction => ({
     id,
     amount,
@@ -553,6 +555,341 @@ describe('Reporting Logic', () => {
       const lines = csv.split('\n');
 
       expect(lines[1]).toBe('"Schedule C Line 8",-10.00,1,""');
+    });
+  });
+
+  describe('generateCpaExport', () => {
+    const accounts: Account[] = [
+      {
+        id: 'acc1',
+        name: 'Business Checking',
+        bookset_id: 'b1',
+        type: 'Asset',
+        opening_balance: 0,
+        opening_balance_date: '2023-01-01',
+        last_reconciled_date: null,
+        last_reconciled_balance: 0,
+        created_at: '2023-01-01',
+        updated_at: '2023-01-01',
+        is_archived: false,
+        created_by: 'u1',
+        last_modified_by: 'u1',
+      },
+    ];
+
+    const payees: Payee[] = [
+      {
+        id: 'payee1',
+        name: 'Starbucks',
+        bookset_id: 'b1',
+        default_category_id: null,
+        created_at: '2023-01-01',
+        updated_at: '2023-01-01',
+        created_by: 'u1',
+        last_modified_by: 'u1',
+      },
+      {
+        id: 'payee2',
+        name: 'Amazon',
+        bookset_id: 'b1',
+        default_category_id: null,
+        created_at: '2023-01-01',
+        updated_at: '2023-01-01',
+        created_by: 'u1',
+        last_modified_by: 'u1',
+      },
+    ];
+
+    const categoriesWithTax: Category[] = [
+      {
+        id: 'cat1',
+        name: 'Meals',
+        tax_line_item: 'Schedule C Line 24b',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        is_tax_deductible: true,
+        parent_category_id: null,
+      },
+      {
+        id: 'cat2',
+        name: 'Office Supplies',
+        tax_line_item: 'Schedule C Line 18',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        is_tax_deductible: true,
+        parent_category_id: null,
+      },
+      {
+        id: 'cat3',
+        name: 'Software',
+        tax_line_item: 'Schedule C Line 18',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        is_tax_deductible: true,
+        parent_category_id: null,
+      },
+    ];
+
+    it('should export simple transaction', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', 'cat1'),
+          account_id: 'acc1',
+          original_description: 'Coffee Shop',
+          payee: null,
+          payee_id: 'payee1',
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        date: '2024-01-15',
+        accountName: 'Business Checking',
+        payeeName: 'Starbucks',
+        description: 'Coffee Shop',
+        categoryName: 'Meals',
+        taxLineItem: 'Schedule C Line 24b',
+        amount: '-50.00',
+        memo: '',
+      });
+    });
+
+    it('should flatten split transactions', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -10000, '2024-01-15', '', true, [
+            { category_id: 'cat2', amount: -6000, memo: 'Office supplies' },
+            { category_id: 'cat3', amount: -4000, memo: 'Software' },
+          ]),
+          account_id: 'acc1',
+          original_description: 'Amazon Purchase',
+          payee: null,
+          payee_id: 'payee2',
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result).toHaveLength(2);
+      expect(result[0]).toMatchObject({
+        categoryName: 'Office Supplies',
+        amount: '-60.00',
+        memo: 'Office supplies',
+      });
+      expect(result[1]).toMatchObject({
+        categoryName: 'Software',
+        amount: '-40.00',
+        memo: 'Software',
+      });
+    });
+
+    it('should handle uncategorized transactions', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', '', false, []),
+          account_id: 'acc1',
+          original_description: 'Unknown Charge',
+          payee: 'Unknown',
+          payee_id: null,
+        },
+      ];
+
+      const result = generateCpaExport(transactions, [], [], []);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        categoryName: 'Uncategorized',
+        taxLineItem: '',
+        payeeName: 'Unknown',
+        amount: '-50.00',
+      });
+    });
+
+    it('should use payee_id over legacy payee field', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', 'cat1'),
+          account_id: 'acc1',
+          original_description: 'Coffee',
+          payee: 'Legacy Payee Name',
+          payee_id: 'payee1',
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result[0].payeeName).toBe('Starbucks'); // From payee_id, not legacy field
+    });
+
+    it('should fall back to legacy payee field when payee_id is null', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', 'cat1'),
+          account_id: 'acc1',
+          original_description: 'Coffee',
+          payee: 'Legacy Payee',
+          payee_id: null,
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result[0].payeeName).toBe('Legacy Payee');
+    });
+
+    it('should handle unknown account gracefully', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', 'cat1'),
+          account_id: 'unknown-account',
+          payee_id: 'payee1',
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result[0].accountName).toBe('Unknown Account');
+    });
+
+    it('should handle unknown category gracefully', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', 'unknown-cat'),
+          account_id: 'acc1',
+          payee_id: 'payee1',
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result[0].categoryName).toBe('Uncategorized');
+      expect(result[0].taxLineItem).toBe('');
+    });
+
+    it('should handle missing payee_id and payee gracefully', () => {
+      const transactions = [
+        {
+          ...mockTx('1', -5000, '2024-01-15', 'cat1'),
+          account_id: 'acc1',
+          payee: null,
+          payee_id: null,
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result[0].payeeName).toBe('');
+    });
+
+    it('should format positive amounts correctly', () => {
+      const transactions = [
+        {
+          ...mockTx('1', 10000, '2024-01-15', 'cat1'),
+          account_id: 'acc1',
+          payee_id: 'payee1',
+        },
+      ];
+
+      const result = generateCpaExport(transactions, categoriesWithTax, accounts, payees);
+
+      expect(result[0].amount).toBe('100.00');
+    });
+  });
+
+  describe('exportCpaExportToCsv', () => {
+    it('should export CPA data to CSV with proper formatting', () => {
+      const rows = [
+        {
+          date: '2024-01-15',
+          accountName: 'Business Checking',
+          payeeName: 'Starbucks',
+          description: 'Coffee Shop',
+          categoryName: 'Meals',
+          taxLineItem: 'Schedule C Line 24b',
+          amount: '-50.00',
+          memo: '',
+        },
+        {
+          date: '2024-01-16',
+          accountName: 'Business Checking',
+          payeeName: 'Amazon',
+          description: 'Office supplies',
+          categoryName: 'Office Supplies',
+          taxLineItem: 'Schedule C Line 18',
+          amount: '-60.00',
+          memo: 'Paper and pens',
+        },
+      ];
+
+      const csv = exportCpaExportToCsv(rows);
+      const lines = csv.split('\n');
+
+      expect(lines[0]).toBe('Date,Account,Payee,Description,Category,Tax Line,Amount,Memo');
+      expect(lines[1]).toBe(
+        '2024-01-15,Business Checking,Starbucks,Coffee Shop,Meals,Schedule C Line 24b,-50.00,'
+      );
+      expect(lines[2]).toBe(
+        '2024-01-16,Business Checking,Amazon,Office supplies,Office Supplies,Schedule C Line 18,-60.00,Paper and pens'
+      );
+    });
+
+    it('should escape CSV special characters', () => {
+      const rows = [
+        {
+          date: '2024-01-15',
+          accountName: 'Checking',
+          payeeName: 'Smith, John',
+          description: 'He said "hello"',
+          categoryName: 'Meals',
+          taxLineItem: 'Schedule C Line 24b',
+          amount: '-50.00',
+          memo: 'Line 1\nLine 2',
+        },
+      ];
+
+      const csv = exportCpaExportToCsv(rows);
+
+      // Should properly escape comma in payee, quotes in description, and newline in memo
+      expect(csv).toContain('"Smith, John"');
+      expect(csv).toContain('"He said ""hello"""');
+      expect(csv).toContain('"Line 1\nLine 2"');
+    });
+
+    it('should handle empty values', () => {
+      const rows = [
+        {
+          date: '2024-01-15',
+          accountName: 'Checking',
+          payeeName: '',
+          description: 'Unknown',
+          categoryName: 'Uncategorized',
+          taxLineItem: '',
+          amount: '-50.00',
+          memo: '',
+        },
+      ];
+
+      const csv = exportCpaExportToCsv(rows);
+      const lines = csv.split('\n');
+
+      expect(lines[1]).toBe('2024-01-15,Checking,,Unknown,Uncategorized,,-50.00,');
     });
   });
 });

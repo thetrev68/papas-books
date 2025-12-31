@@ -1,5 +1,6 @@
-import { Transaction, Category } from '../types/database';
+import { Transaction, Category, Account, Payee } from '../types/database';
 import { CategorySummary, ReportExportRow, ReportFilter } from '../types/reconcile';
+import { formatCsvRow } from './csvUtils';
 
 export interface TaxLineSummary {
   taxLineItem: string;
@@ -7,6 +8,17 @@ export interface TaxLineSummary {
   transactionCount: number;
   isIncome: boolean;
   categoryNames: string[]; // List of categories using this tax line
+}
+
+export interface CpaExportRow {
+  date: string;
+  accountName: string;
+  payeeName: string;
+  description: string;
+  categoryName: string;
+  taxLineItem: string;
+  amount: string; // Formatted as decimal (e.g., "-150.00")
+  memo: string;
 }
 
 export function generateCategoryReport(
@@ -182,4 +194,114 @@ export function exportTaxReportToCsv(summary: TaxLineSummary[]): string {
     return `"${r.taxLineItem}",${amount},${r.transactionCount},"${categories}"`;
   });
   return [header, ...rows].join('\n');
+}
+
+/**
+ * Generates CPA-ready export with one row per transaction line
+ * Split transactions are flattened into multiple rows
+ */
+export function generateCpaExport(
+  transactions: Transaction[],
+  categories: Category[],
+  accounts: Account[],
+  payees: Payee[]
+): CpaExportRow[] {
+  // Build lookup maps for fast access
+  const categoryMap = new Map(categories.map((c) => [c.id, c]));
+  const accountMap = new Map(accounts.map((a) => [a.id, a]));
+  const payeeMap = new Map(payees.map((p) => [p.id, p]));
+
+  const rows: CpaExportRow[] = [];
+
+  for (const tx of transactions) {
+    const accountName = accountMap.get(tx.account_id)?.name || 'Unknown Account';
+    const date = tx.date;
+    const description = tx.original_description;
+
+    // Determine payee name
+    // Priority: payee_id lookup > legacy payee field > empty
+    let payeeName = '';
+    if (tx.payee_id) {
+      payeeName = payeeMap.get(tx.payee_id)?.name || '';
+    } else if (tx.payee) {
+      payeeName = tx.payee;
+    }
+
+    // Helper to create a row for each line item
+    const createRow = (categoryId: string, amount: number, memo?: string): CpaExportRow => {
+      const category = categoryMap.get(categoryId);
+      const categoryName = category?.name || 'Uncategorized';
+      const taxLineItem = category?.tax_line_item || '';
+
+      return {
+        date,
+        accountName,
+        payeeName,
+        description,
+        categoryName,
+        taxLineItem,
+        amount: (amount / 100).toFixed(2), // Convert cents to dollars
+        memo: memo || '',
+      };
+    };
+
+    // Process transaction lines
+    if (tx.is_split && tx.lines && tx.lines.length > 0) {
+      // Split transaction: create one row per line
+      for (const line of tx.lines) {
+        rows.push(createRow(line.category_id, line.amount, line.memo));
+      }
+    } else if (tx.lines && tx.lines.length > 0) {
+      // Simple transaction: single row with transaction amount
+      const categoryId = tx.lines[0].category_id;
+      rows.push(createRow(categoryId, tx.amount));
+    } else {
+      // Uncategorized transaction: still export it
+      rows.push({
+        date,
+        accountName,
+        payeeName,
+        description,
+        categoryName: 'Uncategorized',
+        taxLineItem: '',
+        amount: (tx.amount / 100).toFixed(2),
+        memo: '',
+      });
+    }
+  }
+
+  return rows;
+}
+
+/**
+ * Converts CPA export rows to CSV format
+ */
+export function exportCpaExportToCsv(rows: CpaExportRow[]): string {
+  const headers = [
+    'Date',
+    'Account',
+    'Payee',
+    'Description',
+    'Category',
+    'Tax Line',
+    'Amount',
+    'Memo',
+  ];
+
+  const headerRow = formatCsvRow(headers);
+
+  const dataRows = rows.map((row) =>
+    formatCsvRow([
+      row.date,
+      row.accountName,
+      row.payeeName,
+      row.description,
+      row.categoryName,
+      row.taxLineItem,
+      row.amount,
+      row.memo,
+    ])
+  );
+
+  return [headerRow, ...dataRows].join('\n');
 }

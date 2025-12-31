@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../hooks/useAccounts';
 import { useCategories } from '../hooks/useCategories';
+import { usePayees } from '../hooks/usePayees';
 import { fetchReportTransactions } from '../lib/supabase/reports';
 import {
   generateCategoryReport,
@@ -9,6 +10,8 @@ import {
   exportReportToCsv,
   generateTaxLineReport,
   exportTaxReportToCsv,
+  generateCpaExport,
+  exportCpaExportToCsv,
   TaxLineSummary,
 } from '../lib/reports';
 import { CategorySummary, ReportFilter } from '../types/reconcile';
@@ -18,6 +21,7 @@ export default function ReportsPage() {
   const { activeBookset } = useAuth();
   const { accounts } = useAccounts();
   const { categories } = useCategories();
+  const { payees } = usePayees();
 
   // Helper to process categories with parent:child format
   const sortedCategories = useMemo(() => {
@@ -66,6 +70,7 @@ export default function ReportsPage() {
   const [reportType, setReportType] = useState<'category' | 'taxLine'>('category');
   const [reportData, setReportData] = useState<CategorySummary[] | null>(null);
   const [taxReportData, setTaxReportData] = useState<TaxLineSummary[] | null>(null);
+  const [filteredTransactions, setFilteredTransactions] = useState<Transaction[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [totalTransactions, setTotalTransactions] = useState(0);
@@ -77,6 +82,7 @@ export default function ReportsPage() {
     setError(null);
     setReportData(null);
     setTaxReportData(null);
+    setFilteredTransactions(null);
     try {
       // 1. Fetch ALL transactions by paginating through all pages
       let allTransactions: Transaction[] = [];
@@ -108,17 +114,15 @@ export default function ReportsPage() {
         categoryId: selectedCategoryId || undefined,
       };
 
-      const filteredTransactions = filterTransactionsForReport(
-        allTransactions as Transaction[],
-        filter
-      );
+      const filtered = filterTransactionsForReport(allTransactions as Transaction[], filter);
+      setFilteredTransactions(filtered);
 
       // 3. Generate appropriate report based on type
       if (reportType === 'taxLine') {
-        const taxSummary = generateTaxLineReport(filteredTransactions, categories);
+        const taxSummary = generateTaxLineReport(filtered, categories);
         setTaxReportData(taxSummary);
       } else {
-        const summary = generateCategoryReport(filteredTransactions, categories);
+        const summary = generateCategoryReport(filtered, categories);
         setReportData(summary);
       }
       setTotalTransactions(totalCount);
@@ -154,6 +158,40 @@ export default function ReportsPage() {
 
   const handleExportPdf = () => {
     window.print();
+  };
+
+  const handleExportCpa = () => {
+    if (!filteredTransactions || filteredTransactions.length === 0) {
+      setError('No transactions to export. Please run a report first.');
+      return;
+    }
+
+    try {
+      const exportRows = generateCpaExport(filteredTransactions, categories, accounts, payees);
+
+      if (exportRows.length === 0) {
+        setError('No data to export.');
+        return;
+      }
+
+      const csv = exportCpaExportToCsv(exportRows);
+
+      // Create filename with date range
+      const filename = `cpa-export-${startDate}-to-${endDate}.csv`;
+
+      // Trigger download
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+      const url = window.URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      link.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err) {
+      setError(
+        'Failed to generate CPA export: ' + (err instanceof Error ? err.message : 'Unknown error')
+      );
+    }
   };
 
   const handleAccountChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -279,12 +317,33 @@ export default function ReportsPage() {
       {/* Category Report */}
       {reportType === 'category' && reportData && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          {/* Help Text for CPA Export */}
+          {filteredTransactions && filteredTransactions.length > 0 && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+              <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-1">
+                CPA Export Format
+              </h3>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Exports detailed transaction data with one row per line item. Split transactions are
+                flattened for easy import into tax software. Includes: Date, Account, Payee,
+                Description, Category, Tax Line, Amount, and Memo.
+              </p>
+            </div>
+          )}
+
           <div className="p-4 bg-neutral-50 dark:bg-gray-900 border-b border-neutral-200 dark:border-gray-700 flex justify-end gap-4">
             <button
               onClick={handleExportCsv}
-              className="px-4 py-2 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 rounded-lg font-bold text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 dark:bg-gray-900"
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors"
             >
-              Export CSV
+              Export Report CSV
+            </button>
+            <button
+              onClick={handleExportCpa}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!filteredTransactions || filteredTransactions.length === 0}
+            >
+              Export for CPA
             </button>
             <button
               onClick={handleExportPdf}
@@ -346,12 +405,33 @@ export default function ReportsPage() {
       {/* Tax Line Report */}
       {reportType === 'taxLine' && taxReportData && (
         <div className="bg-white dark:bg-gray-800 rounded-2xl border border-neutral-200 dark:border-gray-700 shadow-sm overflow-hidden">
+          {/* Help Text for CPA Export */}
+          {filteredTransactions && filteredTransactions.length > 0 && (
+            <div className="p-4 bg-blue-50 dark:bg-blue-900/20 border-b border-blue-200 dark:border-blue-800">
+              <h3 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-1">
+                CPA Export Format
+              </h3>
+              <p className="text-xs text-blue-700 dark:text-blue-300">
+                Exports detailed transaction data with one row per line item. Split transactions are
+                flattened for easy import into tax software. Includes: Date, Account, Payee,
+                Description, Category, Tax Line, Amount, and Memo.
+              </p>
+            </div>
+          )}
+
           <div className="p-4 bg-neutral-50 dark:bg-gray-900 border-b border-neutral-200 dark:border-gray-700 flex justify-end gap-4">
             <button
               onClick={handleExportCsv}
-              className="px-4 py-2 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 rounded-lg font-bold text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700 dark:bg-gray-900"
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors"
             >
-              Export CSV
+              Export Report CSV
+            </button>
+            <button
+              onClick={handleExportCpa}
+              className="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg font-medium transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              disabled={!filteredTransactions || filteredTransactions.length === 0}
+            >
+              Export for CPA
             </button>
             <button
               onClick={handleExportPdf}

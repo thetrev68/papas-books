@@ -24,7 +24,7 @@ This document provides the complete implementation roadmap for Papa's Books tax 
 2. **CPA Export** - `02-cpa-export.md`
    - Effort: 2-3 days
    - Dependencies: None
-   - Status: **Implementation-ready**
+   - Status: ✅ **COMPLETED** (2025-12-30)
    - Can be done in parallel with Tax Form Report
 
 **Deliverables:**
