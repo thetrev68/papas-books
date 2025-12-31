@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.3.0](https://github.com/thetrev68/papas-books/compare/v1.2.0...v1.3.0) (2025-12-31)
+
+### Features
+
+- implement CPA export for tax preparation ([c39f632](https://github.com/thetrev68/papas-books/commit/c39f632a2837ba48448b49479e205b43058f366c))
+
 ## [1.2.0](https://github.com/thetrev68/papas-books/compare/v1.1.3...v1.2.0) (2025-12-31)
 
 ### Features
