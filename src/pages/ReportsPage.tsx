@@ -14,8 +14,11 @@ import {
   exportCpaExportToCsv,
   generateQuarterlyReport,
   exportQuarterlyReportToCsv,
+  generateYearComparison,
+  exportYearComparisonToCsv,
   TaxLineSummary,
   QuarterlySummary,
+  YearComparisonRow,
 } from '../lib/reports';
 import { CategorySummary, ReportFilter } from '../types/reconcile';
 import { Transaction, Category } from '../types/database';
@@ -70,10 +73,15 @@ export default function ReportsPage() {
   const [selectedAccountIds, setSelectedAccountIds] = useState<string[]>([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState<string>('');
 
-  const [reportType, setReportType] = useState<'category' | 'taxLine' | 'quarterly'>('category');
+  const [reportType, setReportType] = useState<'category' | 'taxLine' | 'quarterly' | 'comparison'>(
+    'category'
+  );
   const [reportData, setReportData] = useState<CategorySummary[] | null>(null);
   const [taxReportData, setTaxReportData] = useState<TaxLineSummary[] | null>(null);
   const [quarterlyData, setQuarterlyData] = useState<QuarterlySummary[] | null>(null);
+  const [comparisonData, setComparisonData] = useState<YearComparisonRow[] | null>(null);
+  const [compareStartDate, setCompareStartDate] = useState(new Date().getFullYear() - 1 + '-01-01');
+  const [compareEndDate, setCompareEndDate] = useState(new Date().getFullYear() - 1 + '-12-31');
   const [taxRate, setTaxRate] = useState<number>(0.25); // 25% default
   const [filteredTransactions, setFilteredTransactions] = useState<Transaction[] | null>(null);
   const [isLoading, setIsLoading] = useState(false);
@@ -88,9 +96,10 @@ export default function ReportsPage() {
     setReportData(null);
     setTaxReportData(null);
     setQuarterlyData(null);
+    setComparisonData(null);
     setFilteredTransactions(null);
     try {
-      // 1. Fetch ALL transactions by paginating through all pages
+      // 1. Fetch ALL transactions for current period
       let allTransactions: Transaction[] = [];
       let currentPage = 1;
       let totalCount = 0;
@@ -120,18 +129,59 @@ export default function ReportsPage() {
         categoryId: selectedCategoryId || undefined,
       };
 
-      const filtered = filterTransactionsForReport(allTransactions as Transaction[], filter);
-      setFilteredTransactions(filtered);
+      const filteredCurrent = filterTransactionsForReport(allTransactions as Transaction[], filter);
+      setFilteredTransactions(filteredCurrent);
 
-      // 3. Generate appropriate report based on type
-      if (reportType === 'taxLine') {
-        const taxSummary = generateTaxLineReport(filtered, categories);
+      // 3. If comparison mode, fetch comparison period data
+      if (reportType === 'comparison') {
+        // Fetch comparison period transactions
+        let compareTransactions: Transaction[] = [];
+        let comparePage = 1;
+        let compareHasMore = true;
+
+        while (compareHasMore) {
+          const { data, total } = await fetchReportTransactions({
+            booksetId: activeBookset.id,
+            accountIds: selectedAccountIds.length > 0 ? selectedAccountIds : undefined,
+            startDate: compareStartDate,
+            endDate: compareEndDate,
+            page: comparePage,
+            pageSize,
+          });
+
+          compareTransactions = [...compareTransactions, ...data];
+          compareHasMore = compareTransactions.length < total;
+          comparePage++;
+        }
+
+        // Filter comparison transactions (use same account/category filters)
+        const compareFilter: ReportFilter = {
+          startDate: compareStartDate,
+          endDate: compareEndDate,
+          accountIds: selectedAccountIds.length > 0 ? selectedAccountIds : undefined,
+          categoryId: selectedCategoryId || undefined,
+        };
+
+        const filteredCompare = filterTransactionsForReport(
+          compareTransactions as Transaction[],
+          compareFilter
+        );
+
+        // Generate comparison report
+        const comparisonSummary = generateYearComparison(
+          filteredCurrent,
+          filteredCompare,
+          categories
+        );
+        setComparisonData(comparisonSummary);
+      } else if (reportType === 'taxLine') {
+        const taxSummary = generateTaxLineReport(filteredCurrent, categories);
         setTaxReportData(taxSummary);
       } else if (reportType === 'quarterly') {
-        const quarterlySummary = generateQuarterlyReport(filtered, taxRate);
+        const quarterlySummary = generateQuarterlyReport(filteredCurrent, taxRate);
         setQuarterlyData(quarterlySummary);
       } else {
-        const summary = generateCategoryReport(filtered, categories);
+        const summary = generateCategoryReport(filteredCurrent, categories);
         setReportData(summary);
       }
       setTotalTransactions(totalCount);
@@ -146,7 +196,27 @@ export default function ReportsPage() {
     let csv: string;
     let filename: string;
 
-    if (reportType === 'taxLine') {
+    if (reportType === 'comparison') {
+      if (!comparisonData) return;
+
+      // Extract years from date ranges for labels
+      const currentYear = new Date(startDate).getFullYear();
+      const compareYear = new Date(compareStartDate).getFullYear();
+
+      // Use full date ranges if not full years
+      const currentLabel =
+        startDate.endsWith('-01-01') && endDate.endsWith('-12-31')
+          ? String(currentYear)
+          : `${startDate} to ${endDate}`;
+
+      const compareLabel =
+        compareStartDate.endsWith('-01-01') && compareEndDate.endsWith('-12-31')
+          ? String(compareYear)
+          : `${compareStartDate} to ${compareEndDate}`;
+
+      csv = exportYearComparisonToCsv(comparisonData, currentLabel, compareLabel);
+      filename = `year-comparison-${currentYear}-vs-${compareYear}.csv`;
+    } else if (reportType === 'taxLine') {
       if (!taxReportData) return;
       csv = exportTaxReportToCsv(taxReportData);
       filename = `tax-report-${startDate}-to-${endDate}.csv`;
@@ -217,7 +287,8 @@ export default function ReportsPage() {
     setSelectedAccountIds(values);
   };
 
-  const formatMoney = (cents: number) => (cents / 100).toFixed(2);
+  const formatMoney = (cents: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(cents / 100);
 
   return (
     <div className="p-4 md:p-8 max-w-7xl mx-auto">
@@ -316,6 +387,19 @@ export default function ReportsPage() {
                 Quarterly Estimated Tax
               </span>
             </label>
+            <label className="flex items-center gap-2 cursor-pointer">
+              <input
+                type="radio"
+                name="reportType"
+                value="comparison"
+                checked={reportType === 'comparison'}
+                onChange={() => setReportType('comparison')}
+                className="w-4 h-4 text-brand-600 focus:ring-brand-500"
+              />
+              <span className="text-sm text-neutral-700 dark:text-gray-300">
+                Year-Over-Year Comparison
+              </span>
+            </label>
           </div>
           {reportType === 'taxLine' && (
             <p className="text-xs text-neutral-500 dark:text-gray-400 mt-2">
@@ -327,7 +411,90 @@ export default function ReportsPage() {
               Shows income, expenses, and estimated tax by quarter (Q1-Q4) for tax planning
             </p>
           )}
+          {reportType === 'comparison' && (
+            <p className="text-xs text-neutral-500 dark:text-gray-400 mt-2">
+              Compare spending and income across two time periods to identify trends
+            </p>
+          )}
         </div>
+
+        {/* Comparison Period Date Range (only show for comparison report) */}
+        {reportType === 'comparison' && (
+          <div className="bg-white dark:bg-gray-800 p-6 rounded-xl border border-neutral-200 dark:border-gray-700 mb-6 mt-6">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-gray-100 mb-4">
+              Comparison Periods
+            </h3>
+
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Current Period */}
+              <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
+                <h4 className="text-sm font-bold text-blue-900 dark:text-blue-100 mb-3">
+                  Current Period
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex flex-col gap-2">
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                      Start Date
+                    </span>
+                    <input
+                      type="date"
+                      value={startDate}
+                      onChange={(e) => setStartDate(e.target.value)}
+                      className="p-2 text-sm border border-blue-300 dark:border-blue-700 rounded-lg bg-white dark:bg-gray-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2">
+                    <span className="text-xs font-medium text-blue-700 dark:text-blue-300">
+                      End Date
+                    </span>
+                    <input
+                      type="date"
+                      value={endDate}
+                      onChange={(e) => setEndDate(e.target.value)}
+                      className="p-2 text-sm border border-blue-300 dark:border-blue-700 rounded-lg bg-white dark:bg-gray-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
+                    />
+                  </label>
+                </div>
+              </div>
+
+              {/* Comparison Period */}
+              <div className="bg-neutral-50 dark:bg-gray-900/50 p-4 rounded-lg border border-neutral-200 dark:border-gray-700">
+                <h4 className="text-sm font-bold text-neutral-900 dark:text-gray-100 mb-3">
+                  Compare Against
+                </h4>
+                <div className="grid grid-cols-2 gap-3">
+                  <label className="flex flex-col gap-2">
+                    <span className="text-xs font-medium text-neutral-700 dark:text-gray-400">
+                      Start Date
+                    </span>
+                    <input
+                      type="date"
+                      value={compareStartDate}
+                      onChange={(e) => setCompareStartDate(e.target.value)}
+                      className="p-2 text-sm border border-neutral-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
+                    />
+                  </label>
+                  <label className="flex flex-col gap-2">
+                    <span className="text-xs font-medium text-neutral-700 dark:text-gray-400">
+                      End Date
+                    </span>
+                    <input
+                      type="date"
+                      value={compareEndDate}
+                      onChange={(e) => setCompareEndDate(e.target.value)}
+                      className="p-2 text-sm border border-neutral-300 dark:border-gray-600 rounded-lg bg-white dark:bg-gray-900 focus:border-brand-500 focus:ring-2 focus:ring-brand-200 outline-none"
+                    />
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <p className="text-xs text-neutral-500 dark:text-gray-400 mt-3">
+              Tip: Use the same date ranges (e.g., Jan-Dec) for meaningful year-over-year
+              comparisons
+            </p>
+          </div>
+        )}
 
         {/* Tax Rate Input (only show for quarterly report) */}
         {reportType === 'quarterly' && (
@@ -694,6 +861,159 @@ export default function ReportsPage() {
               <strong>Note:</strong> This is an estimate only. Actual tax liability depends on
               deductions, credits, and other factors. Consult a tax professional for personalized
               advice.
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* Year-Over-Year Comparison Report */}
+      {reportType === 'comparison' && comparisonData && (
+        <div className="bg-white dark:bg-gray-800 rounded-xl border border-neutral-200 dark:border-gray-700 overflow-hidden">
+          <div className="px-6 py-4 border-b border-neutral-200 dark:border-gray-700 bg-neutral-50 dark:bg-gray-900/50">
+            <h3 className="text-lg font-bold text-neutral-900 dark:text-gray-100">
+              Year-Over-Year Comparison
+            </h3>
+            <p className="text-sm text-neutral-600 dark:text-gray-400 mt-1">
+              Comparing{' '}
+              <span className="font-semibold text-blue-600 dark:text-blue-400">
+                {startDate} to {endDate}
+              </span>{' '}
+              against{' '}
+              <span className="font-semibold text-neutral-700 dark:text-gray-300">
+                {compareStartDate} to {compareEndDate}
+              </span>
+            </p>
+          </div>
+
+          <div className="p-4 bg-neutral-50 dark:bg-gray-900 border-b border-neutral-200 dark:border-gray-700 flex justify-end gap-4">
+            <button
+              onClick={handleExportCsv}
+              className="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg font-medium transition-colors"
+            >
+              Export Report CSV
+            </button>
+            <button
+              onClick={handleExportPdf}
+              className="px-4 py-2 bg-white dark:bg-gray-800 border border-neutral-300 dark:border-gray-600 rounded-lg font-bold text-neutral-700 dark:text-gray-300 hover:bg-neutral-100 dark:hover:bg-gray-700"
+            >
+              Export PDF (Print)
+            </button>
+          </div>
+
+          <div className="overflow-x-auto">
+            <table className="w-full">
+              <thead className="bg-neutral-50 dark:bg-gray-900/50 border-b border-neutral-200 dark:border-gray-700">
+                <tr>
+                  <th className="px-6 py-3 text-left text-xs font-bold text-neutral-700 dark:text-gray-300 uppercase tracking-wider">
+                    Category
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-blue-700 dark:text-blue-400 uppercase tracking-wider">
+                    Current
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-neutral-600 dark:text-gray-400 uppercase tracking-wider">
+                    Compare
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-neutral-700 dark:text-gray-300 uppercase tracking-wider">
+                    Variance $
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-neutral-700 dark:text-gray-300 uppercase tracking-wider">
+                    Variance %
+                  </th>
+                  <th className="px-6 py-3 text-right text-xs font-bold text-neutral-700 dark:text-gray-300 uppercase tracking-wider">
+                    Transactions
+                  </th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-neutral-200 dark:divide-gray-700">
+                {comparisonData.map((row, idx) => {
+                  // Determine variance color
+                  // For expenses (negative amounts): Increase (more negative) is bad (red)
+                  // For income (positive amounts): Increase (more positive) is good (green)
+                  const isIncrease = row.varianceAmount > 0;
+                  const isDecrease = row.varianceAmount < 0;
+
+                  let varianceColorClass = 'text-neutral-900 dark:text-gray-100';
+                  if (row.isIncome) {
+                    // Income: increase is green, decrease is red
+                    if (isIncrease) varianceColorClass = 'text-green-600 dark:text-green-400';
+                    if (isDecrease) varianceColorClass = 'text-red-600 dark:text-red-400';
+                  } else {
+                    // Expense: increase is red, decrease is green
+                    if (isIncrease) varianceColorClass = 'text-red-600 dark:text-red-400'; // More expense
+                    if (isDecrease) varianceColorClass = 'text-green-600 dark:text-green-400'; // Less expense
+                  }
+
+                  return (
+                    <tr
+                      key={row.categoryId}
+                      className={
+                        idx % 2 === 0
+                          ? 'bg-white dark:bg-gray-800'
+                          : 'bg-neutral-50 dark:bg-gray-900/30'
+                      }
+                    >
+                      <td className="px-6 py-4 text-sm font-medium text-neutral-900 dark:text-gray-100">
+                        {row.categoryName}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right font-mono text-blue-700 dark:text-blue-400 font-semibold">
+                        {formatMoney(row.currentAmount)}
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right font-mono text-neutral-600 dark:text-gray-400">
+                        {formatMoney(row.compareAmount)}
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-sm text-right font-mono font-semibold ${varianceColorClass}`}
+                      >
+                        {row.varianceAmount > 0 ? '+' : ''}
+                        {formatMoney(row.varianceAmount)}
+                      </td>
+                      <td
+                        className={`px-6 py-4 text-sm text-right font-semibold ${varianceColorClass}`}
+                      >
+                        {row.varianceAmount > 0 ? '+' : ''}
+                        {row.variancePercent.toFixed(1)}%
+                      </td>
+                      <td className="px-6 py-4 text-sm text-right text-neutral-600 dark:text-gray-400">
+                        <div className="flex flex-col items-end">
+                          <div>{row.currentTransactionCount}</div>
+                          <div className="text-xs text-neutral-400 dark:text-gray-500">
+                            vs {row.compareTransactionCount}
+                          </div>
+                        </div>
+                      </td>
+                    </tr>
+                  );
+                })}
+              </tbody>
+              <tfoot className="bg-neutral-100 dark:bg-gray-900 border-t-2 border-neutral-300 dark:border-gray-600">
+                <tr>
+                  <td className="px-6 py-4 text-sm font-bold text-neutral-900 dark:text-gray-100">
+                    Total
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-right font-mono text-blue-700 dark:text-blue-400">
+                    {formatMoney(comparisonData.reduce((sum, r) => sum + r.currentAmount, 0))}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-right font-mono text-neutral-700 dark:text-gray-300">
+                    {formatMoney(comparisonData.reduce((sum, r) => sum + r.compareAmount, 0))}
+                  </td>
+                  <td className="px-6 py-4 text-sm font-bold text-right font-mono text-neutral-900 dark:text-gray-100">
+                    {formatMoney(comparisonData.reduce((sum, r) => sum + r.varianceAmount, 0))}
+                  </td>
+                  <td className="px-6 py-4"></td>
+                  <td className="px-6 py-4 text-sm font-bold text-right text-neutral-900 dark:text-gray-100">
+                    {comparisonData.reduce((sum, r) => sum + r.currentTransactionCount, 0)}
+                  </td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+
+          {/* Help text below table */}
+          <div className="px-6 py-4 bg-blue-50 dark:bg-blue-900/20 border-t border-blue-100 dark:border-blue-800">
+            <p className="text-sm text-blue-800 dark:text-blue-200">
+              <strong>Color Guide:</strong> For expenses, green means spending decreased (good), red
+              means spending increased (attention needed). For income, green means income increased
+              (good), red means income decreased (attention needed).
             </p>
           </div>
         </div>

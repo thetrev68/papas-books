@@ -38,6 +38,21 @@ export interface QuarterlySummary {
   expenseTransactionCount: number; // Count of expense transactions
 }
 
+/**
+ * Comparison of category spending between two periods (typically years)
+ */
+export interface YearComparisonRow {
+  categoryId: string;
+  categoryName: string;
+  currentAmount: number; // In cents (current period total)
+  compareAmount: number; // In cents (comparison period total)
+  varianceAmount: number; // In cents (currentAmount - compareAmount)
+  variancePercent: number; // Percentage change ((variance / |compareAmount|) * 100)
+  currentTransactionCount: number; // Number of transactions in current period
+  compareTransactionCount: number; // Number of transactions in comparison period
+  isIncome: boolean; // True if category is income-based (positive amounts)
+}
+
 export function generateCategoryReport(
   transactions: Transaction[],
   categories: Category[]
@@ -449,6 +464,120 @@ export function exportQuarterlyReportToCsv(summary: QuarterlySummary[]): string 
       net,
       tax,
       q.transactionCount,
+    ].join(',');
+  });
+
+  return [header, ...rows].join('\n');
+}
+
+/**
+ * Generates a year-over-year comparison report by category
+ * Compares two sets of transactions (typically different years)
+ *
+ * @param currentTransactions - Transactions from current period (e.g., 2024)
+ * @param compareTransactions - Transactions from comparison period (e.g., 2023)
+ * @param categories - All categories for name lookup
+ * @returns Array of comparison rows, one per category that appears in either period
+ */
+export function generateYearComparison(
+  currentTransactions: Transaction[],
+  compareTransactions: Transaction[],
+  categories: Category[]
+): YearComparisonRow[] {
+  // 1. Generate category summaries for both periods
+  const currentSummary = generateCategoryReport(currentTransactions, categories);
+  const compareSummary = generateCategoryReport(compareTransactions, categories);
+
+  // 2. Build lookup maps for fast access
+  const currentMap = new Map(currentSummary.map((s) => [s.categoryId, s]));
+  const compareMap = new Map(compareSummary.map((s) => [s.categoryId, s]));
+
+  // 3. Get union of all category IDs (categories that appear in either period)
+  const allCategoryIds = new Set([
+    ...currentSummary.map((s) => s.categoryId),
+    ...compareSummary.map((s) => s.categoryId),
+  ]);
+
+  // 4. Build comparison rows
+  const results: YearComparisonRow[] = [];
+
+  for (const catId of allCategoryIds) {
+    const current = currentMap.get(catId);
+    const compare = compareMap.get(catId);
+
+    // Get category name from whichever summary has it (prefer current)
+    const categoryName = current?.categoryName || compare?.categoryName || 'Unknown';
+
+    const currentAmt = current?.totalAmount || 0;
+    const compareAmt = compare?.totalAmount || 0;
+    const currentCount = current?.transactionCount || 0;
+    const compareCount = compare?.transactionCount || 0;
+
+    // Calculate variance
+    const varianceAmt = currentAmt - compareAmt;
+
+    // Calculate percentage change
+    // For expenses (negative amounts): Use absolute value to get meaningful percentages
+    // For income (positive amounts): Direct calculation
+    // Handle zero/new categories specially
+    let variancePct = 0;
+    if (compareAmt !== 0) {
+      // Standard case: category existed in both periods
+      variancePct = (varianceAmt / Math.abs(compareAmt)) * 100;
+    } else if (currentAmt !== 0) {
+      // New category this period (didn't exist in comparison period)
+      variancePct = 100;
+    }
+    // else: Category has zero in both periods (shouldn't happen, but handle gracefully)
+
+    // Determine if income category (use current period's data if available)
+    const isIncome = current?.isIncome ?? compare?.isIncome ?? false;
+
+    results.push({
+      categoryId: catId,
+      categoryName,
+      currentAmount: currentAmt,
+      compareAmount: compareAmt,
+      varianceAmount: varianceAmt,
+      variancePercent: variancePct,
+      currentTransactionCount: currentCount,
+      compareTransactionCount: compareCount,
+      isIncome,
+    });
+  }
+
+  // 5. Sort alphabetically by category name
+  return results.sort((a, b) => a.categoryName.localeCompare(b.categoryName));
+}
+
+/**
+ * Export year comparison report to CSV format
+ * @param summary - Array of year comparison rows
+ * @param currentLabel - Label for current period (e.g., "2024")
+ * @param compareLabel - Label for comparison period (e.g., "2023")
+ * @returns CSV string with headers and data rows
+ */
+export function exportYearComparisonToCsv(
+  summary: YearComparisonRow[],
+  currentLabel: string,
+  compareLabel: string
+): string {
+  const header = `Category,${currentLabel},${compareLabel},Variance $,Variance %,${currentLabel} Txns,${compareLabel} Txns`;
+
+  const rows = summary.map((r) => {
+    const current = (r.currentAmount / 100).toFixed(2);
+    const compare = (r.compareAmount / 100).toFixed(2);
+    const variance = (r.varianceAmount / 100).toFixed(2);
+    const pct = r.variancePercent.toFixed(1);
+
+    return [
+      `"${r.categoryName}"`,
+      current,
+      compare,
+      variance,
+      `${pct}%`,
+      r.currentTransactionCount,
+      r.compareTransactionCount,
     ].join(',');
   });
 
