@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.7.0](https://github.com/thetrev68/papas-books/compare/v1.6.0...v1.7.0) (2025-12-31)
+
+### Features
+
+- add audit metadata to tax year locks ([70f5223](https://github.com/thetrev68/papas-books/commit/70f5223af4afc3283129df4433839496a3d5d734))
+
 ## [1.6.0](https://github.com/thetrev68/papas-books/compare/v1.5.1...v1.6.0) (2025-12-31)
 
 ### Features
