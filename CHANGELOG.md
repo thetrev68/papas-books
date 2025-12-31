@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.0](https://github.com/thetrev68/papas-books/compare/v1.4.0...v1.5.0) (2025-12-31)
+
+### Features
+
+- implement year-over-year comparison report ([1053bf0](https://github.com/thetrev68/papas-books/commit/1053bf0077b039e1e9c109da47fdc43f1eb3043c))
+
 ## [1.4.0](https://github.com/thetrev68/papas-books/compare/v1.3.0...v1.4.0) (2025-12-31)
 
 ### Features
