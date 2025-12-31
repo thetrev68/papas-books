@@ -6,6 +6,7 @@ import {
   updateTransaction,
   deleteTransaction,
   bulkUpdateReviewed,
+  bulkUpdateCategory,
 } from './transactions';
 import { supabase } from './config';
 import { DatabaseError } from '../errors';
@@ -15,6 +16,7 @@ import { mockTransaction, mockSplitTransaction } from '../../test-utils/fixtures
 vi.mock('./config', () => ({
   supabase: {
     from: vi.fn(),
+    rpc: vi.fn(),
   },
 }));
 
@@ -438,6 +440,177 @@ describe('bulkUpdateReviewed', () => {
     await expect(bulkUpdateReviewed(['id-1'], true)).rejects.toThrow(DatabaseError);
     await expect(bulkUpdateReviewed(['id-1'], true)).rejects.toThrow(
       'Failed to update transactions'
+    );
+  });
+});
+
+describe('bulkUpdateCategory', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should successfully update multiple transactions', async () => {
+    const mockResponse = {
+      data: [
+        {
+          updated_count: 5,
+          skipped_count: 0,
+          error_message: null,
+        },
+      ],
+      error: null,
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    const result = await bulkUpdateCategory(
+      ['tx1', 'tx2', 'tx3', 'tx4', 'tx5'],
+      'cat-office-supplies'
+    );
+
+    expect(result).toEqual({
+      updatedCount: 5,
+      skippedCount: 0,
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith('bulk_update_category', {
+      _transaction_ids: ['tx1', 'tx2', 'tx3', 'tx4', 'tx5'],
+      _category_id: 'cat-office-supplies',
+    });
+  });
+
+  it('should handle partial updates (some skipped)', async () => {
+    const mockResponse = {
+      data: [
+        {
+          updated_count: 3,
+          skipped_count: 2,
+          error_message: null,
+        },
+      ],
+      error: null,
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    const result = await bulkUpdateCategory(['tx1', 'tx2', 'tx3', 'tx4', 'tx5'], 'cat-rent');
+
+    expect(result).toEqual({
+      updatedCount: 3,
+      skippedCount: 2,
+    });
+  });
+
+  it('should throw error when no transaction IDs provided', async () => {
+    await expect(bulkUpdateCategory([], 'cat-food')).rejects.toThrow('No transaction IDs provided');
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('should throw error when category ID is empty', async () => {
+    await expect(bulkUpdateCategory(['tx1'], '')).rejects.toThrow('Category ID is required');
+    expect(supabase.rpc).not.toHaveBeenCalled();
+  });
+
+  it('should handle RPC errors', async () => {
+    const mockResponse = {
+      data: null,
+      error: { message: 'Database connection failed', code: 'CONNECTION_ERROR' },
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    await expect(bulkUpdateCategory(['tx1'], 'cat-food')).rejects.toThrow(DatabaseError);
+  });
+
+  it('should handle error_message from RPC', async () => {
+    const mockResponse = {
+      data: [
+        {
+          updated_count: 0,
+          skipped_count: 0,
+          error_message: 'Category does not exist',
+        },
+      ],
+      error: null,
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    await expect(bulkUpdateCategory(['tx1'], 'invalid-cat')).rejects.toThrow(
+      'Category does not exist'
+    );
+  });
+
+  it('should handle missing result data', async () => {
+    const mockResponse = {
+      data: null,
+      error: null,
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    await expect(bulkUpdateCategory(['tx1'], 'cat-food')).rejects.toThrow(
+      'Bulk update returned no results'
+    );
+  });
+
+  it('should work with single transaction', async () => {
+    const mockResponse = {
+      data: [
+        {
+          updated_count: 1,
+          skipped_count: 0,
+          error_message: null,
+        },
+      ],
+      error: null,
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    const result = await bulkUpdateCategory(['single-tx'], 'cat-supplies');
+
+    expect(result).toEqual({
+      updatedCount: 1,
+      skippedCount: 0,
+    });
+  });
+
+  it('should handle large batch updates', async () => {
+    const transactionIds = Array.from({ length: 100 }, (_, i) => `tx-${i}`);
+
+    const mockResponse = {
+      data: [
+        {
+          updated_count: 98,
+          skipped_count: 2,
+          error_message: null,
+        },
+      ],
+      error: null,
+    };
+
+    (supabase.rpc as any).mockResolvedValue(mockResponse);
+
+    const result = await bulkUpdateCategory(transactionIds, 'cat-bulk');
+
+    expect(result).toEqual({
+      updatedCount: 98,
+      skippedCount: 2,
+    });
+
+    expect(supabase.rpc).toHaveBeenCalledWith('bulk_update_category', {
+      _transaction_ids: transactionIds,
+      _category_id: 'cat-bulk',
+    });
+  });
+
+  it('should wrap unexpected errors in DatabaseError', async () => {
+    (supabase.rpc as any).mockRejectedValue(new Error('Unexpected system error'));
+
+    await expect(bulkUpdateCategory(['tx1'], 'cat-food')).rejects.toThrow(DatabaseError);
+    await expect(bulkUpdateCategory(['tx1'], 'cat-food')).rejects.toThrow(
+      'Failed to bulk update category'
     );
   });
 });

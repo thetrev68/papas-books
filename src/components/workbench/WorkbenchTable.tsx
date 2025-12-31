@@ -10,6 +10,7 @@ import {
   type SortingState,
   type ColumnFiltersState,
   type ExpandedState,
+  type RowSelectionState,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { Transaction, Category } from '../../types/database';
@@ -27,6 +28,7 @@ interface WorkbenchTableProps {
   onReview: (transaction: Transaction) => void;
   onUpdatePayee: (transactionId: string, newPayee: string) => void;
   onUpdateCategory: (transactionId: string, categoryId: string) => void;
+  onBulkUpdateCategory: (transactionIds: string[], categoryId: string) => void;
   onCreateRule: (transaction: Transaction) => void;
   onCreatePayee?: (name: string) => void;
   onShowHistory?: (transaction: Transaction) => void;
@@ -40,6 +42,7 @@ function WorkbenchTable({
   onReview,
   onUpdatePayee,
   onUpdateCategory,
+  onBulkUpdateCategory,
   onCreateRule,
   onCreatePayee,
   onShowHistory,
@@ -49,6 +52,7 @@ function WorkbenchTable({
   const [globalFilter, setGlobalFilter] = useState('');
   const [editingPayee, setEditingPayee] = useState<string | null>(null);
   const [expanded, setExpanded] = useState<ExpandedState>({});
+  const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
   const { categories } = useCategories();
   const { accounts } = useAccounts();
@@ -110,6 +114,44 @@ function WorkbenchTable({
   // Memoize columns to prevent re-creation on every render
   const columns = useMemo(
     () => [
+      columnHelper.display({
+        id: 'select',
+        header: ({ table }) => {
+          const ref = useRef<HTMLInputElement>(null);
+          // Handle indeterminate state
+          if (ref.current) {
+            ref.current.indeterminate = table.getIsSomeRowsSelected();
+          }
+          return (
+            <div className="flex items-center justify-center">
+              <input
+                ref={ref}
+                type="checkbox"
+                checked={table.getIsAllRowsSelected()}
+                onChange={table.getToggleAllRowsSelectedHandler()}
+                className="w-5 h-5 text-brand-600 rounded border-neutral-300 focus:ring-brand-500 cursor-pointer"
+                title="Select all"
+              />
+            </div>
+          );
+        },
+        cell: ({ row }) => {
+          const locked = isDateLocked(row.original.date) || row.original.reconciled;
+          return (
+            <div className="flex items-center justify-center">
+              <input
+                type="checkbox"
+                checked={row.getIsSelected()}
+                disabled={locked}
+                onChange={row.getToggleSelectedHandler()}
+                className="w-5 h-5 text-brand-600 rounded border-neutral-300 focus:ring-brand-500 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                title={locked ? 'Cannot select locked/reconciled transaction' : 'Select'}
+              />
+            </div>
+          );
+        },
+        size: 50,
+      }),
       columnHelper.display({
         id: 'lock-indicator',
         header: '',
@@ -340,6 +382,26 @@ function WorkbenchTable({
     ]
   );
 
+  // Bulk action handlers
+  const handleBulkCategoryUpdate = (categoryId: string) => {
+    const selectedIds = Object.keys(rowSelection);
+    if (selectedIds.length === 0) return;
+
+    // Confirm if updating many transactions
+    if (selectedIds.length > 10) {
+      const category = sortedCategories.find((c) => c.id === categoryId);
+      const categoryName = category?.displayName || 'Unknown Category';
+      const confirm = window.confirm(
+        `Are you sure you want to update ${selectedIds.length} transactions to "${categoryName}"?\n\n` +
+          `Note: Split transactions will be converted to simple transactions.`
+      );
+      if (!confirm) return;
+    }
+
+    onBulkUpdateCategory(selectedIds, categoryId);
+    setRowSelection({});
+  };
+
   const table = useReactTable({
     data: transactions,
     columns,
@@ -348,11 +410,17 @@ function WorkbenchTable({
       columnFilters,
       globalFilter,
       expanded,
+      rowSelection,
     },
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     onGlobalFilterChange: setGlobalFilter,
     onExpandedChange: setExpanded,
+    onRowSelectionChange: setRowSelection,
+    enableRowSelection: (row) => {
+      // Only allow selection of unlocked, non-reconciled transactions
+      return !isDateLocked(row.original.date) && !row.original.reconciled;
+    },
     getCoreRowModel: getCoreRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -391,6 +459,66 @@ function WorkbenchTable({
           className="w-full md:w-96 p-4 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-white dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900 outline-none"
         />
       </div>
+
+      {/* Bulk Action Toolbar */}
+      {Object.keys(rowSelection).length > 0 && (
+        <div className="mb-4 bg-brand-50 dark:bg-brand-900/30 border-2 border-brand-300 dark:border-brand-700 rounded-xl p-4 shadow-sm">
+          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+            {/* Selection Count */}
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-brand-900 dark:text-brand-100 text-lg">
+                {Object.keys(rowSelection).length} transaction
+                {Object.keys(rowSelection).length === 1 ? '' : 's'} selected
+              </span>
+              <button
+                onClick={() => setRowSelection({})}
+                className="text-sm text-brand-700 dark:text-brand-300 hover:text-brand-900 dark:hover:text-brand-100 underline"
+              >
+                Clear
+              </button>
+            </div>
+
+            {/* Bulk Actions */}
+            <div className="flex flex-wrap items-center gap-3">
+              {/* Category Selector */}
+              <div className="flex items-center gap-2">
+                <label
+                  htmlFor="bulk-category-select"
+                  className="text-sm font-semibold text-brand-800 dark:text-brand-200"
+                >
+                  Set Category:
+                </label>
+                <select
+                  id="bulk-category-select"
+                  className="bg-white dark:bg-gray-700 border-2 border-brand-300 dark:border-brand-600 text-brand-900 dark:text-gray-100 py-2 px-3 pr-8 rounded-lg font-semibold hover:bg-brand-50 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer min-w-[200px]"
+                  onChange={(e) => {
+                    if (e.target.value) {
+                      handleBulkCategoryUpdate(e.target.value);
+                      e.target.value = ''; // Reset select
+                    }
+                  }}
+                  defaultValue=""
+                >
+                  <option value="" disabled>
+                    Choose category...
+                  </option>
+                  {sortedCategories.map((cat) => (
+                    <option key={cat.id} value={cat.id}>
+                      {cat.displayName}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            </div>
+          </div>
+
+          {/* Info Message */}
+          <p className="text-xs text-brand-700 dark:text-brand-300 mt-3">
+            <strong>Note:</strong> Bulk category update will convert split transactions to simple
+            transactions. Locked and reconciled transactions will be skipped.
+          </p>
+        </div>
+      )}
 
       {/* Desktop Table */}
       <div

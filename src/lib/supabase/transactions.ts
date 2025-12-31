@@ -155,6 +155,55 @@ export async function bulkUpdateReviewed(
 }
 
 /**
+ * Bulk update category for multiple transactions
+ * Converts split transactions to simple transactions
+ * Skips locked/reconciled transactions
+ */
+export async function bulkUpdateCategory(
+  transactionIds: string[],
+  categoryId: string
+): Promise<{ updatedCount: number; skippedCount: number }> {
+  try {
+    // Validate inputs
+    if (!transactionIds || transactionIds.length === 0) {
+      throw new DatabaseError('No transaction IDs provided');
+    }
+
+    if (!categoryId) {
+      throw new DatabaseError('Category ID is required');
+    }
+
+    // Call PostgreSQL function
+    const { data, error } = await supabase.rpc('bulk_update_category', {
+      _transaction_ids: transactionIds,
+      _category_id: categoryId,
+    });
+
+    if (error) {
+      handleSupabaseError(error);
+    }
+
+    // Extract results from RPC response
+    const result = data?.[0];
+    if (!result) {
+      throw new DatabaseError('Bulk update returned no results');
+    }
+
+    if (result.error_message) {
+      throw new DatabaseError(result.error_message);
+    }
+
+    return {
+      updatedCount: result.updated_count || 0,
+      skippedCount: result.skipped_count || 0,
+    };
+  } catch (error) {
+    if (error instanceof DatabaseError) throw error;
+    throw new DatabaseError('Failed to bulk update category', undefined, error);
+  }
+}
+
+/**
  * Generate fingerprint for duplicate detection
  */
 async function generateFingerprint(date: string, amount: number, payee: string): Promise<string> {

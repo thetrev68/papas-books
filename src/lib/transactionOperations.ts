@@ -1,9 +1,10 @@
 import type { Transaction } from '../types/database';
 
-export interface BulkOperation {
-  type: 'markReviewed' | 'markUnreviewed' | 'applyRules';
-  transactionIds: string[];
-}
+export type BulkOperation =
+  | { type: 'markReviewed'; transactionIds: string[] }
+  | { type: 'markUnreviewed'; transactionIds: string[] }
+  | { type: 'updateCategory'; transactionIds: string[]; categoryId: string }
+  | { type: 'applyRules'; transactionIds: string[] };
 
 /**
  * Creates a new manual transaction object (not persisted to DB)

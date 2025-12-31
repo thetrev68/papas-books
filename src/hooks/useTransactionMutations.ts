@@ -4,6 +4,7 @@ import {
   updateTransaction,
   deleteTransaction,
   bulkUpdateReviewed,
+  bulkUpdateCategory,
 } from '../lib/supabase/transactions';
 import type { Transaction } from '../types/database';
 import type { BulkOperation } from '../lib/transactionOperations';
@@ -67,20 +68,38 @@ export function useTransactionMutations(booksetId: string) {
   });
 
   const bulkUpdateMutation = useMutation({
-    mutationFn: (operation: BulkOperation) => {
+    mutationFn: async (operation: BulkOperation) => {
       if (operation.type === 'markReviewed') {
-        return bulkUpdateReviewed(operation.transactionIds, true);
+        await bulkUpdateReviewed(operation.transactionIds, true);
+        return undefined;
       } else if (operation.type === 'markUnreviewed') {
-        return bulkUpdateReviewed(operation.transactionIds, false);
+        await bulkUpdateReviewed(operation.transactionIds, false);
+        return undefined;
+      } else if (operation.type === 'updateCategory') {
+        return await bulkUpdateCategory(operation.transactionIds, operation.categoryId);
       } else if (operation.type === 'applyRules') {
         // This would be implemented with rules application
         throw new Error('Apply rules bulk operation not implemented yet');
       }
       throw new Error('Unknown bulk operation type');
     },
-    onSuccess: () => {
+    onSuccess: (result, operation) => {
       queryClient.invalidateQueries({ queryKey: ['transactions', booksetId] });
-      showSuccess('Transactions updated');
+
+      // Show specific success message for category updates
+      if (operation.type === 'updateCategory' && result) {
+        const { updatedCount, skippedCount } = result;
+        if (updatedCount > 0) {
+          showSuccess(
+            `Updated ${updatedCount} transaction${updatedCount === 1 ? '' : 's'}` +
+              (skippedCount > 0 ? ` (${skippedCount} skipped - locked or reconciled)` : '')
+          );
+        } else {
+          showError('No transactions were updated (all are locked or reconciled)');
+        }
+      } else {
+        showSuccess('Transactions updated');
+      }
     },
     onError: (error) => {
       const message =

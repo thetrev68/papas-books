@@ -28,9 +28,8 @@ export default function WorkbenchPage() {
   const [historyTransaction, setHistoryTransaction] = useState<Transaction | null>(null);
 
   const { transactions, isLoading, filter, setFilter } = useWorkbenchData(activeBookset?.id || '');
-  const { createTransaction, updateTransaction, deleteTransaction } = useTransactionMutations(
-    activeBookset?.id || ''
-  );
+  const { createTransaction, updateTransaction, deleteTransaction, bulkUpdate } =
+    useTransactionMutations(activeBookset?.id || '');
 
   // Optimistic locking for concurrent edit detection
   const { conflictData, checkForConflict, resolveConflict, hasConflict, clearConflict } =
@@ -110,6 +109,14 @@ export default function WorkbenchPage() {
     const hasConflict = await checkForConflict(transaction, updatedTransaction);
     if (hasConflict) return; // Show conflict modal
     updateTransaction(updatedTransaction);
+  };
+
+  const handleBulkUpdateCategory = (transactionIds: string[], categoryId: string) => {
+    bulkUpdate({
+      type: 'updateCategory',
+      transactionIds,
+      categoryId,
+    });
   };
 
   const handleCreateTransaction = (transaction: Transaction) => {
@@ -209,6 +216,7 @@ export default function WorkbenchPage() {
             onReview={handleReview}
             onUpdatePayee={handleUpdatePayee}
             onUpdateCategory={handleUpdateCategory}
+            onBulkUpdateCategory={handleBulkUpdateCategory}
             onCreateRule={handleCreateRule}
             onCreatePayee={handleCreatePayee}
             onShowHistory={setHistoryTransaction}
