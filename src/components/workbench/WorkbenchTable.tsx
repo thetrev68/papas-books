@@ -129,7 +129,7 @@ function WorkbenchTable({
                 type="checkbox"
                 checked={table.getIsAllRowsSelected()}
                 onChange={table.getToggleAllRowsSelectedHandler()}
-                className="w-5 h-5 text-brand-600 rounded border-neutral-300 focus:ring-brand-500 cursor-pointer"
+                className="w-5 h-5 text-brand-600 dark:text-brand-500 rounded border-neutral-300 dark:border-gray-600 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer bg-white dark:bg-gray-700"
                 title="Select all"
               />
             </div>
@@ -144,7 +144,7 @@ function WorkbenchTable({
                 checked={row.getIsSelected()}
                 disabled={locked}
                 onChange={row.getToggleSelectedHandler()}
-                className="w-5 h-5 text-brand-600 rounded border-neutral-300 focus:ring-brand-500 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed"
+                className="w-5 h-5 text-brand-600 dark:text-brand-500 rounded border-neutral-300 dark:border-gray-600 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer disabled:opacity-30 disabled:cursor-not-allowed bg-white dark:bg-gray-700"
                 title={locked ? 'Cannot select locked/reconciled transaction' : 'Select'}
               />
             </div>
@@ -168,7 +168,7 @@ function WorkbenchTable({
       columnHelper.accessor('date', {
         header: 'Date',
         cell: (info) => (
-          <span className="text-neutral-600 font-medium">
+          <span className="text-neutral-900 dark:text-gray-100">
             {new Date(info.getValue()).toLocaleDateString()}
           </span>
         ),
@@ -192,7 +192,7 @@ function WorkbenchTable({
         header: 'Description',
         cell: (info) => (
           <span
-            className="text-neutral-500 italic block truncate max-w-[200px]"
+            className="text-neutral-600 dark:text-gray-400 italic block truncate max-w-[200px]"
             title={info.getValue()}
           >
             {info.getValue()}
@@ -204,9 +204,11 @@ function WorkbenchTable({
         cell: (info) => {
           const amount = info.getValue();
           const colorClass =
-            amount >= 0 ? 'text-success-700' : 'text-neutral-900 dark:text-gray-100';
+            amount >= 0
+              ? 'text-success-700 dark:text-green-500'
+              : 'text-neutral-900 dark:text-gray-100';
           return (
-            <div className={`font-bold text-right ${colorClass}`}>
+            <div className={`text-right ${colorClass}`}>
               $
               {(Math.abs(amount) / 100).toLocaleString('en-US', {
                 minimumFractionDigits: 2,
@@ -227,7 +229,7 @@ function WorkbenchTable({
               <div>
                 <button
                   onClick={row.getToggleExpandedHandler()}
-                  className="text-brand-600 font-bold hover:underline flex items-center gap-1"
+                  className="text-brand-600 dark:text-brand-400 hover:underline flex items-center gap-1"
                 >
                   {row.getIsExpanded() ? '▼' : '▶'} Split ({row.original.lines.length})
                 </button>
@@ -240,7 +242,7 @@ function WorkbenchTable({
                 value={currentCategoryId}
                 onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
                 disabled={locked}
-                className="w-full bg-brand-50 dark:bg-gray-700 border border-brand-200 dark:border-gray-600 text-brand-900 dark:text-gray-100 py-1 px-2 pr-8 rounded font-bold hover:bg-brand-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                className="w-full bg-brand-50 dark:bg-gray-700 border border-brand-200 dark:border-gray-600 text-brand-900 dark:text-gray-100 py-1 px-2 pr-8 rounded hover:bg-brand-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed text-sm"
               >
                 <option value="">Uncategorized</option>
                 {sortedCategories.map((cat) => (
@@ -256,7 +258,7 @@ function WorkbenchTable({
       columnHelper.accessor('account_id', {
         header: 'Account',
         cell: (info) => (
-          <span className="text-xs text-neutral-500 dark:text-gray-400 font-medium bg-neutral-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
+          <span className="text-xs text-neutral-700 dark:text-gray-300 bg-neutral-100 dark:bg-gray-700 px-1.5 py-0.5 rounded">
             {getAccountName(info.getValue())}
           </span>
         ),
@@ -272,7 +274,7 @@ function WorkbenchTable({
                 checked={info.getValue()}
                 onChange={() => onReview(info.row.original)}
                 disabled={locked}
-                className="w-5 h-5 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+                className="w-5 h-5 text-brand-600 dark:text-brand-500 rounded focus:ring-brand-500 dark:focus:ring-brand-700 border-neutral-300 dark:border-gray-600 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed bg-white dark:bg-gray-700"
               />
             </div>
           );
@@ -288,7 +290,7 @@ function WorkbenchTable({
               <button
                 onClick={() => onEdit(row.original)}
                 disabled={locked}
-                className="p-1 text-neutral-400 hover:text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 text-neutral-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 title={locked ? 'Locked (tax year filed)' : 'Edit'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -303,7 +305,7 @@ function WorkbenchTable({
               <button
                 onClick={() => onSplit(row.original)}
                 disabled={locked}
-                className="p-1 text-neutral-400 hover:text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 text-neutral-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 title={locked ? 'Locked (tax year filed)' : 'Split'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -317,7 +319,7 @@ function WorkbenchTable({
               </button>
               <button
                 onClick={() => onCreateRule(row.original)}
-                className="p-1 text-neutral-400 hover:text-brand-600 transition-colors"
+                className="p-1 text-neutral-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                 title="Create Rule"
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -332,7 +334,7 @@ function WorkbenchTable({
               <button
                 onClick={() => onDelete(row.original)}
                 disabled={locked}
-                className="p-1 text-neutral-400 hover:text-danger-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                className="p-1 text-neutral-600 dark:text-gray-400 hover:text-danger-700 dark:hover:text-red-500 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
                 title={locked ? 'Locked (tax year filed)' : 'Delete'}
               >
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -347,7 +349,7 @@ function WorkbenchTable({
               {onShowHistory && (
                 <button
                   onClick={() => onShowHistory(row.original)}
-                  className="p-1 text-neutral-400 hover:text-brand-600 transition-colors"
+                  className="p-1 text-neutral-600 dark:text-gray-400 hover:text-brand-600 dark:hover:text-brand-400 transition-colors"
                   title="View History"
                 >
                   <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -547,7 +549,7 @@ function WorkbenchTable({
               </tr>
             ))}
           </thead>
-          <tbody className="divide-y divide-neutral-200 text-sm">
+          <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-sm">
             {paddingTop > 0 && (
               <tr>
                 <td colSpan={columns.length} style={{ height: `${paddingTop}px` }} />
@@ -566,7 +568,7 @@ function WorkbenchTable({
                     ref={(node) => virtualizer.measureElement(node)}
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-2 py-2 align-middle dark:text-gray-200">
+                      <td key={cell.id} className="px-2 py-2 align-middle">
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
@@ -588,13 +590,13 @@ function WorkbenchTable({
                                 className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-lg border border-neutral-200 dark:border-gray-700"
                               >
                                 <span
-                                  className="font-bold text-brand-700 w-1/3 truncate"
+                                  className="text-brand-700 dark:text-brand-400 w-1/3 truncate"
                                   title={getCategoryName(line.category_id)}
                                 >
                                   {getCategoryName(line.category_id)}
                                 </span>
                                 <span
-                                  className={`font-mono font-medium w-32 text-right ${line.amount >= 0 ? 'text-success-700' : 'text-neutral-900 dark:text-gray-100'}`}
+                                  className={`font-mono w-32 text-right ${line.amount >= 0 ? 'text-success-700 dark:text-green-500' : 'text-neutral-900 dark:text-gray-100'}`}
                                 >
                                   {line.amount >= 0 ? '+' : ''}
                                   {(Math.abs(line.amount) / 100).toLocaleString('en-US', {
@@ -602,7 +604,7 @@ function WorkbenchTable({
                                     maximumFractionDigits: 2,
                                   })}
                                 </span>
-                                <span className="text-neutral-500 text-sm italic flex-1">
+                                <span className="text-neutral-600 dark:text-gray-400 text-sm italic flex-1">
                                   {line.memo || 'No memo'}
                                 </span>
                               </div>

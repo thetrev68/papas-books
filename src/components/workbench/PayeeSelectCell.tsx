@@ -112,7 +112,9 @@ const PayeeSelectCell = memo(function PayeeSelectCell({
     <span
       onClick={handleClick}
       className={`cursor-pointer px-1 py-0.5 rounded inline-block w-full min-h-[1.5em] hover:bg-neutral-100 dark:hover:bg-gray-700 ${
-        !value ? 'text-neutral-400 dark:text-gray-500 italic' : ''
+        !value
+          ? 'text-neutral-400 dark:text-gray-500 italic'
+          : 'text-neutral-900 dark:text-gray-100'
       }`}
     >
       {value || 'Select Payee...'}

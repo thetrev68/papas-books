@@ -241,7 +241,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           <div>
             <label
               htmlFor="rule-keyword"
-              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+              className="block text-sm text-neutral-600 dark:text-gray-400 mb-1"
             >
               Keyword
             </label>
@@ -261,7 +261,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           <div>
             <label
               htmlFor="rule-match-type"
-              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+              className="block text-sm text-neutral-600 dark:text-gray-400 mb-1"
             >
               Match Type
             </label>
@@ -285,15 +285,13 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
               onChange={(e) => setFormData({ ...formData, caseSensitive: e.target.checked })}
               className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-500"
             />
-            <span className="text-lg font-medium text-neutral-900 dark:text-gray-100">
-              Case sensitive
-            </span>
+            <span className="text-lg text-neutral-900 dark:text-gray-100">Case sensitive</span>
           </label>
 
           <div>
             <label
               htmlFor="rule-category"
-              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+              className="block text-sm text-neutral-600 dark:text-gray-400 mb-1"
             >
               Category
             </label>
@@ -320,7 +318,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           <div>
             <label
               htmlFor="rule-suggested-payee"
-              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+              className="block text-sm text-neutral-600 dark:text-gray-400 mb-1"
             >
               Suggested Payee (optional)
             </label>
@@ -337,7 +335,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           <div>
             <label
               htmlFor="rule-priority"
-              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+              className="block text-sm text-neutral-600 dark:text-gray-400 mb-1"
             >
               Priority (1-100)
             </label>
@@ -358,7 +356,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
             <button
               type="button"
               onClick={() => setShowAdvanced(!showAdvanced)}
-              className="text-brand-700 dark:text-brand-400 font-bold hover:underline"
+              className="text-brand-700 dark:text-brand-400 hover:underline"
             >
               {showAdvanced ? 'Hide Advanced Conditions' : 'Show Advanced Conditions'}
             </button>
@@ -367,7 +365,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
           {showAdvanced && (
             <div className="bg-neutral-50 dark:bg-gray-800 border border-neutral-200 dark:border-gray-600 rounded-xl p-4 space-y-4">
               <div>
-                <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">
                   Amount Range (cents)
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
@@ -389,7 +387,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">
                   Description Regex (AND condition)
                 </label>
                 <input
@@ -407,7 +405,7 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
               </div>
 
               <div>
-                <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+                <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">
                   Date Range
                 </label>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mb-3">
@@ -453,21 +451,21 @@ export default function RuleFormModal({ rule, initialValues, onClose }: RuleForm
               onChange={(e) => setFormData({ ...formData, isEnabled: e.target.checked })}
               className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-500"
             />
-            <span className="text-lg font-medium text-neutral-900 dark:text-gray-100">Enabled</span>
+            <span className="text-lg text-neutral-900 dark:text-gray-100">Enabled</span>
           </label>
 
           <div className="flex flex-wrap gap-3 justify-end">
             <button
               type="submit"
               disabled={isCreating || isUpdating}
-              className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+              className="px-6 py-3 bg-brand-600 text-white rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
             >
               {isCreating || isUpdating ? 'Saving...' : 'Save'}
             </button>
             <button
               type="button"
               onClick={onClose}
-              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
+              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
             >
               Cancel
             </button>

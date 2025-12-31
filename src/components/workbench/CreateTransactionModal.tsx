@@ -178,9 +178,7 @@ function CreateTransactionModal({
       >
         <div className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
-              Date
-            </label>
+            <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">Date</label>
             <input
               type="date"
               value={formData.date}
@@ -190,9 +188,7 @@ function CreateTransactionModal({
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
-              Payee
-            </label>
+            <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">Payee</label>
             <input
               type="text"
               list="payees-list"
@@ -209,9 +205,7 @@ function CreateTransactionModal({
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
-              Amount
-            </label>
+            <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">Amount</label>
             <input
               type="number"
               step="0.01"
@@ -230,14 +224,12 @@ function CreateTransactionModal({
               onChange={(e) => setFormData({ ...formData, isSplit: e.target.checked })}
               className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 dark:border-gray-600"
             />
-            <span className="text-lg font-medium text-neutral-900 dark:text-gray-100">
-              Split Transaction
-            </span>
+            <span className="text-lg text-neutral-900 dark:text-gray-100">Split Transaction</span>
           </label>
 
           {!formData.isSplit && (
             <div>
-              <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+              <label className="block text-sm text-neutral-600 dark:text-gray-400 mb-1">
                 Category
               </label>
               <select
@@ -257,10 +249,10 @@ function CreateTransactionModal({
 
           {initialTransaction?.original_description && (
             <div className="bg-neutral-50 dark:bg-gray-700 p-3 rounded-xl border border-neutral-200 dark:border-gray-600">
-              <span className="block text-xs font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wide mb-1">
+              <span className="block text-xs text-neutral-600 dark:text-gray-400 uppercase tracking-wide mb-1">
                 Bank Description
               </span>
-              <span className="text-neutral-700 dark:text-gray-300 font-mono text-sm break-all">
+              <span className="text-neutral-900 dark:text-gray-100 font-mono text-sm break-all">
                 {initialTransaction.original_description}
               </span>
             </div>
@@ -274,14 +266,14 @@ function CreateTransactionModal({
                 formData.amount === 0 ||
                 (!formData.isSplit && !formData.categoryId)
               }
-              className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
+              className="px-6 py-3 bg-brand-600 text-white rounded-xl shadow hover:bg-brand-700 disabled:opacity-50"
               type="button"
             >
               {initialTransaction ? 'Save' : 'Create'}
             </button>
             <button
               onClick={onClose}
-              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 font-bold rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
+              className="px-6 py-3 bg-white dark:bg-gray-700 border-2 border-neutral-300 dark:border-gray-600 text-neutral-700 dark:text-gray-200 rounded-xl hover:bg-neutral-50 dark:hover:bg-gray-600"
               type="button"
             >
               Cancel
