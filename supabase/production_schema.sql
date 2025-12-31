@@ -22,21 +22,24 @@ CREATE EXTENSION IF NOT EXISTS "uuid-ossp";
 -- -----------------------------------------------------------------------------
 -- 0. Cleanup (Reset Schema)
 -- -----------------------------------------------------------------------------
+DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
+DROP FUNCTION IF EXISTS public.handle_new_user();
 
--- Drop tables first (CASCADE will drop all dependent triggers, indexes, and constraints)
-DROP TABLE IF EXISTS public.reconciliations CASCADE;
-DROP TABLE IF EXISTS public.transactions CASCADE;
-DROP TABLE IF EXISTS public.import_batches CASCADE;
-DROP TABLE IF EXISTS public.rules CASCADE;
-DROP TABLE IF EXISTS public.categories CASCADE;
-DROP TABLE IF EXISTS public.payees CASCADE;
-DROP TABLE IF EXISTS public.accounts CASCADE;
-DROP TABLE IF EXISTS public.access_grants CASCADE;
-DROP TABLE IF EXISTS public.booksets CASCADE;
-DROP TABLE IF EXISTS public.users CASCADE;
+-- Drop Phase 9 audit triggers
+DROP TRIGGER IF EXISTS track_transaction_changes ON public.transactions;
+DROP TRIGGER IF EXISTS track_account_changes ON public.accounts;
+DROP TRIGGER IF EXISTS track_category_changes ON public.categories;
+DROP TRIGGER IF EXISTS track_rule_changes ON public.rules;
 
--- Drop functions (these may still exist even after table drops)
-DROP FUNCTION IF EXISTS public.handle_new_user() CASCADE;
+-- Drop tax year locking trigger
+DROP TRIGGER IF EXISTS enforce_tax_year_locks ON public.transactions;
+
+-- Drop Phase 8 audit triggers (old version)
+DROP TRIGGER IF EXISTS tr_audit_transactions ON public.transactions;
+DROP TRIGGER IF EXISTS tr_audit_accounts ON public.accounts;
+DROP TRIGGER IF EXISTS tr_audit_rules ON public.rules;
+
+-- Drop all functions to ensure clean state
 DROP FUNCTION IF EXISTS public.user_owns_bookset(uuid) CASCADE;
 DROP FUNCTION IF EXISTS public.user_has_access_grant(uuid, text) CASCADE;
 DROP FUNCTION IF EXISTS public.user_can_read_bookset(uuid) CASCADE;
@@ -49,8 +52,45 @@ DROP FUNCTION IF EXISTS public.track_change_history() CASCADE;
 DROP FUNCTION IF EXISTS public.finalize_reconciliation(uuid, uuid, bigint, timestamp with time zone, bigint, bigint, uuid[]) CASCADE;
 DROP FUNCTION IF EXISTS public.grant_access_by_email(uuid, text, text, boolean, boolean) CASCADE;
 DROP FUNCTION IF EXISTS public.undo_import_batch(uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.add_payee_alias(uuid, text) CASCADE;
+DROP FUNCTION IF EXISTS public.get_max_locked_year(uuid) CASCADE;
+DROP FUNCTION IF EXISTS public.is_date_locked(uuid, date) CASCADE;
+DROP FUNCTION IF EXISTS public.lock_tax_year(uuid, int) CASCADE;
+DROP FUNCTION IF EXISTS public.unlock_tax_year(uuid, int) CASCADE;
+DROP FUNCTION IF EXISTS public.prevent_locked_transaction_changes() CASCADE;
 
--- Note: Indexes and triggers are automatically dropped when tables are dropped with CASCADE
+-- Drop indexes
+DROP INDEX IF EXISTS idx_transactions_bookset_account_date;
+DROP INDEX IF EXISTS idx_transactions_fingerprint;
+DROP INDEX IF EXISTS idx_transactions_bookset_reviewed;
+DROP INDEX IF EXISTS idx_transactions_account_date_reconciled;
+DROP INDEX IF EXISTS idx_transactions_lines_category;
+DROP INDEX IF EXISTS idx_transactions_payee_id;
+DROP INDEX IF EXISTS idx_rules_bookset_priority;
+DROP INDEX IF EXISTS idx_rules_keyword;
+DROP INDEX IF EXISTS idx_rules_payee_id;
+DROP INDEX IF EXISTS idx_categories_bookset_parent;
+DROP INDEX IF EXISTS idx_categories_sort;
+DROP INDEX IF EXISTS idx_accounts_bookset_active;
+DROP INDEX IF EXISTS idx_access_grants_user_bookset;
+DROP INDEX IF EXISTS idx_access_grants_bookset;
+DROP INDEX IF EXISTS idx_import_batches_account;
+DROP INDEX IF EXISTS idx_import_batches_undone;
+DROP INDEX IF EXISTS idx_payees_bookset_name;
+DROP INDEX IF EXISTS idx_tax_year_locks_bookset;
+
+-- Drop tables
+DROP TABLE IF EXISTS public.reconciliations CASCADE;
+DROP TABLE IF EXISTS public.transactions CASCADE;
+DROP TABLE IF EXISTS public.import_batches CASCADE;
+DROP TABLE IF EXISTS public.tax_year_locks CASCADE;
+DROP TABLE IF EXISTS public.rules CASCADE;
+DROP TABLE IF EXISTS public.categories CASCADE;
+DROP TABLE IF EXISTS public.accounts CASCADE;
+DROP TABLE IF EXISTS public.access_grants CASCADE;
+DROP TABLE IF EXISTS public.users CASCADE;
+DROP TABLE IF EXISTS public.booksets CASCADE;
+DROP TABLE IF EXISTS public.payees CASCADE;
 
 -- -----------------------------------------------------------------------------
 -- 1. Tables
@@ -145,18 +185,6 @@ CREATE TABLE public.categories (
   change_history jsonb -- Phase 9: Audit trail
 );
 
--- Table: payees (must be created before transactions and rules that reference it)
-CREATE TABLE public.payees (
-  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
-  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
-  name text NOT NULL,
-  default_category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
-  created_at timestamp with time zone DEFAULT now(),
-  updated_at timestamp with time zone DEFAULT now(),
-  created_by uuid REFERENCES public.users(id),
-  last_modified_by uuid REFERENCES public.users(id)
-);
-
 -- Table: transactions
 CREATE TABLE public.transactions (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -229,6 +257,18 @@ CREATE TABLE public.reconciliations (
   discrepancy_resolution text
 );
 
+-- Table: payees
+CREATE TABLE public.payees (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  name text NOT NULL,
+  default_category_id uuid REFERENCES public.categories(id) ON DELETE SET NULL,
+  created_at timestamp with time zone DEFAULT now(),
+  updated_at timestamp with time zone DEFAULT now(),
+  created_by uuid REFERENCES public.users(id),
+  last_modified_by uuid REFERENCES public.users(id)
+);
+
 -- Table: import_batches
 CREATE TABLE public.import_batches (
   id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
@@ -250,6 +290,16 @@ CREATE TABLE public.import_batches (
 
 -- Add transaction source_batch_id FK
 ALTER TABLE public.transactions ADD CONSTRAINT fk_transactions_batch FOREIGN KEY (source_batch_id) REFERENCES public.import_batches(id) ON DELETE SET NULL;
+
+-- Table: tax_year_locks
+CREATE TABLE public.tax_year_locks (
+  id uuid PRIMARY KEY DEFAULT gen_random_uuid(),
+  bookset_id uuid REFERENCES public.booksets(id) ON DELETE CASCADE NOT NULL,
+  tax_year int NOT NULL,
+  locked_at timestamp with time zone DEFAULT now() NOT NULL,
+  locked_by uuid REFERENCES public.users(id) NOT NULL,
+  UNIQUE(bookset_id, tax_year)
+);
 
 -- -----------------------------------------------------------------------------
 -- 2. RLS Helper Functions (with search_path security)
@@ -402,6 +452,7 @@ ALTER TABLE public.categories ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.rules ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.payees ENABLE ROW LEVEL SECURITY;
 ALTER TABLE public.import_batches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.tax_year_locks ENABLE ROW LEVEL SECURITY;
 
 -- Read policies
 CREATE POLICY "Users can read accounts" ON public.accounts FOR SELECT USING (user_can_read_bookset(bookset_id));
@@ -409,6 +460,7 @@ CREATE POLICY "Users can read categories" ON public.categories FOR SELECT USING 
 CREATE POLICY "Users can read rules" ON public.rules FOR SELECT USING (user_can_read_bookset(bookset_id));
 CREATE POLICY "Users can read payees" ON public.payees FOR SELECT USING (user_can_read_bookset(bookset_id));
 CREATE POLICY "Users can read import_batches" ON public.import_batches FOR SELECT USING (user_can_read_bookset(bookset_id));
+CREATE POLICY "Users can read locks for their booksets" ON public.tax_year_locks FOR SELECT USING (user_can_read_bookset(bookset_id));
 
 -- Write policies
 CREATE POLICY "Editors can insert accounts" ON public.accounts FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
@@ -430,6 +482,8 @@ CREATE POLICY "Editors can delete payees" ON public.payees FOR DELETE USING (use
 CREATE POLICY "Editors can insert import_batches" ON public.import_batches FOR INSERT WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can update import_batches" ON public.import_batches FOR UPDATE USING (user_can_write_bookset(bookset_id)) WITH CHECK (user_can_write_bookset(bookset_id));
 CREATE POLICY "Editors can delete import_batches" ON public.import_batches FOR DELETE USING (user_can_write_bookset(bookset_id));
+
+CREATE POLICY "Owners can manage locks" ON public.tax_year_locks FOR ALL USING (user_owns_bookset(bookset_id)) WITH CHECK (user_owns_bookset(bookset_id));
 
 -- Transactions
 ALTER TABLE public.transactions ENABLE ROW LEVEL SECURITY;
@@ -531,6 +585,7 @@ CREATE TRIGGER categories_prevent_audit_changes BEFORE UPDATE ON public.categori
 
 CREATE TRIGGER transactions_set_audit_on_create BEFORE INSERT ON public.transactions FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
 CREATE TRIGGER transactions_prevent_audit_changes BEFORE UPDATE ON public.transactions FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
+CREATE TRIGGER enforce_tax_year_locks BEFORE UPDATE OR DELETE ON public.transactions FOR EACH ROW EXECUTE FUNCTION prevent_locked_transaction_changes();
 
 CREATE TRIGGER rules_set_audit_on_create BEFORE INSERT ON public.rules FOR EACH ROW EXECUTE FUNCTION set_audit_fields_on_create();
 CREATE TRIGGER rules_prevent_audit_changes BEFORE UPDATE ON public.rules FOR EACH ROW EXECUTE FUNCTION prevent_audit_field_changes();
@@ -747,10 +802,153 @@ END;
 $$;
 
 -- -----------------------------------------------------------------------------
--- 8. Advanced Features RPCs
+-- 8. Tax Year Locking Functions
 -- -----------------------------------------------------------------------------
 
--- 8.1 RPC: grant_access_by_email
+-- Get maximum locked year for a bookset
+CREATE OR REPLACE FUNCTION get_max_locked_year(p_bookset_id uuid)
+RETURNS int
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  max_year int;
+BEGIN
+  SELECT MAX(tax_year)
+  INTO max_year
+  FROM tax_year_locks
+  WHERE bookset_id = p_bookset_id;
+
+  RETURN max_year;
+END;
+$$;
+
+-- Check if a transaction date is in a locked year
+CREATE OR REPLACE FUNCTION is_date_locked(
+  p_bookset_id uuid,
+  p_date date
+)
+RETURNS boolean
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  max_locked_year int;
+  transaction_year int;
+BEGIN
+  -- Get max locked year for this bookset
+  max_locked_year := get_max_locked_year(p_bookset_id);
+
+  -- If no years are locked, date is not locked
+  IF max_locked_year IS NULL THEN
+    RETURN FALSE;
+  END IF;
+
+  -- Extract year from date
+  transaction_year := EXTRACT(YEAR FROM p_date);
+
+  -- Date is locked if its year is <= max locked year
+  RETURN transaction_year <= max_locked_year;
+END;
+$$;
+
+-- Lock a specific tax year
+CREATE OR REPLACE FUNCTION lock_tax_year(
+  p_bookset_id uuid,
+  p_year int
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  -- Verify user owns bookset
+  IF NOT user_owns_bookset(p_bookset_id) THEN
+    RAISE EXCEPTION 'Only bookset owners can lock tax years';
+  END IF;
+
+  -- Insert lock record
+  INSERT INTO tax_year_locks (bookset_id, tax_year, locked_by)
+  VALUES (p_bookset_id, p_year, auth.uid())
+  ON CONFLICT (bookset_id, tax_year) DO NOTHING;
+END;
+$$;
+
+-- Unlock a specific tax year
+CREATE OR REPLACE FUNCTION unlock_tax_year(
+  p_bookset_id uuid,
+  p_year int
+)
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+BEGIN
+  -- Verify user owns bookset
+  IF NOT user_owns_bookset(p_bookset_id) THEN
+    RAISE EXCEPTION 'Only bookset owners can unlock tax years';
+  END IF;
+
+  -- Delete lock record
+  DELETE FROM tax_year_locks
+  WHERE bookset_id = p_bookset_id
+    AND tax_year = p_year;
+END;
+$$;
+
+-- Prevent updates/deletes to transactions in locked years
+CREATE OR REPLACE FUNCTION prevent_locked_transaction_changes()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  is_locked boolean;
+BEGIN
+  -- For DELETE operations, check OLD record
+  IF TG_OP = 'DELETE' THEN
+    is_locked := is_date_locked(OLD.bookset_id, OLD.date::date);
+    IF is_locked THEN
+      RAISE EXCEPTION 'Cannot delete transaction in locked tax year %',
+        EXTRACT(YEAR FROM OLD.date::date);
+    END IF;
+    RETURN OLD;
+  END IF;
+
+  -- For UPDATE operations, check both OLD and NEW
+  IF TG_OP = 'UPDATE' THEN
+    -- Check if old date is locked
+    is_locked := is_date_locked(OLD.bookset_id, OLD.date::date);
+    IF is_locked THEN
+      RAISE EXCEPTION 'Cannot modify transaction in locked tax year %',
+        EXTRACT(YEAR FROM OLD.date::date);
+    END IF;
+
+    -- Check if new date would move it into a locked year
+    is_locked := is_date_locked(NEW.bookset_id, NEW.date::date);
+    IF is_locked THEN
+      RAISE EXCEPTION 'Cannot change transaction date to locked tax year %',
+        EXTRACT(YEAR FROM NEW.date::date);
+    END IF;
+
+    RETURN NEW;
+  END IF;
+
+  -- INSERT operations are not blocked
+  RETURN NEW;
+END;
+$$;
+
+-- -----------------------------------------------------------------------------
+-- 9. Advanced Features RPCs
+-- -----------------------------------------------------------------------------
+
+-- 9.1 RPC: grant_access_by_email
 CREATE OR REPLACE FUNCTION grant_access_by_email(
   _bookset_id uuid,
   _email text,
@@ -931,6 +1129,11 @@ CREATE INDEX IF NOT EXISTS idx_import_batches_account
 -- Undo functionality
 CREATE INDEX IF NOT EXISTS idx_import_batches_undone
   ON import_batches(bookset_id, is_undone);
+
+-- TAX YEAR LOCKS TABLE
+-- Fast lookup of locked years by bookset
+CREATE INDEX IF NOT EXISTS idx_tax_year_locks_bookset
+  ON tax_year_locks(bookset_id);
 
 -- PAYEES TABLE
 -- Payee lookup for autocomplete
