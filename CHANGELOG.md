@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.6.0](https://github.com/thetrev68/papas-books/compare/v1.5.1...v1.6.0) (2025-12-31)
+
+### Features
+
+- **reports:** use parent:child format for category names in all reports ([5728096](https://github.com/thetrev68/papas-books/commit/57280966119423928f7bd65c58c10eb8ab56fef5))
+- **workbench:** implement bulk category update feature ([b00c4d5](https://github.com/thetrev68/papas-books/commit/b00c4d5adef16a7dbadabfd6ff89e92dbcf8c9a7))
+
 ## [1.5.1](https://github.com/thetrev68/papas-books/compare/v1.5.0...v1.5.1) (2025-12-31)
 
 ### Bug Fixes
