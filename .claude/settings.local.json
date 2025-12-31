@@ -17,7 +17,8 @@
       "Bash(npm run test:coverage:*)",
       "Bash(npx vitest:*)",
       "Bash(dos2unix:*)",
-      "Bash(tee:*)"
+      "Bash(tee:*)",
+      "Bash(npm run lint:md:fix:*)"
     ]
   }
 }

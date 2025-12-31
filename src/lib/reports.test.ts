@@ -1,4 +1,10 @@
-import { generateCategoryReport, filterTransactionsForReport, exportReportToCsv } from './reports';
+import {
+  generateCategoryReport,
+  filterTransactionsForReport,
+  exportReportToCsv,
+  generateTaxLineReport,
+  exportTaxReportToCsv,
+} from './reports';
 import { Transaction, Category } from '../types/database';
 import { ReportFilter } from '../types/reconcile';
 
@@ -247,6 +253,306 @@ describe('Reporting Logic', () => {
       };
       const result = filterTransactionsForReport(allTxs, filter);
       expect(result.find((t) => t.id === '4')).toBeDefined(); // Split tx has c2
+    });
+  });
+
+  describe('generateTaxLineReport', () => {
+    const categoriesWithTaxLines: Category[] = [
+      {
+        id: 'cat1',
+        name: 'Advertising',
+        tax_line_item: 'Schedule C Line 8',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        is_tax_deductible: true,
+        parent_category_id: null,
+      },
+      {
+        id: 'cat2',
+        name: 'Office Supplies',
+        tax_line_item: 'Schedule C Line 18',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        is_tax_deductible: true,
+        parent_category_id: null,
+      },
+      {
+        id: 'cat3',
+        name: 'Uncategorized',
+        tax_line_item: null,
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        is_tax_deductible: false,
+        parent_category_id: null,
+      },
+    ];
+
+    it('should group transactions by tax_line_item', () => {
+      const txs = [
+        mockTx('1', -5000, '2023-01-01', 'cat1'),
+        mockTx('2', -3000, '2023-01-02', 'cat1'),
+        mockTx('3', -2000, '2023-01-03', 'cat2'),
+        mockTx('4', -1000, '2023-01-04', 'cat3'), // Should be excluded (no tax line)
+      ];
+
+      const result = generateTaxLineReport(txs, categoriesWithTaxLines);
+
+      expect(result).toHaveLength(2); // Only cat1 and cat2 have tax lines
+      expect(result[0]).toMatchObject({
+        taxLineItem: 'Schedule C Line 18',
+        totalAmount: -2000,
+        transactionCount: 1,
+        categoryNames: ['Office Supplies'],
+      });
+      expect(result[1]).toMatchObject({
+        taxLineItem: 'Schedule C Line 8',
+        totalAmount: -8000,
+        transactionCount: 2,
+        categoryNames: ['Advertising'],
+      });
+    });
+
+    it('should handle split transactions', () => {
+      const categoriesForSplit: Category[] = [
+        {
+          id: 'cat1',
+          name: 'Advertising',
+          tax_line_item: 'Schedule C Line 8',
+          bookset_id: 'b1',
+          is_archived: false,
+          sort_order: 0,
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          last_modified_by: '',
+          is_tax_deductible: true,
+          parent_category_id: null,
+        },
+        {
+          id: 'cat2',
+          name: 'Meals',
+          tax_line_item: 'Schedule C Line 24b',
+          bookset_id: 'b1',
+          is_archived: false,
+          sort_order: 0,
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          last_modified_by: '',
+          is_tax_deductible: true,
+          parent_category_id: null,
+        },
+      ];
+
+      const txs = [
+        mockTx('1', -10000, '2023-01-01', '', true, [
+          { category_id: 'cat1', amount: -6000 },
+          { category_id: 'cat2', amount: -4000 },
+        ]),
+      ];
+
+      const result = generateTaxLineReport(txs, categoriesForSplit);
+
+      expect(result).toHaveLength(2);
+      expect(result.find((r) => r.taxLineItem === 'Schedule C Line 8')).toMatchObject({
+        totalAmount: -6000,
+        transactionCount: 1,
+        categoryNames: ['Advertising'],
+      });
+      expect(result.find((r) => r.taxLineItem === 'Schedule C Line 24b')).toMatchObject({
+        totalAmount: -4000,
+        transactionCount: 1,
+        categoryNames: ['Meals'],
+      });
+    });
+
+    it('should group multiple categories with the same tax line', () => {
+      const multiCategoryTaxLine: Category[] = [
+        {
+          id: 'cat1',
+          name: 'Facebook Ads',
+          tax_line_item: 'Schedule C Line 8',
+          bookset_id: 'b1',
+          is_archived: false,
+          sort_order: 0,
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          last_modified_by: '',
+          is_tax_deductible: true,
+          parent_category_id: null,
+        },
+        {
+          id: 'cat2',
+          name: 'Google Ads',
+          tax_line_item: 'Schedule C Line 8',
+          bookset_id: 'b1',
+          is_archived: false,
+          sort_order: 0,
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          last_modified_by: '',
+          is_tax_deductible: true,
+          parent_category_id: null,
+        },
+      ];
+
+      const txs = [
+        mockTx('1', -5000, '2023-01-01', 'cat1'),
+        mockTx('2', -3000, '2023-01-02', 'cat2'),
+      ];
+
+      const result = generateTaxLineReport(txs, multiCategoryTaxLine);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        taxLineItem: 'Schedule C Line 8',
+        totalAmount: -8000,
+        transactionCount: 2,
+      });
+      expect(result[0].categoryNames).toEqual(['Facebook Ads', 'Google Ads']);
+    });
+
+    it('should handle income transactions', () => {
+      const incomeCategory: Category[] = [
+        {
+          id: 'cat1',
+          name: 'Sales Revenue',
+          tax_line_item: 'Schedule C Line 1',
+          bookset_id: 'b1',
+          is_archived: false,
+          sort_order: 0,
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          last_modified_by: '',
+          is_tax_deductible: false,
+          parent_category_id: null,
+        },
+      ];
+
+      const txs = [mockTx('1', 10000, '2023-01-01', 'cat1')];
+
+      const result = generateTaxLineReport(txs, incomeCategory);
+
+      expect(result).toHaveLength(1);
+      expect(result[0]).toMatchObject({
+        taxLineItem: 'Schedule C Line 1',
+        totalAmount: 10000,
+        transactionCount: 1,
+        isIncome: true,
+      });
+    });
+
+    it('should return empty array when no categories have tax lines', () => {
+      const noTaxLineCategories: Category[] = [
+        {
+          id: 'cat1',
+          name: 'Misc',
+          tax_line_item: null,
+          bookset_id: 'b1',
+          is_archived: false,
+          sort_order: 0,
+          created_at: '',
+          updated_at: '',
+          created_by: '',
+          last_modified_by: '',
+          is_tax_deductible: false,
+          parent_category_id: null,
+        },
+      ];
+
+      const txs = [mockTx('1', -1000, '2023-01-01', 'cat1')];
+
+      const result = generateTaxLineReport(txs, noTaxLineCategories);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should skip transactions with no lines', () => {
+      const txs = [mockTx('1', -1000, '2023-01-01', '', false, [])];
+
+      const result = generateTaxLineReport(txs, categoriesWithTaxLines);
+
+      expect(result).toHaveLength(0);
+    });
+  });
+
+  describe('exportTaxReportToCsv', () => {
+    it('should export tax report to CSV with proper formatting', () => {
+      const summary = [
+        {
+          taxLineItem: 'Schedule C Line 8',
+          totalAmount: -8000,
+          transactionCount: 2,
+          isIncome: false,
+          categoryNames: ['Advertising', 'Marketing'],
+        },
+        {
+          taxLineItem: 'Schedule C Line 18',
+          totalAmount: -2500,
+          transactionCount: 1,
+          isIncome: false,
+          categoryNames: ['Office Supplies'],
+        },
+      ];
+
+      const csv = exportTaxReportToCsv(summary);
+      const lines = csv.split('\n');
+
+      expect(lines[0]).toBe('Tax Line Item,Total Amount,Transaction Count,Categories');
+      expect(lines[1]).toBe('"Schedule C Line 8",-80.00,2,"Advertising; Marketing"');
+      expect(lines[2]).toBe('"Schedule C Line 18",-25.00,1,"Office Supplies"');
+    });
+
+    it('should handle amounts with proper decimal formatting', () => {
+      const summary = [
+        {
+          taxLineItem: 'Schedule C Line 1',
+          totalAmount: 125050, // $1,250.50
+          transactionCount: 5,
+          isIncome: true,
+          categoryNames: ['Sales'],
+        },
+      ];
+
+      const csv = exportTaxReportToCsv(summary);
+      const lines = csv.split('\n');
+
+      expect(lines[1]).toBe('"Schedule C Line 1",1250.50,5,"Sales"');
+    });
+
+    it('should handle empty category names', () => {
+      const summary = [
+        {
+          taxLineItem: 'Schedule C Line 8',
+          totalAmount: -1000,
+          transactionCount: 1,
+          isIncome: false,
+          categoryNames: [],
+        },
+      ];
+
+      const csv = exportTaxReportToCsv(summary);
+      const lines = csv.split('\n');
+
+      expect(lines[1]).toBe('"Schedule C Line 8",-10.00,1,""');
     });
   });
 });
