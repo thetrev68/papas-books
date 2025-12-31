@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.5.1](https://github.com/thetrev68/papas-books/compare/v1.5.0...v1.5.1) (2025-12-31)
+
+### Bug Fixes
+
+- resolve tax_year_locks 404s and optimize workbench UI ([7260b25](https://github.com/thetrev68/papas-books/commit/7260b25b221d1773753c5e7b8402c43356a52801))
+
 ## [1.5.0](https://github.com/thetrev68/papas-books/compare/v1.4.0...v1.5.0) (2025-12-31)
 
 ### Features
