@@ -3,7 +3,11 @@ import { useAuth } from '../context/AuthContext';
 import { previewCsv, parseFullCsv, type ParseResult } from '../lib/import/parser';
 import { mapRowsToTransactions, type StagedTransaction } from '../lib/import/mapper';
 import { addFingerprints } from '../lib/import/fingerprint';
-import { detectExactDuplicates, type ProcessedTransaction } from '../lib/import/reconciler';
+import {
+  detectExactDuplicates,
+  validateImportDates,
+  type ProcessedTransaction,
+} from '../lib/import/reconciler';
 import { detectFuzzyDuplicates } from '../lib/import/fuzzy-matcher';
 import {
   fetchExistingFingerprints,
@@ -238,6 +242,16 @@ export function useImportSession(): UseImportSessionResult {
     try {
       // Filter only "new" transactions
       const toImport = state.processedTransactions.filter((t) => t.status === 'new' && t.isValid);
+
+      // Validate that no transactions are in locked tax years
+      const validation = await validateImportDates(activeBookset.id, toImport);
+      if (!validation.valid) {
+        throw new Error(
+          `Cannot import transactions in locked tax years. ` +
+            `Found ${validation.lockedDates.length} transaction(s) in locked years. ` +
+            `Please remove these dates from your CSV and try again: ${validation.lockedDates.join(', ')}`
+        );
+      }
 
       // Build transaction objects
       const transactions = toImport.map((t) => ({

@@ -1,5 +1,6 @@
 import { StagedTransaction } from './mapper';
 import type { Transaction } from '../../types/database';
+import { isDateLocked } from '../supabase/taxYearLocks';
 
 export type ImportStatus = 'new' | 'duplicate' | 'fuzzy_duplicate' | 'error';
 
@@ -39,4 +40,28 @@ export function detectExactDuplicates(
       status: 'new',
     };
   });
+}
+
+/**
+ * Validates import dates against locked tax years
+ * Throws an error if any transactions are in locked years
+ */
+export async function validateImportDates(
+  booksetId: string,
+  transactions: { date?: string }[]
+): Promise<{ valid: boolean; lockedDates: string[] }> {
+  const lockedDates: string[] = [];
+
+  for (const tx of transactions) {
+    if (!tx.date) continue;
+    const locked = await isDateLocked(booksetId, tx.date);
+    if (locked) {
+      lockedDates.push(tx.date);
+    }
+  }
+
+  return {
+    valid: lockedDates.length === 0,
+    lockedDates,
+  };
 }

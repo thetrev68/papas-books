@@ -5,12 +5,13 @@ import CategoriesTab from '../components/settings/CategoriesTab';
 import RulesTab from '../components/settings/RulesTab';
 import PayeesTab from '../components/settings/PayeesTab';
 import AccessTab from '../components/settings/AccessTab';
+import TaxYearLocksTab from '../components/settings/TaxYearLocksTab';
 import ThemeToggle from '../components/ThemeToggle';
 
 export default function SettingsPage() {
   const { activeBookset } = useAuth();
   const [activeTab, setActiveTab] = useState<
-    'accounts' | 'categories' | 'payees' | 'rules' | 'access'
+    'accounts' | 'categories' | 'payees' | 'rules' | 'access' | 'tax-locks'
   >('accounts');
 
   const tabs = [
@@ -18,6 +19,7 @@ export default function SettingsPage() {
     { id: 'categories', label: 'Categories' },
     { id: 'payees', label: 'Payees' },
     { id: 'rules', label: 'Rules' },
+    { id: 'tax-locks', label: 'Tax Years' },
     { id: 'access', label: 'Access' },
   ] as const;
 
@@ -52,6 +54,7 @@ export default function SettingsPage() {
         {activeTab === 'categories' && <CategoriesTab />}
         {activeTab === 'payees' && <PayeesTab />}
         {activeTab === 'rules' && <RulesTab />}
+        {activeTab === 'tax-locks' && <TaxYearLocksTab />}
         {activeTab === 'access' && <AccessTab />}
       </div>
     </div>

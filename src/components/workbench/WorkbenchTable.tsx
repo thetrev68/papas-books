@@ -17,6 +17,7 @@ import PayeeSelectCell from './PayeeSelectCell';
 import { useCategories } from '../../hooks/useCategories';
 import { useAccounts } from '../../hooks/useAccounts';
 import { usePayees } from '../../hooks/usePayees';
+import { useTaxYearLocks } from '../../hooks/useTaxYearLocks';
 
 interface WorkbenchTableProps {
   transactions: Transaction[];
@@ -52,6 +53,7 @@ function WorkbenchTable({
   const { categories } = useCategories();
   const { accounts } = useAccounts();
   const { payees } = usePayees();
+  const { isDateLocked } = useTaxYearLocks();
 
   const columnHelper = createColumnHelper<Transaction>();
 
@@ -108,6 +110,19 @@ function WorkbenchTable({
   // Memoize columns to prevent re-creation on every render
   const columns = useMemo(
     () => [
+      columnHelper.display({
+        id: 'lock-indicator',
+        header: '',
+        cell: ({ row }) => {
+          const locked = isDateLocked(row.original.date);
+          return locked ? (
+            <span className="text-red-600 text-lg" title="Locked (tax year filed)">
+              🔒
+            </span>
+          ) : null;
+        },
+        size: 30,
+      }),
       columnHelper.accessor('date', {
         header: 'Date',
         cell: (info) => (
@@ -164,6 +179,7 @@ function WorkbenchTable({
         id: 'category',
         header: 'Category',
         cell: ({ row }) => {
+          const locked = isDateLocked(row.original.date);
           if (row.original.is_split) {
             return (
               <div>
@@ -181,7 +197,8 @@ function WorkbenchTable({
               <select
                 value={currentCategoryId}
                 onChange={(e) => onUpdateCategory(row.original.id, e.target.value)}
-                className="w-full bg-brand-50 dark:bg-gray-700 border border-brand-200 dark:border-gray-600 text-brand-900 dark:text-gray-100 py-2 px-3 pr-8 rounded-lg font-bold hover:bg-brand-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer"
+                disabled={locked}
+                className="w-full bg-brand-50 dark:bg-gray-700 border border-brand-200 dark:border-gray-600 text-brand-900 dark:text-gray-100 py-2 px-3 pr-8 rounded-lg font-bold hover:bg-brand-100 dark:hover:bg-gray-600 focus:outline-none focus:ring-2 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 <option value="">Uncategorized</option>
                 {sortedCategories.map((cat) => (
@@ -204,96 +221,106 @@ function WorkbenchTable({
       }),
       columnHelper.accessor('is_reviewed', {
         header: 'Reviewed',
-        cell: (info) => (
-          <div className="flex justify-center">
-            <input
-              type="checkbox"
-              checked={info.getValue()}
-              onChange={() => onReview(info.row.original)}
-              className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 cursor-pointer"
-            />
-          </div>
-        ),
+        cell: (info) => {
+          const locked = isDateLocked(info.row.original.date);
+          return (
+            <div className="flex justify-center">
+              <input
+                type="checkbox"
+                checked={info.getValue()}
+                onChange={() => onReview(info.row.original)}
+                disabled={locked}
+                className="w-6 h-6 text-brand-600 rounded focus:ring-brand-500 border-neutral-300 cursor-pointer disabled:opacity-50 disabled:cursor-not-allowed"
+              />
+            </div>
+          );
+        },
       }),
       columnHelper.display({
         id: 'actions',
         header: 'Actions',
-        cell: ({ row }) => (
-          <div className="flex gap-2 justify-center">
-            <button
-              onClick={() => onEdit(row.original)}
-              className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-              title="Edit"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
-                ></path>
-              </svg>
-            </button>
-            <button
-              onClick={() => onSplit(row.original)}
-              className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-              title="Split"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
-                ></path>
-              </svg>
-            </button>
-            <button
-              onClick={() => onCreateRule(row.original)}
-              className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-              title="Create Rule"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
-                ></path>
-              </svg>
-            </button>
-            <button
-              onClick={() => onDelete(row.original)}
-              className="p-2 text-neutral-400 hover:text-danger-700 transition-colors"
-              title="Delete"
-            >
-              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                  strokeWidth="2"
-                  d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-2.14-1.928L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
-                ></path>
-              </svg>
-            </button>
-            {onShowHistory && (
+        cell: ({ row }) => {
+          const locked = isDateLocked(row.original.date);
+          return (
+            <div className="flex gap-2 justify-center">
               <button
-                onClick={() => onShowHistory(row.original)}
-                className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
-                title="View History"
+                onClick={() => onEdit(row.original)}
+                disabled={locked}
+                className="p-2 text-neutral-400 hover:text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={locked ? 'Locked (tax year filed)' : 'Edit'}
               >
                 <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path
                     strokeLinecap="round"
                     strokeLinejoin="round"
                     strokeWidth="2"
-                    d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
                   ></path>
                 </svg>
               </button>
-            )}
-          </div>
-        ),
+              <button
+                onClick={() => onSplit(row.original)}
+                disabled={locked}
+                className="p-2 text-neutral-400 hover:text-brand-600 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={locked ? 'Locked (tax year filed)' : 'Split'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"
+                  ></path>
+                </svg>
+              </button>
+              <button
+                onClick={() => onCreateRule(row.original)}
+                className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+                title="Create Rule"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19.428 15.428a2 2 0 00-1.022-.547l-2.384-.477a6 6 0 00-3.86.517l-.318.158a6 6 0 01-3.86.517L6.05 15.21a2 2 0 00-1.806.547M8 4h8l-1 1v5.172a2 2 0 00.586 1.414l5 5c1.26 1.26.367 3.414-1.415 3.414H4.828c-1.782 0-2.674-2.154-1.414-3.414l5-5A2 2 0 009 10.172V5L8 4z"
+                  ></path>
+                </svg>
+              </button>
+              <button
+                onClick={() => onDelete(row.original)}
+                disabled={locked}
+                className="p-2 text-neutral-400 hover:text-danger-700 transition-colors disabled:opacity-30 disabled:cursor-not-allowed"
+                title={locked ? 'Locked (tax year filed)' : 'Delete'}
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    strokeWidth="2"
+                    d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-2.14-1.928L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16"
+                  ></path>
+                </svg>
+              </button>
+              {onShowHistory && (
+                <button
+                  onClick={() => onShowHistory(row.original)}
+                  className="p-2 text-neutral-400 hover:text-brand-600 transition-colors"
+                  title="View History"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      strokeWidth="2"
+                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                    ></path>
+                  </svg>
+                </button>
+              )}
+            </div>
+          );
+        },
       }),
     ],
     [
@@ -309,6 +336,7 @@ function WorkbenchTable({
       onReview,
       onCreatePayee,
       onShowHistory,
+      isDateLocked,
     ]
   );
 
@@ -399,10 +427,13 @@ function WorkbenchTable({
             )}
             {items.map((virtualRow) => {
               const row = table.getRowModel().rows[virtualRow.index];
+              const locked = isDateLocked(row.original.date);
               return (
                 <Fragment key={row.id}>
                   <tr
-                    className="hover:bg-brand-50 dark:hover:bg-gray-700 transition-colors group"
+                    className={`hover:bg-brand-50 dark:hover:bg-gray-700 transition-colors group ${
+                      locked ? 'bg-red-50 dark:bg-red-950 opacity-60' : ''
+                    }`}
                     data-index={virtualRow.index}
                     ref={(node) => virtualizer.measureElement(node)}
                   >

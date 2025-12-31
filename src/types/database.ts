@@ -164,3 +164,11 @@ export interface Rule {
   change_history?: unknown; // JSONB
   conditions?: unknown; // JSONB
 }
+
+export interface TaxYearLock {
+  id: string;
+  bookset_id: string;
+  tax_year: number;
+  locked_at: string;
+  locked_by: string;
+}
