@@ -2,6 +2,21 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.4.0](https://github.com/thetrev68/papas-books/compare/v1.3.0...v1.4.0) (2025-12-31)
+
+### Features
+
+- implement quarterly estimated tax summary report ([dd5c232](https://github.com/thetrev68/papas-books/commit/dd5c2328fffeacf6171a9ceaddfa68e713844604))
+- implement tax year locking for data protection ([096dcad](https://github.com/thetrev68/papas-books/commit/096dcade76a33773ba00357756abdb85fbca5e26))
+
+### Maintenance
+
+- add tax year locking to schema.sql and production_schema.sql ([559241a](https://github.com/thetrev68/papas-books/commit/559241a578d9461f96c6aa29898f12c15193aa4b))
+
+### Documentation
+
+- mark tax year locking as completed ([746c454](https://github.com/thetrev68/papas-books/commit/746c454354e4e773eb91042dadc56c9468c91cea))
+
 ## [1.3.0](https://github.com/thetrev68/papas-books/compare/v1.2.0...v1.3.0) (2025-12-31)
 
 ### Features
