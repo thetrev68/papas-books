@@ -97,7 +97,7 @@ const PayeeSelectCell = memo(function PayeeSelectCell({
           onChange={(e) => setEditValue(e.target.value)}
           onBlur={handleSave}
           onKeyDown={handleKeyDown}
-          className="w-full p-2 text-lg border-2 border-brand-500 rounded-lg bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-4 focus:ring-brand-100 dark:focus:ring-brand-900"
+          className="w-full p-1 text-sm border-2 border-brand-500 rounded bg-white dark:bg-gray-700 dark:text-gray-100 focus:outline-none focus:ring-2 focus:ring-brand-100 dark:focus:ring-brand-900"
         />
         <datalist id={listId}>
           {payees.map((payee) => (
@@ -111,7 +111,7 @@ const PayeeSelectCell = memo(function PayeeSelectCell({
   return (
     <span
       onClick={handleClick}
-      className={`cursor-pointer px-2 py-1 rounded-lg inline-block w-full min-h-[1.5em] hover:bg-neutral-100 dark:hover:bg-gray-700 ${
+      className={`cursor-pointer px-1 py-0.5 rounded inline-block w-full min-h-[1.5em] hover:bg-neutral-100 dark:hover:bg-gray-700 ${
         !value ? 'text-neutral-400 dark:text-gray-500 italic' : ''
       }`}
     >

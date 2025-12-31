@@ -10,7 +10,15 @@ export async function fetchTaxYearLocks(booksetId: string): Promise<number[]> {
     .eq('bookset_id', booksetId)
     .order('tax_year', { ascending: true });
 
-  if (error) throw error;
+  if (error) {
+    // If the table doesn't exist (e.g. migration not applied), return empty list
+    // to prevent application crash/spam.
+    if (error.code === '42P01' || error.message?.includes('404')) {
+      console.warn('Tax year locks table missing or inaccessible. Feature disabled.');
+      return [];
+    }
+    throw error;
+  }
   return data?.map((r) => r.tax_year) || [];
 }
 
@@ -59,6 +67,12 @@ export async function isDateLocked(booksetId: string, date: string): Promise<boo
     p_date: date,
   });
 
-  if (error) throw error;
+  if (error) {
+    // If RPC missing, assume not locked
+    if (error.code === '42883' || error.message?.includes('404')) {
+      return false;
+    }
+    throw error;
+  }
   return data || false;
 }
