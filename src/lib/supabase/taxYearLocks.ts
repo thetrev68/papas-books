@@ -1,12 +1,13 @@
 import { supabase } from './config';
+import type { TaxYearLock } from '../../types/database';
 
 /**
  * Fetches all locked years for a bookset
  */
-export async function fetchTaxYearLocks(booksetId: string): Promise<number[]> {
+export async function fetchTaxYearLocks(booksetId: string): Promise<TaxYearLock[]> {
   const { data, error } = await supabase
     .from('tax_year_locks')
-    .select('tax_year')
+    .select('*')
     .eq('bookset_id', booksetId)
     .order('tax_year', { ascending: true });
 
@@ -19,7 +20,7 @@ export async function fetchTaxYearLocks(booksetId: string): Promise<number[]> {
     }
     throw error;
   }
-  return data?.map((r) => r.tax_year) || [];
+  return data || [];
 }
 
 /**

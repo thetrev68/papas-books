@@ -9,11 +9,13 @@ export function useTaxYearLocks() {
   const { showError, showSuccess } = useToast();
 
   // Fetch locked years
-  const { data: lockedYears = [], isLoading } = useQuery({
+  const { data: locks = [], isLoading } = useQuery({
     queryKey: ['taxYearLocks', activeBookset?.id],
     queryFn: () => fetchTaxYearLocks(activeBookset!.id),
     enabled: !!activeBookset,
   });
+
+  const lockedYears = locks.map((l) => l.tax_year);
 
   // Get max locked year
   const maxLockedYear = lockedYears.length > 0 ? Math.max(...lockedYears) : null;
@@ -57,6 +59,7 @@ export function useTaxYearLocks() {
   });
 
   return {
+    locks,
     lockedYears,
     maxLockedYear,
     isLoading,

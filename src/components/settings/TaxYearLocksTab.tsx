@@ -1,12 +1,39 @@
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useTaxYearLocks } from '../../hooks/useTaxYearLocks';
+import { useQuery } from '@tanstack/react-query';
+import { supabase } from '../../lib/supabase/config';
 
 export default function TaxYearLocksTab() {
-  const { lockedYears, maxLockedYear, lockYear, unlockYear, isLocking, isUnlocking } =
+  const { locks, lockedYears, maxLockedYear, lockYear, unlockYear, isLocking, isUnlocking } =
     useTaxYearLocks();
 
   const [showLockConfirm, setShowLockConfirm] = useState<number | null>(null);
   const [showUnlockConfirm, setShowUnlockConfirm] = useState<number | null>(null);
+
+  // Fetch user display names for the locks
+  const userIds = useMemo(() => {
+    return Array.from(new Set(locks.map((l) => l.locked_by)));
+  }, [locks]);
+
+  const { data: users } = useQuery({
+    queryKey: ['users', userIds],
+    queryFn: async () => {
+      if (userIds.length === 0) return [];
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, display_name, email')
+        .in('id', userIds);
+      if (error) throw error;
+      return data;
+    },
+    enabled: userIds.length > 0,
+  });
+
+  const userMap = useMemo(() => {
+    const map = new Map<string, string>();
+    users?.forEach((u) => map.set(u.id, u.display_name || u.email));
+    return map;
+  }, [users]);
 
   // Generate list of years (current year back to 2020)
   const currentYear = new Date().getFullYear();
@@ -36,6 +63,7 @@ export default function TaxYearLocksTab() {
       <div className="space-y-2">
         {years.map((year) => {
           const isLocked = lockedYears.includes(year);
+          const lock = locks.find((l) => l.tax_year === year);
           const isImplicitlyLocked = maxLockedYear && year < maxLockedYear && !isLocked;
 
           return (
@@ -43,17 +71,25 @@ export default function TaxYearLocksTab() {
               key={year}
               className="flex items-center justify-between p-3 bg-neutral-50 dark:bg-gray-700 rounded-lg"
             >
-              <div className="flex items-center gap-3">
-                <span className="font-bold text-neutral-900 dark:text-gray-100">{year}</span>
-                {isLocked && (
-                  <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 text-xs font-bold rounded">
-                    Locked
-                  </span>
-                )}
-                {isImplicitlyLocked && (
-                  <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200 text-xs font-bold rounded">
-                    Locked (by {maxLockedYear})
-                  </span>
+              <div className="flex flex-col">
+                <div className="flex items-center gap-3">
+                  <span className="font-bold text-neutral-900 dark:text-gray-100">{year}</span>
+                  {isLocked && (
+                    <span className="px-2 py-1 bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-200 text-xs font-bold rounded">
+                      Locked
+                    </span>
+                  )}
+                  {isImplicitlyLocked && (
+                    <span className="px-2 py-1 bg-orange-100 dark:bg-orange-900 text-orange-700 dark:text-orange-200 text-xs font-bold rounded">
+                      Locked (by {maxLockedYear})
+                    </span>
+                  )}
+                </div>
+                {isLocked && lock && (
+                  <div className="text-[10px] text-neutral-500 dark:text-gray-400 mt-1">
+                    Locked by {userMap.get(lock.locked_by) || 'Unknown'} on{' '}
+                    {new Date(lock.locked_at).toLocaleDateString()}
+                  </div>
                 )}
               </div>
 

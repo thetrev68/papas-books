@@ -23,7 +23,22 @@ describe('fetchTaxYearLocks', () => {
   });
 
   it('should fetch locked years for a bookset', async () => {
-    const mockData = [{ tax_year: 2022 }, { tax_year: 2023 }];
+    const mockData = [
+      {
+        id: '1',
+        bookset_id: 'test-bookset-id',
+        tax_year: 2022,
+        locked_at: '2023-01-01',
+        locked_by: 'user1',
+      },
+      {
+        id: '2',
+        bookset_id: 'test-bookset-id',
+        tax_year: 2023,
+        locked_at: '2024-01-01',
+        locked_by: 'user1',
+      },
+    ];
 
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
@@ -36,10 +51,10 @@ describe('fetchTaxYearLocks', () => {
     const result = await fetchTaxYearLocks('test-bookset-id');
 
     expect(supabase.from).toHaveBeenCalledWith('tax_year_locks');
-    expect(mockQuery.select).toHaveBeenCalledWith('tax_year');
+    expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(mockQuery.eq).toHaveBeenCalledWith('bookset_id', 'test-bookset-id');
     expect(mockQuery.order).toHaveBeenCalledWith('tax_year', { ascending: true });
-    expect(result).toEqual([2022, 2023]);
+    expect(result).toEqual(mockData);
   });
 
   it('should return empty array when no locked years found', async () => {
