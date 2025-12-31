@@ -34,25 +34,19 @@ test.describe('Rule Application Workflow', () => {
       await page.waitForTimeout(1000);
 
       // Fill in rule details
-      const keywordInput = page
-        .locator('input[name="keyword"], input#keyword, input[placeholder*="keyword" i]')
-        .first();
+      const keywordInput = page.getByLabel('Keyword');
       if (await keywordInput.isVisible().catch(() => false)) {
         await keywordInput.fill('STARBUCKS');
       }
 
       // Select match type if available
-      const matchTypeSelect = page
-        .locator('select[name="matchType"], select[name="match_type"], select')
-        .first();
+      const matchTypeSelect = page.getByLabel('Match Type');
       if (await matchTypeSelect.isVisible().catch(() => false)) {
         await matchTypeSelect.selectOption({ label: 'Contains' });
       }
 
       // Select category
-      const categorySelect = page
-        .locator('select[name="category"], select[name="categoryId"], select[name="category_id"]')
-        .first();
+      const categorySelect = page.getByLabel('Category');
       if (await categorySelect.isVisible().catch(() => false)) {
         const options = await categorySelect.locator('option').count();
         if (options > 1) {
@@ -134,12 +128,10 @@ test.describe('Rule Application Workflow', () => {
         await createButton.click();
 
         const dialog = page.getByRole('dialog');
-        const keywordInput = dialog.locator('input[name="keyword"], input#keyword').first();
+        const keywordInput = dialog.getByLabel('Keyword');
         await keywordInput.fill('PLAYWRIGHT');
 
-        const categorySelect = dialog
-          .locator('select[name="category"], select[name="categoryId"], select[name="category_id"]')
-          .first();
+        const categorySelect = dialog.getByLabel('Category');
         if (await categorySelect.isVisible().catch(() => false)) {
           const options = await categorySelect.locator('option').count();
           if (options > 1) {
