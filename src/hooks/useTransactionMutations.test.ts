@@ -19,6 +19,7 @@ vi.mock('../lib/supabase/transactions', () => ({
   updateTransaction: vi.fn(),
   deleteTransaction: vi.fn(),
   bulkUpdateReviewed: vi.fn(),
+  bulkUpdateCategory: vi.fn(),
 }));
 
 // Mock the toast provider
@@ -240,6 +241,103 @@ describe('useTransactionMutations', () => {
       });
 
       expect(transactionsLib.bulkUpdateReviewed).toHaveBeenCalledWith(transactionIds, false);
+    });
+
+    it('should update category for multiple transactions', async () => {
+      const transactionIds = ['id-1', 'id-2', 'id-3'];
+      const categoryId = 'cat-123';
+      const updateResult = { updatedCount: 3, skippedCount: 0 };
+
+      vi.mocked(transactionsLib.bulkUpdateCategory).mockResolvedValue(updateResult);
+
+      const wrapper = createQueryWrapper();
+      const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
+
+      result.current.bulkUpdate({
+        type: 'updateCategory',
+        transactionIds,
+        categoryId,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(transactionsLib.bulkUpdateCategory).toHaveBeenCalledWith(transactionIds, categoryId);
+      expect(mockShowSuccess).toHaveBeenCalledWith('Updated 3 transactions');
+    });
+
+    it('should handle skipped transactions in category update', async () => {
+      const transactionIds = ['id-1', 'id-2', 'id-3', 'id-4', 'id-5'];
+      const categoryId = 'cat-123';
+      const updateResult = { updatedCount: 3, skippedCount: 2 };
+
+      vi.mocked(transactionsLib.bulkUpdateCategory).mockResolvedValue(updateResult);
+
+      const wrapper = createQueryWrapper();
+      const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
+
+      result.current.bulkUpdate({
+        type: 'updateCategory',
+        transactionIds,
+        categoryId,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockShowSuccess).toHaveBeenCalledWith(
+        'Updated 3 transactions (2 skipped - locked or reconciled)'
+      );
+    });
+
+    it('should show error when all transactions are skipped in category update', async () => {
+      const transactionIds = ['id-1', 'id-2'];
+      const categoryId = 'cat-123';
+      const updateResult = { updatedCount: 0, skippedCount: 2 };
+
+      vi.mocked(transactionsLib.bulkUpdateCategory).mockResolvedValue(updateResult);
+
+      const wrapper = createQueryWrapper();
+      const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
+
+      result.current.bulkUpdate({
+        type: 'updateCategory',
+        transactionIds,
+        categoryId,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockShowError).toHaveBeenCalledWith(
+        'No transactions were updated (all are locked or reconciled)'
+      );
+    });
+
+    it('should handle single transaction category update', async () => {
+      const transactionIds = ['id-1'];
+      const categoryId = 'cat-123';
+      const updateResult = { updatedCount: 1, skippedCount: 0 };
+
+      vi.mocked(transactionsLib.bulkUpdateCategory).mockResolvedValue(updateResult);
+
+      const wrapper = createQueryWrapper();
+      const { result } = renderHook(() => useTransactionMutations(booksetId), { wrapper });
+
+      result.current.bulkUpdate({
+        type: 'updateCategory',
+        transactionIds,
+        categoryId,
+      });
+
+      await waitFor(() => {
+        expect(result.current.isLoading).toBe(false);
+      });
+
+      expect(mockShowSuccess).toHaveBeenCalledWith('Updated 1 transaction');
     });
 
     it('should throw error for applyRules operation', async () => {

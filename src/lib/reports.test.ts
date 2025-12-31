@@ -9,6 +9,9 @@ import {
   generateQuarterlyReport,
   exportQuarterlyReportToCsv,
   QuarterlySummary,
+  getCategoryFullName,
+  generateYearComparison,
+  exportYearComparisonToCsv,
 } from './reports';
 import { Transaction, Category, Account, Payee } from '../types/database';
 import { ReportFilter } from '../types/reconcile';
@@ -1202,6 +1205,272 @@ describe('Reporting Logic', () => {
       const csv = exportQuarterlyReportToCsv(summary);
 
       expect(csv).toContain('50.00,80.00,-30.00,0.00,5');
+    });
+  });
+
+  describe('getCategoryFullName', () => {
+    it('should return category name when no parent', () => {
+      const category: Category = {
+        id: 'c1',
+        name: 'Expenses',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        tax_line_item: null,
+        is_tax_deductible: false,
+        parent_category_id: null,
+      };
+
+      const result = getCategoryFullName(category, [category]);
+
+      expect(result).toBe('Expenses');
+    });
+
+    it('should return parent:child format when parent exists', () => {
+      const parent: Category = {
+        id: 'c1',
+        name: 'Business',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        tax_line_item: null,
+        is_tax_deductible: false,
+        parent_category_id: null,
+      };
+
+      const child: Category = {
+        id: 'c2',
+        name: 'Travel',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        tax_line_item: null,
+        is_tax_deductible: false,
+        parent_category_id: 'c1',
+      };
+
+      const result = getCategoryFullName(child, [parent, child]);
+
+      expect(result).toBe('Business: Travel');
+    });
+
+    it('should return child name when parent not found in list', () => {
+      const child: Category = {
+        id: 'c2',
+        name: 'Travel',
+        bookset_id: 'b1',
+        is_archived: false,
+        sort_order: 0,
+        created_at: '',
+        updated_at: '',
+        created_by: '',
+        last_modified_by: '',
+        tax_line_item: null,
+        is_tax_deductible: false,
+        parent_category_id: 'c1',
+      };
+
+      const result = getCategoryFullName(child, [child]);
+
+      expect(result).toBe('Travel');
+    });
+  });
+
+  describe('generateYearComparison', () => {
+    it('should compare transactions between two periods', () => {
+      const currentTxs = [
+        mockTx('1', 10000, '2024-01-15', 'c1'), // $100 Food
+        mockTx('2', 20000, '2024-02-20', 'c2'), // $200 Rent
+      ];
+
+      const compareTxs = [
+        mockTx('3', 5000, '2023-01-15', 'c1'), // $50 Food
+        mockTx('4', 20000, '2023-02-20', 'c2'), // $200 Rent
+      ];
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result).toHaveLength(2);
+
+      // Food comparison
+      const foodRow = result.find((r) => r.categoryId === 'c1');
+      expect(foodRow).toBeDefined();
+      expect(foodRow?.currentAmount).toBe(10000);
+      expect(foodRow?.compareAmount).toBe(5000);
+      expect(foodRow?.varianceAmount).toBe(5000);
+      expect(foodRow?.variancePercent).toBe(100); // (5000 / 5000) * 100
+
+      // Rent comparison
+      const rentRow = result.find((r) => r.categoryId === 'c2');
+      expect(rentRow).toBeDefined();
+      expect(rentRow?.currentAmount).toBe(20000);
+      expect(rentRow?.compareAmount).toBe(20000);
+      expect(rentRow?.varianceAmount).toBe(0);
+      expect(rentRow?.variancePercent).toBe(0);
+    });
+
+    it('should handle new categories in current period', () => {
+      const currentTxs = [mockTx('1', 10000, '2024-01-15', 'c1')];
+      const compareTxs: Transaction[] = [];
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].currentAmount).toBe(10000);
+      expect(result[0].compareAmount).toBe(0);
+      expect(result[0].variancePercent).toBe(100); // New category = 100%
+    });
+
+    it('should handle categories only in comparison period', () => {
+      const currentTxs: Transaction[] = [];
+      const compareTxs = [mockTx('1', 10000, '2023-01-15', 'c1')];
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].currentAmount).toBe(0);
+      expect(result[0].compareAmount).toBe(10000);
+      expect(result[0].varianceAmount).toBe(-10000);
+      expect(result[0].variancePercent).toBe(-100);
+    });
+
+    it('should calculate negative variance correctly', () => {
+      const currentTxs = [mockTx('1', 5000, '2024-01-15', 'c1')]; // $50
+      const compareTxs = [mockTx('2', 15000, '2023-01-15', 'c1')]; // $150
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result[0].varianceAmount).toBe(-10000);
+      expect(result[0].variancePercent).toBeCloseTo(-66.67, 1);
+    });
+
+    it('should handle zero amounts in both periods', () => {
+      const currentTxs: Transaction[] = [];
+      const compareTxs: Transaction[] = [];
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result).toHaveLength(0);
+    });
+
+    it('should sort results alphabetically by category name', () => {
+      const currentTxs = [
+        mockTx('1', 10000, '2024-01-15', 'c2'), // Rent
+        mockTx('2', 20000, '2024-02-20', 'c1'), // Food
+      ];
+      const compareTxs = [
+        mockTx('3', 5000, '2023-01-15', 'c2'),
+        mockTx('4', 15000, '2023-02-20', 'c1'),
+      ];
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result[0].categoryName).toBe('Food');
+      expect(result[1].categoryName).toBe('Rent');
+    });
+
+    it('should include transaction counts', () => {
+      const currentTxs = [
+        mockTx('1', 10000, '2024-01-15', 'c1'),
+        mockTx('2', 5000, '2024-02-20', 'c1'),
+        mockTx('3', 8000, '2024-03-10', 'c1'),
+      ];
+      const compareTxs = [
+        mockTx('4', 12000, '2023-01-15', 'c1'),
+        mockTx('5', 9000, '2023-02-20', 'c1'),
+      ];
+
+      const result = generateYearComparison(currentTxs, compareTxs, categories);
+
+      expect(result[0].currentTransactionCount).toBe(3);
+      expect(result[0].compareTransactionCount).toBe(2);
+    });
+  });
+
+  describe('exportYearComparisonToCsv', () => {
+    it('should export year comparison to CSV format', () => {
+      const summary = [
+        {
+          categoryId: 'c1',
+          categoryName: 'Food',
+          currentAmount: 10000,
+          compareAmount: 8000,
+          varianceAmount: 2000,
+          variancePercent: 25,
+          currentTransactionCount: 5,
+          compareTransactionCount: 4,
+          isIncome: false,
+        },
+        {
+          categoryId: 'c2',
+          categoryName: 'Rent',
+          currentAmount: 20000,
+          compareAmount: 20000,
+          varianceAmount: 0,
+          variancePercent: 0,
+          currentTransactionCount: 2,
+          compareTransactionCount: 2,
+          isIncome: false,
+        },
+      ];
+
+      const csv = exportYearComparisonToCsv(summary, '2024', '2023');
+
+      expect(csv).toContain('Category,2024,2023,Variance $,Variance %,2024 Txns,2023 Txns');
+      expect(csv).toContain('"Food",100.00,80.00,20.00,25.0%,5,4');
+      expect(csv).toContain('"Rent",200.00,200.00,0.00,0.0%,2,2');
+    });
+
+    it('should handle negative variance', () => {
+      const summary = [
+        {
+          categoryId: 'c1',
+          categoryName: 'Travel',
+          currentAmount: 5000,
+          compareAmount: 10000,
+          varianceAmount: -5000,
+          variancePercent: -50,
+          currentTransactionCount: 2,
+          compareTransactionCount: 5,
+          isIncome: false,
+        },
+      ];
+
+      const csv = exportYearComparisonToCsv(summary, '2024', '2023');
+
+      expect(csv).toContain('"Travel",50.00,100.00,-50.00,-50.0%,2,5');
+    });
+
+    it('should quote category names with commas', () => {
+      const summary = [
+        {
+          categoryId: 'c1',
+          categoryName: 'Business: Travel, Meals',
+          currentAmount: 10000,
+          compareAmount: 8000,
+          varianceAmount: 2000,
+          variancePercent: 25,
+          currentTransactionCount: 3,
+          compareTransactionCount: 2,
+          isIncome: false,
+        },
+      ];
+
+      const csv = exportYearComparisonToCsv(summary, '2024', '2023');
+
+      expect(csv).toContain('"Business: Travel, Meals",100.00,80.00,20.00,25.0%,3,2');
     });
   });
 });

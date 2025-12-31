@@ -1,5 +1,12 @@
-import { detectExactDuplicates } from './reconciler';
+import { describe, it, expect, vi, beforeEach } from 'vitest';
+import { detectExactDuplicates, validateImportDates } from './reconciler';
 import type { StagedTransaction } from './mapper';
+import * as taxYearLocks from '../supabase/taxYearLocks';
+
+// Mock the taxYearLocks module
+vi.mock('../supabase/taxYearLocks', () => ({
+  isDateLocked: vi.fn(),
+}));
 
 describe('detectExactDuplicates', () => {
   it('should mark transaction as duplicate if fingerprint exists', () => {
@@ -153,5 +160,84 @@ describe('detectExactDuplicates', () => {
 
     expect(result).toHaveLength(1);
     expect(result[0].status).toBe('new');
+  });
+});
+
+describe('validateImportDates', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  it('should return valid when no dates are locked', async () => {
+    vi.spyOn(taxYearLocks, 'isDateLocked').mockResolvedValue(false);
+
+    const transactions = [{ date: '2024-01-15' }, { date: '2024-02-20' }, { date: '2024-03-10' }];
+
+    const result = await validateImportDates('test-bookset-id', transactions);
+
+    expect(result.valid).toBe(true);
+    expect(result.lockedDates).toEqual([]);
+    expect(taxYearLocks.isDateLocked).toHaveBeenCalledTimes(3);
+  });
+
+  it('should return invalid with locked dates when some dates are locked', async () => {
+    vi.spyOn(taxYearLocks, 'isDateLocked')
+      .mockResolvedValueOnce(false) // 2024-01-15
+      .mockResolvedValueOnce(true) // 2023-12-20 - locked
+      .mockResolvedValueOnce(true); // 2023-11-10 - locked
+
+    const transactions = [{ date: '2024-01-15' }, { date: '2023-12-20' }, { date: '2023-11-10' }];
+
+    const result = await validateImportDates('test-bookset-id', transactions);
+
+    expect(result.valid).toBe(false);
+    expect(result.lockedDates).toEqual(['2023-12-20', '2023-11-10']);
+    expect(taxYearLocks.isDateLocked).toHaveBeenCalledTimes(3);
+  });
+
+  it('should skip transactions without dates', async () => {
+    vi.spyOn(taxYearLocks, 'isDateLocked').mockResolvedValue(false);
+
+    const transactions = [{ date: '2024-01-15' }, { date: undefined }, { date: '2024-03-10' }, {}];
+
+    const result = await validateImportDates('test-bookset-id', transactions);
+
+    expect(result.valid).toBe(true);
+    expect(result.lockedDates).toEqual([]);
+    expect(taxYearLocks.isDateLocked).toHaveBeenCalledTimes(2); // Only called for dates that exist
+  });
+
+  it('should handle empty transactions array', async () => {
+    vi.spyOn(taxYearLocks, 'isDateLocked').mockResolvedValue(false);
+
+    const transactions: { date?: string }[] = [];
+
+    const result = await validateImportDates('test-bookset-id', transactions);
+
+    expect(result.valid).toBe(true);
+    expect(result.lockedDates).toEqual([]);
+    expect(taxYearLocks.isDateLocked).not.toHaveBeenCalled();
+  });
+
+  it('should handle all dates being locked', async () => {
+    vi.spyOn(taxYearLocks, 'isDateLocked').mockResolvedValue(true);
+
+    const transactions = [{ date: '2023-01-15' }, { date: '2023-02-20' }, { date: '2023-03-10' }];
+
+    const result = await validateImportDates('test-bookset-id', transactions);
+
+    expect(result.valid).toBe(false);
+    expect(result.lockedDates).toEqual(['2023-01-15', '2023-02-20', '2023-03-10']);
+    expect(taxYearLocks.isDateLocked).toHaveBeenCalledTimes(3);
+  });
+
+  it('should call isDateLocked with correct parameters', async () => {
+    const isDateLockedSpy = vi.spyOn(taxYearLocks, 'isDateLocked').mockResolvedValue(false);
+
+    const transactions = [{ date: '2024-05-15' }];
+
+    await validateImportDates('bookset-123', transactions);
+
+    expect(isDateLockedSpy).toHaveBeenCalledWith('bookset-123', '2024-05-15');
   });
 });
