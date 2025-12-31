@@ -19,6 +19,7 @@ import { useCategories } from '../../hooks/useCategories';
 import { useAccounts } from '../../hooks/useAccounts';
 import { usePayees } from '../../hooks/usePayees';
 import { useTaxYearLocks } from '../../hooks/useTaxYearLocks';
+import { useToast } from '../GlobalToastProvider';
 
 interface WorkbenchTableProps {
   transactions: Transaction[];
@@ -47,6 +48,7 @@ function WorkbenchTable({
   onCreatePayee,
   onShowHistory,
 }: WorkbenchTableProps) {
+  const { showConfirm } = useToast();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [globalFilter, setGlobalFilter] = useState('');
@@ -393,15 +395,22 @@ function WorkbenchTable({
     if (selectedIds.length > 10) {
       const category = sortedCategories.find((c) => c.id === categoryId);
       const categoryName = category?.displayName || 'Unknown Category';
-      const confirm = window.confirm(
-        `Are you sure you want to update ${selectedIds.length} transactions to "${categoryName}"?\n\n` +
-          `Note: Split transactions will be converted to simple transactions.`
+      showConfirm(
+        `Are you sure you want to update ${selectedIds.length} transactions to "${categoryName}"?\n\nNote: Split transactions will be converted to simple transactions.`,
+        {
+          onConfirm: () => {
+            onBulkUpdateCategory(selectedIds, categoryId);
+            setRowSelection({});
+          },
+          confirmText: 'Update',
+          cancelText: 'Cancel',
+          variant: 'warning',
+        }
       );
-      if (!confirm) return;
+    } else {
+      onBulkUpdateCategory(selectedIds, categoryId);
+      setRowSelection({});
     }
-
-    onBulkUpdateCategory(selectedIds, categoryId);
-    setRowSelection({});
   };
 
   const table = useReactTable({

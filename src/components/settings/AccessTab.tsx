@@ -2,10 +2,12 @@ import { useState, useEffect } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { grantAccessByEmail, listAccessGrants, revokeAccess } from '../../lib/supabase/access';
 import { AccessGrant } from '../../types/access';
+import { useToast } from '../GlobalToastProvider';
 
 export default function AccessTab() {
   const { activeBookset, user } = useAuth();
   const isOwner = activeBookset?.owner_id === user?.id;
+  const { showSuccess, showError, showConfirm } = useToast();
   const [grants, setGrants] = useState<AccessGrant[]>([]);
   const [email, setEmail] = useState('');
   const [role, setRole] = useState<'viewer' | 'editor'>('viewer');
@@ -52,14 +54,21 @@ export default function AccessTab() {
   }
 
   async function handleRevoke(grantId: string) {
-    if (!confirm('Are you sure you want to revoke access?')) return;
-    try {
-      await revokeAccess(grantId);
-      loadGrants();
-    } catch (err) {
-      console.error('Failed to revoke access:', err);
-      alert('Failed to revoke access.');
-    }
+    showConfirm('Are you sure you want to revoke access?', {
+      onConfirm: async () => {
+        try {
+          await revokeAccess(grantId);
+          loadGrants();
+          showSuccess('Access revoked successfully.');
+        } catch (err) {
+          console.error('Failed to revoke access:', err);
+          showError('Failed to revoke access.');
+        }
+      },
+      confirmText: 'Revoke',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
   }
 
   if (!isOwner) {

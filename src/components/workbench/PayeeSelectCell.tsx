@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, memo } from 'react';
 import type { Payee } from '../../types/database';
+import { useToast } from '../GlobalToastProvider';
 
 interface PayeeSelectCellProps {
   value: string;
@@ -20,6 +21,7 @@ const PayeeSelectCell = memo(function PayeeSelectCell({
   setIsEditing,
   onCreatePayee,
 }: PayeeSelectCellProps) {
+  const { showConfirm } = useToast();
   const [editValue, setEditValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
   const listId = `payees-list-${Math.random().toString(36).substr(2, 9)}`;
@@ -48,16 +50,22 @@ const PayeeSelectCell = memo(function PayeeSelectCell({
     const exists = payees.some((p) => p.name.toLowerCase() === editValue.toLowerCase());
 
     if (!exists && onCreatePayee) {
-      if (confirm(`Payee "${editValue}" does not exist. Do you want to add it?`)) {
-        // Yes: Update transaction AND open create modal
-        onSave(editValue);
-        onCreatePayee(editValue);
-        setIsEditing(false);
-      } else {
-        // No: Return to editing (don't save, don't close)
-        // Focus back on input if lost
-        setTimeout(() => inputRef.current?.focus(), 0);
-      }
+      showConfirm(`Payee "${editValue}" does not exist. Do you want to add it?`, {
+        onConfirm: () => {
+          // Yes: Update transaction AND open create modal
+          onSave(editValue);
+          onCreatePayee(editValue);
+          setIsEditing(false);
+        },
+        onCancel: () => {
+          // No: Return to editing (don't save, don't close)
+          // Focus back on input if lost
+          setTimeout(() => inputRef.current?.focus(), 0);
+        },
+        confirmText: 'Add Payee',
+        cancelText: 'Cancel',
+        variant: 'info',
+      });
     } else {
       // Exists or no creation handler: Just save
       onSave(editValue);

@@ -19,7 +19,7 @@ import { useToast } from '../GlobalToastProvider';
 export default function PayeesTab() {
   const { activeBookset } = useAuth();
   const queryClient = useQueryClient();
-  const { showSuccess, showError } = useToast();
+  const { showSuccess, showError, showConfirm } = useToast();
 
   const [showModal, setShowModal] = useState(false);
   const [editingPayee, setEditingPayee] = useState<Payee | null>(null);
@@ -103,20 +103,12 @@ export default function PayeesTab() {
   });
 
   const handleDelete = (payee: Payee) => {
-    // Custom "toast" style prompt? The user asked for "sticky toast prompt like the others".
-    // If GlobalToastProvider doesn't support actions, I'll use a confirmation modal or rely on window.confirm
-    // but the user explicitly said "ugly prompt" (implying window.confirm) is bad.
-    // I'll stick to a simple window.confirm for now but maybe styled better if I had a ConfirmModal.
-    // Actually, I'll just use window.confirm for now as I don't have a Toast-with-action component ready.
-    // Wait, the user said "sticky toast prompt like the others". This implies there ARE others.
-    // Looking at file structure... `GlobalToastProvider.tsx` is simple.
-    // Maybe they mean the specific UI in `RuleBatchResultModal`?
-    // I will stick to standard confirm but mention I can't do "sticky toast with action" without a new component.
-    // BUT, I can try to make a nicer confirm.
-
-    if (confirm(`Are you sure you want to delete "${payee.name}"?`)) {
-      deleteMutation.mutate(payee.id);
-    }
+    showConfirm(`Are you sure you want to delete "${payee.name}"?`, {
+      onConfirm: () => deleteMutation.mutate(payee.id),
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
   };
 
   const handleEdit = (payee: Payee) => {

@@ -13,10 +13,12 @@ import PayeeFormModal from '../components/settings/PayeeFormModal';
 import TransactionHistoryModal from '../components/audit/TransactionHistoryModal';
 import { VersionConflictModal } from '../components/common/VersionConflictModal';
 import type { Transaction } from '../types/database';
+import { useToast } from '../components/GlobalToastProvider';
 
 export default function WorkbenchPage() {
   const { activeBookset } = useAuth();
   const { applyRules, isApplying, result } = useApplyRules();
+  const { showInfo, showConfirm } = useToast();
   const [showResultModal, setShowResultModal] = useState(false);
   const [showCreateModal, setShowCreateModal] = useState(false);
 
@@ -43,14 +45,19 @@ export default function WorkbenchPage() {
     const ids = unreviewed.map((t) => t.id);
 
     if (ids.length === 0) {
-      alert('No unreviewed transactions to apply rules to.');
+      showInfo('No unreviewed transactions to apply rules to.');
       return;
     }
 
-    if (confirm(`Apply rules to ${ids.length} unreviewed transactions?`)) {
-      await applyRules(ids);
-      setShowResultModal(true);
-    }
+    showConfirm(`Apply rules to ${ids.length} unreviewed transactions?`, {
+      onConfirm: async () => {
+        await applyRules(ids);
+        setShowResultModal(true);
+      },
+      confirmText: 'Apply Rules',
+      cancelText: 'Cancel',
+      variant: 'info',
+    });
   }
 
   const handleEdit = (transaction: Transaction) => {
@@ -67,13 +74,15 @@ export default function WorkbenchPage() {
 
   const handleDelete = (transaction: Transaction) => {
     const amountStr = (transaction.amount / 100).toFixed(2);
-    if (
-      confirm(
-        `Are you sure you want to delete the transaction with "${transaction.payee}" for $${amountStr}?`
-      )
-    ) {
-      deleteTransaction(transaction.id);
-    }
+    showConfirm(
+      `Are you sure you want to delete the transaction with "${transaction.payee}" for $${amountStr}?`,
+      {
+        onConfirm: () => deleteTransaction(transaction.id),
+        confirmText: 'Delete',
+        cancelText: 'Cancel',
+        variant: 'danger',
+      }
+    );
   };
 
   const handleReview = async (transaction: Transaction) => {

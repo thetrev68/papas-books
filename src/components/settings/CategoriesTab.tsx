@@ -3,10 +3,12 @@ import { useCategories, useDeleteCategory } from '../../hooks/useCategories';
 import CategoryFormModal from './CategoryFormModal';
 import AuditHistoryModal from '../audit/AuditHistoryModal';
 import type { Category } from '../../types/database';
+import { useToast } from '../GlobalToastProvider';
 
 export default function CategoriesTab() {
   const { categories, isLoading, error } = useCategories();
   const { deleteCategory } = useDeleteCategory();
+  const { showError, showConfirm } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [historyCategory, setHistoryCategory] = useState<Category | null>(null);
@@ -24,15 +26,18 @@ export default function CategoriesTab() {
   function handleDelete(id: string) {
     const hasChildren = categories.some((c) => c.parent_category_id === id);
     if (hasChildren) {
-      alert(
+      showError(
         'Cannot delete a category that has child categories. Please delete or reassign children first.'
       );
       return;
     }
 
-    if (confirm('Delete this category? It will be archived.')) {
-      deleteCategory(id);
-    }
+    showConfirm('Delete this category? It will be archived.', {
+      onConfirm: () => deleteCategory(id),
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
   }
 
   function getCategoryName(categoryId: string | null): string {

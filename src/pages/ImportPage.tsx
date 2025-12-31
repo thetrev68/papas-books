@@ -22,7 +22,7 @@ export default function ImportPage() {
   } = useImportSession();
   const { accounts } = useAccounts();
   const { activeBookset } = useAuth();
-  const { showError } = useToast();
+  const { showError, showSuccess, showConfirm } = useToast();
 
   // Recent Batches State
   const [batches, setBatches] = useState<ImportBatch[]>([]);
@@ -48,22 +48,28 @@ export default function ImportPage() {
   }
 
   async function handleUndo(batchId: string) {
-    if (
-      !confirm(
-        'Are you sure you want to undo this import? This will archive all transactions in the batch.'
-      )
-    )
-      return;
-    try {
-      console.log('Attempting to undo batch:', batchId);
-      await undoImportBatch(batchId);
-      loadBatches();
-      alert('Import undone successfully.');
-    } catch (err) {
-      console.error('Failed to undo batch:', err);
-      console.error('Error details:', JSON.stringify(err, null, 2));
-      alert('Failed to undo batch: ' + (err instanceof Error ? err.message : String(err)));
-    }
+    showConfirm(
+      'Are you sure you want to undo this import? This will archive all transactions in the batch.',
+      {
+        onConfirm: async () => {
+          try {
+            console.log('Attempting to undo batch:', batchId);
+            await undoImportBatch(batchId);
+            loadBatches();
+            showSuccess('Import undone successfully.');
+          } catch (err) {
+            console.error('Failed to undo batch:', err);
+            console.error('Error details:', JSON.stringify(err, null, 2));
+            showError(
+              'Failed to undo batch: ' + (err instanceof Error ? err.message : String(err))
+            );
+          }
+        },
+        confirmText: 'Undo Import',
+        cancelText: 'Cancel',
+        variant: 'warning',
+      }
+    );
   }
 
   return (

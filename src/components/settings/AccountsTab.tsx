@@ -3,10 +3,12 @@ import { useAccounts, useDeleteAccount } from '../../hooks/useAccounts';
 import AccountFormModal from './AccountFormModal';
 import AuditHistoryModal from '../audit/AuditHistoryModal';
 import type { Account } from '../../types/database';
+import { useToast } from '../GlobalToastProvider';
 
 export default function AccountsTab() {
   const { accounts, isLoading, error } = useAccounts();
   const { deleteAccount } = useDeleteAccount();
+  const { showConfirm } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingAccount, setEditingAccount] = useState<Account | null>(null);
   const [historyAccount, setHistoryAccount] = useState<Account | null>(null);
@@ -22,9 +24,12 @@ export default function AccountsTab() {
   }
 
   function handleDelete(id: string) {
-    if (confirm('Delete this account? It will be archived.')) {
-      deleteAccount(id);
-    }
+    showConfirm('Delete this account? It will be archived.', {
+      onConfirm: () => deleteAccount(id),
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
   }
 
   return (

@@ -4,12 +4,14 @@ import { useCategories } from '../../hooks/useCategories';
 import RuleFormModal from './RuleFormModal';
 import AuditHistoryModal from '../audit/AuditHistoryModal';
 import { Rule } from '../../types/database';
+import { useToast } from '../GlobalToastProvider';
 
 export default function RulesTab() {
   const { rules, isLoading, error } = useRules();
   const { deleteRule } = useDeleteRule();
   const { updateRule } = useUpdateRule();
   const { categories } = useCategories();
+  const { showConfirm } = useToast();
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [editingRule, setEditingRule] = useState<Rule | null>(null);
   const [historyRule, setHistoryRule] = useState<Rule | null>(null);
@@ -25,9 +27,12 @@ export default function RulesTab() {
   }
 
   async function handleDelete(id: string) {
-    if (confirm('Delete this rule?')) {
-      await deleteRule(id);
-    }
+    showConfirm('Delete this rule?', {
+      onConfirm: async () => await deleteRule(id),
+      confirmText: 'Delete',
+      cancelText: 'Cancel',
+      variant: 'danger',
+    });
   }
 
   async function handleToggleEnabled(rule: Rule) {
