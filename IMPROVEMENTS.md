@@ -377,7 +377,7 @@ export async function lockTaxYear(booksetId: string, year: number): Promise<void
 - All 22 tests pass (verified in WSL - Windows has known test runner issues with mocked modules)
 - ESLint passes with no errors
 
-### 12. Missing 404 Route
+### 12. Missing 404 Route ✅ COMPLETED
 
 **File:** `src/main.tsx` (lines 51-68)
 
@@ -387,11 +387,28 @@ Add catch-all route:
 <Route path="*" element={<NotFoundPage />} />
 ```
 
-### 13. Move DevTools to devDependencies
+**Status:** Implemented 404 error handling:
+
+- Created `src/pages/NotFoundPage.tsx` with styled error page
+- Added catch-all route `<Route path="*" element={<NotFoundPage />} />` to main.tsx
+- Displays user-friendly 404 message with "Go to Home" link
+- Consistent styling with other public pages (login, signup, etc.)
+- Route placed at bottom of Routes to ensure it catches all unmatched paths
+
+### 13. Move DevTools to devDependencies ✅ COMPLETED
 
 **File:** `package.json`
 
 Move `@tanstack/react-query-devtools` from `dependencies` to `devDependencies`.
+
+**Status:** Moved `@tanstack/react-query-devtools` from dependencies to devDependencies:
+
+- Removed `@tanstack/react-query-devtools` from dependencies section
+- Added it to devDependencies section (alphabetically after `@tailwindcss/forms`)
+- Benefits:
+  - Reduces production bundle size (devtools only used in development)
+  - Properly categorizes development-only tooling
+  - Aligns with conditional usage in main.tsx: `{import.meta.env.DEV && <ReactQueryDevtools />}`
 
 ### 14. AuthContext Value Memoization
 

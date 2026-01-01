@@ -36,6 +36,7 @@ import WorkbenchPage from './pages/WorkbenchPage';
 import ReconcilePage from './pages/ReconcilePage';
 import ReportsPage from './pages/ReportsPage';
 import ConfirmEmailPage from './pages/ConfirmEmailPage';
+import NotFoundPage from './pages/NotFoundPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { queryClient } from './lib/queryClient';
 
@@ -69,6 +70,7 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
                   </Route>
 
                   <Route path="/" element={<RootRedirect />} />
+                  <Route path="*" element={<NotFoundPage />} />
                 </Routes>
               </AuthProvider>
             </GlobalToastProvider>
