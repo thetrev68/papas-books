@@ -4,15 +4,25 @@ import { handleSupabaseError, DatabaseError } from '../errors';
 import { validateSplitLines } from '../validation/splits';
 
 /**
- * Fetch transactions for workbench (with filtering)
+ * Fetch transactions for workbench (with filtering and optional pagination)
  */
-export async function fetchTransactions(booksetId: string): Promise<Transaction[]> {
+export async function fetchTransactions(
+  booksetId: string,
+  options?: { limit?: number; offset?: number }
+): Promise<Transaction[]> {
   try {
-    const { data, error } = await supabase
+    let query = supabase
       .from('transactions')
       .select('*')
       .eq('bookset_id', booksetId)
+      .eq('is_archived', false)
       .order('date', { ascending: false });
+
+    if (options?.limit) {
+      query = query.range(options.offset || 0, (options.offset || 0) + options.limit - 1);
+    }
+
+    const { data, error } = await query;
 
     if (error) {
       handleSupabaseError(error);

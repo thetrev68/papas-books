@@ -92,6 +92,7 @@ export default function DashboardPage() {
   const { categories } = useCategories();
   const [timeRange, setTimeRange] = useState<TimeRange>('month');
   const [timePeriod, setTimePeriod] = useState<TimePeriod>('current');
+  const [recentActivityLimit, setRecentActivityLimit] = useState(5);
 
   const { data: transactions, isLoading } = useQuery({
     queryKey: ['transactions', activeBookset?.id],
@@ -99,10 +100,8 @@ export default function DashboardPage() {
     enabled: !!activeBookset,
   });
 
-  const normalizedTransactions = useMemo(
-    () => (transactions || []).filter((t) => !t.is_archived),
-    [transactions]
-  );
+  // Server-side filtering of is_archived now handled in fetchTransactions
+  const normalizedTransactions = useMemo(() => transactions || [], [transactions]);
 
   const range = useMemo(() => getRangeBounds(timeRange, timePeriod), [timeRange, timePeriod]);
 
@@ -154,8 +153,8 @@ export default function DashboardPage() {
   const recentActivity = useMemo(() => {
     return [...normalizedTransactions]
       .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())
-      .slice(0, 5);
-  }, [normalizedTransactions]);
+      .slice(0, recentActivityLimit);
+  }, [normalizedTransactions, recentActivityLimit]);
 
   const topCategories = useMemo(() => {
     const categoryTotals = new Map<string, number>();
@@ -462,8 +461,19 @@ export default function DashboardPage() {
               })
             )}
           </div>
-          <div className="mt-4 pt-4 border-t border-neutral-100">
-            <Link to="/app/workbench" className="text-brand-600 font-bold hover:underline">
+          <div className="mt-4 pt-4 border-t border-neutral-100 dark:border-gray-700 space-y-2">
+            {normalizedTransactions.length > recentActivityLimit && (
+              <button
+                onClick={() => setRecentActivityLimit((prev) => prev + 10)}
+                className="w-full py-2 px-4 bg-neutral-100 dark:bg-gray-700 text-neutral-700 dark:text-gray-300 font-bold rounded-lg hover:bg-neutral-200 dark:hover:bg-gray-600 transition-colors"
+              >
+                Load More ({normalizedTransactions.length - recentActivityLimit} remaining)
+              </button>
+            )}
+            <Link
+              to="/app/workbench"
+              className="block text-center text-brand-600 dark:text-brand-400 font-bold hover:underline"
+            >
               View All Activity &rarr;
             </Link>
           </div>

@@ -59,6 +59,7 @@ describe('fetchTransactions', () => {
     expect(supabase.from).toHaveBeenCalledWith('transactions');
     expect(mockQuery.select).toHaveBeenCalledWith('*');
     expect(mockQuery.eq).toHaveBeenCalledWith('bookset_id', 'test-bookset-id');
+    expect(mockQuery.eq).toHaveBeenCalledWith('is_archived', false);
     expect(mockQuery.order).toHaveBeenCalledWith('date', { ascending: false });
     expect(result).toEqual(mockData);
   });
@@ -105,6 +106,58 @@ describe('fetchTransactions', () => {
     await expect(fetchTransactions('test-bookset-id')).rejects.toThrow(
       'Failed to fetch transactions'
     );
+  });
+
+  it('should support pagination with limit and offset', async () => {
+    const mockData = [mockTransaction()];
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      range: vi.fn().mockResolvedValue({ data: mockData, error: null }),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    const result = await fetchTransactions('test-bookset-id', { limit: 10, offset: 20 });
+
+    expect(mockQuery.range).toHaveBeenCalledWith(20, 29);
+    expect(result).toEqual(mockData);
+  });
+
+  it('should use offset 0 when not provided', async () => {
+    const mockData = [mockTransaction()];
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockReturnThis(),
+      range: vi.fn().mockResolvedValue({ data: mockData, error: null }),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await fetchTransactions('test-bookset-id', { limit: 5 });
+
+    expect(mockQuery.range).toHaveBeenCalledWith(0, 4);
+  });
+
+  it('should not apply range when no limit is provided', async () => {
+    const mockData = [mockTransaction()];
+
+    const mockQuery = {
+      select: vi.fn().mockReturnThis(),
+      eq: vi.fn().mockReturnThis(),
+      order: vi.fn().mockResolvedValue({ data: mockData, error: null }),
+      range: vi.fn(),
+    };
+
+    (supabase.from as any).mockReturnValue(mockQuery);
+
+    await fetchTransactions('test-bookset-id');
+
+    expect(mockQuery.range).not.toHaveBeenCalled();
   });
 });
 

@@ -35,7 +35,7 @@ import FocusTrap from 'focus-trap-react';
 - Added Escape key handler to dismiss modal
 - Modal now focuses on mount and restores focus to previously focused element on unmount
 
-### 2. Transaction Pagination
+### 2. Transaction Pagination ✅ COMPLETED
 
 **File:** `src/lib/supabase/transactions.ts` (lines 9-25)
 
@@ -64,6 +64,20 @@ export async function fetchTransactions(
   // ...
 }
 ```
+
+**Status:** Implemented pagination support with optional limit/offset parameters:
+
+- Added `is_archived = false` filter to exclude soft-deleted transactions
+- Added optional `options` parameter with `limit` and `offset` fields
+- Implemented range-based pagination using Supabase `.range()` method
+- Maintained backward compatibility - existing calls without options still work
+- Added comprehensive unit tests for pagination behavior
+
+**UI Implementations:**
+
+1. **Workbench**: Automatically benefits from server-side `is_archived` filter, reducing data transfer for large booksets
+2. **Dashboard**: Added "Load More" button to Recent Activity section with dynamic limit (starts at 5, increments by 10)
+3. **Reports**: Already implemented with full pagination support via `fetchReportTransactions` (page-based with 1000 records per page)
 
 ### 3. RLS Policy - Prevent Moving Transactions Between Booksets
 
