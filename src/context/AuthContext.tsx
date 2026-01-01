@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
 import { User, Bookset } from '../types/database';
@@ -296,24 +296,24 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   // Backwards compatibility: loading is true when initializing
   const loading = authState.status === 'initializing';
 
-  return (
-    <AuthContext.Provider
-      value={{
-        ...authState,
-        signUp,
-        signIn,
-        signOut,
-        resetPassword,
-        switchBookset,
-        retryAuth,
-        canEdit,
-        canAdmin,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  // Memoize context value to prevent unnecessary re-renders
+  const value = useMemo(
+    () => ({
+      ...authState,
+      signUp,
+      signIn,
+      signOut,
+      resetPassword,
+      switchBookset,
+      retryAuth,
+      canEdit,
+      canAdmin,
+      loading,
+    }),
+    [authState, canEdit, canAdmin, loading]
   );
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
 
 export function useAuth() {
