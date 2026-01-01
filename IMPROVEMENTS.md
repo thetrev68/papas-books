@@ -626,7 +626,7 @@ const ReportsPage = React.lazy(() => import('./pages/ReportsPage'));
   - Seamless user experience with loading spinner during chunk fetch
 - All page components already had default exports, ensuring compatibility with lazy loading
 
-### 20. Database Constraints
+### 20. Database Constraints ✅ COMPLETED
 
 **File:** `supabase/schema.sql`
 
@@ -640,7 +640,19 @@ ALTER TABLE payees ADD CONSTRAINT unique_payee_name_per_bookset
   UNIQUE (bookset_id, name);
 ```
 
-### 21. CI Security Audit
+**Status:** Implemented unique constraints in both `schema.sql` and `production_schema.sql`:
+
+- Added `UNIQUE(bookset_id, name)` constraint to `categories` table (line 186)
+- Added `UNIQUE(bookset_id, name)` constraint to `payees` table (line 271)
+- Constraints prevent duplicate category or payee names within the same bookset
+- Database will now enforce name uniqueness at the schema level
+- Benefits:
+  - Data integrity enforced by PostgreSQL instead of relying on application-level validation
+  - Prevents race conditions where two users could create duplicate names simultaneously
+  - Provides clear error messages when attempting to create duplicates
+  - Improves query performance by creating implicit indexes on (bookset_id, name)
+
+### 21. CI Security Audit ✅ COMPLETED
 
 **File:** `.github/workflows/ci.yml`
 
@@ -651,7 +663,18 @@ Add npm audit step:
   run: npm audit --audit-level=high
 ```
 
-### 22. Dependabot Configuration
+**Status:** Added security audit step to CI workflow:
+
+- Inserted security audit step after dependency installation (line 30-31)
+- Configured to fail on high severity vulnerabilities with `--audit-level=high`
+- Runs on every push to main branch and all pull requests
+- Benefits:
+  - Automatic detection of known security vulnerabilities in dependencies
+  - Prevents merging PRs with high-severity security issues
+  - Early warning system for supply chain security risks
+  - Integrates seamlessly with existing CI pipeline
+
+### 22. Dependabot Configuration ✅ COMPLETED
 
 Create `.github/dependabot.yml`:
 
@@ -664,6 +687,18 @@ updates:
       interval: 'weekly'
     open-pull-requests-limit: 10
 ```
+
+**Status:** Created Dependabot configuration file:
+
+- Created `.github/dependabot.yml` with npm package ecosystem configuration
+- Configured for weekly automatic dependency update checks
+- Limited to 10 open pull requests to avoid PR spam
+- Benefits:
+  - Automatic dependency updates keep project secure and current
+  - Weekly schedule balances staying updated with minimizing maintenance burden
+  - GitHub automatically creates PRs with changelogs and release notes
+  - Works in conjunction with CI security audit to catch vulnerable dependencies
+  - Reduces technical debt by preventing dependency staleness
 
 ## Notes
 

@@ -182,7 +182,8 @@ CREATE TABLE public.categories (
   budget_period text CHECK (budget_period IN ('monthly', 'quarterly', 'annual')),
   created_by uuid REFERENCES public.users(id),
   last_modified_by uuid REFERENCES public.users(id),
-  change_history jsonb -- Phase 9: Audit trail
+  change_history jsonb, -- Phase 9: Audit trail
+  UNIQUE(bookset_id, name)
 );
 
 -- Table: transactions
@@ -266,7 +267,8 @@ CREATE TABLE public.payees (
   created_at timestamp with time zone DEFAULT now(),
   updated_at timestamp with time zone DEFAULT now(),
   created_by uuid REFERENCES public.users(id),
-  last_modified_by uuid REFERENCES public.users(id)
+  last_modified_by uuid REFERENCES public.users(id),
+  UNIQUE(bookset_id, name)
 );
 
 -- Table: import_batches
