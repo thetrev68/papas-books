@@ -70,39 +70,44 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const userQuery = supabase.from('users').select('*').eq('id', userId).single();
     const booksetsQuery = supabase.from('booksets').select('*');
 
-    const [userResult, booksetsResult] = await Promise.all([
-      withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch'),
-      withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch'),
-    ]);
+    try {
+      const [userResult, booksetsResult] = await Promise.all([
+        withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch'),
+        withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch'),
+      ]);
 
-    const { data: userData, error: userError } = userResult;
-    const { data: booksetsData, error: booksetsError } = booksetsResult;
+      const { data: userData, error: userError } = userResult;
+      const { data: booksetsData, error: booksetsError } = booksetsResult;
 
-    if (userError || !userData) {
+      if (userError || !userData) {
+        throw userError || new Error('User profile not found');
+      }
+
+      if (booksetsError) {
+        throw booksetsError;
+      }
+
+      log('User profile fetched:', userData.email);
+
+      const booksets: Bookset[] = booksetsData || [];
+      log('Booksets fetched:', booksets.length);
+
+      // 3. Set active bookset
+      const activeId = userData.active_bookset_id;
+      const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
+
+      log('Active bookset:', active?.name || 'none');
+
+      return { user: userData, booksets, activeBookset: active };
+    } catch (err) {
       if (retries > 0) {
-        log(`User fetch failed, retrying (${retries} left)...`);
+        const msg = err instanceof Error ? err.message : 'Unknown error';
+        log(`User data fetch failed (${msg}), retrying (${retries} left)...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
         return fetchUserData(userId, retries - 1, delay);
       }
-      throw userError || new Error('User profile not found');
+      throw err;
     }
-
-    log('User profile fetched:', userData.email);
-
-    if (booksetsError) {
-      throw booksetsError;
-    }
-
-    const booksets: Bookset[] = booksetsData || [];
-    log('Booksets fetched:', booksets.length);
-
-    // 3. Set active bookset
-    const activeId = userData.active_bookset_id;
-    const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
-
-    log('Active bookset:', active?.name || 'none');
-
-    return { user: userData, booksets, activeBookset: active };
   };
 
   // Single effect - only source of truth is onAuthStateChange
