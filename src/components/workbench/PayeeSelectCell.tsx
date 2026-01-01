@@ -1,4 +1,4 @@
-import { useState, useEffect, useRef, memo } from 'react';
+import { useState, useEffect, useRef, memo, useId } from 'react';
 import type { Payee } from '../../types/database';
 import { useToast } from '../GlobalToastProvider';
 
@@ -24,7 +24,7 @@ const PayeeSelectCell = memo(function PayeeSelectCell({
   const { showConfirm } = useToast();
   const [editValue, setEditValue] = useState(value);
   const inputRef = useRef<HTMLInputElement>(null);
-  const listId = `payees-list-${Math.random().toString(36).substr(2, 9)}`;
+  const listId = useId();
 
   useEffect(() => {
     if (isEditing && inputRef.current) {
