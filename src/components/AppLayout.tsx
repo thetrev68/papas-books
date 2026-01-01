@@ -276,7 +276,7 @@ export default function AppLayout() {
         className="md:hidden sticky bottom-0 bg-white dark:bg-gray-800 border-t border-neutral-200 dark:border-gray-700 flex justify-around p-2 pb-safe shadow-[0_-4px_6px_-1px_rgba(0,0,0,0.1)] z-20"
         aria-label="Mobile navigation"
       >
-        {navLinks.slice(0, 5).map((link) => {
+        {navLinks.map((link) => {
           const active = isActive(link.path);
           return (
             <Link
