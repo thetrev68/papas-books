@@ -1,5 +1,6 @@
 import { supabase } from './config';
 import type { TaxYearLock } from '../../types/database';
+import { handleSupabaseError } from '../errors';
 
 /**
  * Fetches all locked years for a bookset
@@ -18,7 +19,7 @@ export async function fetchTaxYearLocks(booksetId: string): Promise<TaxYearLock[
       console.warn('Tax year locks table missing or inaccessible. Feature disabled.');
       return [];
     }
-    throw error;
+    handleSupabaseError(error);
   }
   return data || [];
 }
@@ -32,7 +33,7 @@ export async function lockTaxYear(booksetId: string, year: number): Promise<void
     p_year: year,
   });
 
-  if (error) throw error;
+  if (error) handleSupabaseError(error);
 }
 
 /**
@@ -44,7 +45,7 @@ export async function unlockTaxYear(booksetId: string, year: number): Promise<vo
     p_year: year,
   });
 
-  if (error) throw error;
+  if (error) handleSupabaseError(error);
 }
 
 /**
@@ -55,7 +56,7 @@ export async function getMaxLockedYear(booksetId: string): Promise<number | null
     p_bookset_id: booksetId,
   });
 
-  if (error) throw error;
+  if (error) handleSupabaseError(error);
   return data;
 }
 
@@ -73,7 +74,7 @@ export async function isDateLocked(booksetId: string, date: string): Promise<boo
     if (error.code === '42883' || error.message?.includes('404')) {
       return false;
     }
-    throw error;
+    handleSupabaseError(error);
   }
   return data || false;
 }

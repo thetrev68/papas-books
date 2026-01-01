@@ -8,6 +8,7 @@ import {
   isDateLocked,
 } from './taxYearLocks';
 import { supabase } from './config';
+import { DatabaseError } from '../errors';
 
 // Mock the Supabase client
 vi.mock('./config', () => ({
@@ -119,7 +120,7 @@ describe('fetchTaxYearLocks', () => {
     consoleWarnSpy.mockRestore();
   });
 
-  it('should throw error on other Supabase errors', async () => {
+  it('should throw DatabaseError on other Supabase errors', async () => {
     const mockQuery = {
       select: vi.fn().mockReturnThis(),
       eq: vi.fn().mockReturnThis(),
@@ -131,7 +132,7 @@ describe('fetchTaxYearLocks', () => {
 
     (supabase.from as any).mockReturnValue(mockQuery);
 
-    await expect(fetchTaxYearLocks('test-bookset-id')).rejects.toThrow();
+    await expect(fetchTaxYearLocks('test-bookset-id')).rejects.toThrow(DatabaseError);
   });
 });
 
@@ -151,11 +152,11 @@ describe('lockTaxYear', () => {
     });
   });
 
-  it('should throw error on lock failure', async () => {
+  it('should throw DatabaseError on lock failure', async () => {
     const mockError = { message: 'Failed to lock year', code: '23505' };
     (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
 
-    await expect(lockTaxYear('test-bookset-id', 2023)).rejects.toThrow();
+    await expect(lockTaxYear('test-bookset-id', 2023)).rejects.toThrow(DatabaseError);
   });
 });
 
@@ -175,11 +176,11 @@ describe('unlockTaxYear', () => {
     });
   });
 
-  it('should throw error on unlock failure', async () => {
+  it('should throw DatabaseError on unlock failure', async () => {
     const mockError = { message: 'Failed to unlock year', code: '23503' };
     (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
 
-    await expect(unlockTaxYear('test-bookset-id', 2023)).rejects.toThrow();
+    await expect(unlockTaxYear('test-bookset-id', 2023)).rejects.toThrow(DatabaseError);
   });
 });
 
@@ -207,11 +208,11 @@ describe('getMaxLockedYear', () => {
     expect(result).toBeNull();
   });
 
-  it('should throw error on RPC failure', async () => {
+  it('should throw DatabaseError on RPC failure', async () => {
     const mockError = { message: 'RPC failed', code: '42883' };
     (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
 
-    await expect(getMaxLockedYear('test-bookset-id')).rejects.toThrow();
+    await expect(getMaxLockedYear('test-bookset-id')).rejects.toThrow(DatabaseError);
   });
 });
 
@@ -270,10 +271,10 @@ describe('isDateLocked', () => {
     expect(result).toBe(false);
   });
 
-  it('should throw error on other RPC failures', async () => {
+  it('should throw DatabaseError on other RPC failures', async () => {
     const mockError = { message: 'Database error', code: '42501' };
     (supabase.rpc as any).mockResolvedValue({ data: null, error: mockError });
 
-    await expect(isDateLocked('test-bookset-id', '2023-05-15')).rejects.toThrow();
+    await expect(isDateLocked('test-bookset-id', '2023-05-15')).rejects.toThrow(DatabaseError);
   });
 });

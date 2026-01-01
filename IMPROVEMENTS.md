@@ -347,7 +347,7 @@ build: {
 
 **Status:** Fixed by removing the `.slice(0, 5)` limitation on the mobile bottom navigation. All 6 navigation links (Dashboard, Workbench, Import, Reconcile, Reports, and Settings) are now displayed in the mobile bottom navigation bar. The existing `justify-around` flexbox layout automatically distributes the 6 items evenly across the navigation bar width.
 
-### 11. Tax Year Lock Error Handling
+### 11. Tax Year Lock Error Handling ✅ COMPLETED
 
 **File:** `src/lib/supabase/taxYearLocks.ts`
 
@@ -360,9 +360,22 @@ export async function lockTaxYear(booksetId: string, year: number): Promise<void
     p_year: year,
   });
 
-  if (error) throw handleSupabaseError(error);
+  if (error) handleSupabaseError(error);
 }
 ```
+
+**Status:** Implemented consistent error handling across all tax year lock functions:
+
+- Imported `handleSupabaseError` from `../errors`
+- Updated all five functions to use `handleSupabaseError()` instead of raw `throw error`:
+  - `fetchTaxYearLocks()` - Maintained special handling for missing table (42P01/404) while using `handleSupabaseError()` for other errors
+  - `lockTaxYear()` - Now throws `DatabaseError` with user-friendly messages
+  - `unlockTaxYear()` - Now throws `DatabaseError` with user-friendly messages
+  - `getMaxLockedYear()` - Now throws `DatabaseError` with user-friendly messages
+  - `isDateLocked()` - Maintained special handling for missing RPC (42883/404) while using `handleSupabaseError()` for other errors
+- Updated test file to expect `DatabaseError` instead of generic errors
+- All 22 tests pass (verified in WSL - Windows has known test runner issues with mocked modules)
+- ESLint passes with no errors
 
 ### 12. Missing 404 Route
 
