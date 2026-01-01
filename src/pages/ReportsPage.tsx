@@ -1,7 +1,6 @@
-import { useState, useMemo } from 'react';
+import { useState } from 'react';
 import { useAuth } from '../context/AuthContext';
 import { useAccounts } from '../hooks/useAccounts';
-import { useCategories } from '../hooks/useCategories';
 import { usePayees } from '../hooks/usePayees';
 import { fetchReportTransactions } from '../lib/supabase/reports';
 import {
@@ -21,52 +20,16 @@ import {
   YearComparisonRow,
 } from '../lib/reports';
 import { CategorySummary, ReportFilter } from '../types/reconcile';
-import { Transaction, Category } from '../types/database';
+import { Transaction } from '../types/database';
+import { useSortedCategories } from '../lib/categoryUtils';
 
 export default function ReportsPage() {
   const { activeBookset } = useAuth();
   const { accounts } = useAccounts();
-  const { categories } = useCategories();
   const { payees } = usePayees();
 
   // Helper to process categories with parent:child format
-  const sortedCategories = useMemo(() => {
-    const categoryMap = new Map(categories.map((c) => [c.id, c]));
-
-    const getRoot = (cat: Category): Category => {
-      let current = cat;
-      const seen = new Set<string>();
-      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
-        if (seen.has(current.id)) break;
-        seen.add(current.id);
-        current = categoryMap.get(current.parent_category_id)!;
-      }
-      return current;
-    };
-
-    const getFullName = (cat: Category) => {
-      if (!cat.parent_category_id) return cat.name;
-      const parent = categoryMap.get(cat.parent_category_id);
-      return parent ? `${parent.name}: ${cat.name}` : cat.name;
-    };
-
-    return [...categories]
-      .sort((a, b) => {
-        const rootA = getRoot(a);
-        const rootB = getRoot(b);
-        const isIncomeA = rootA.name === 'Income';
-        const isIncomeB = rootB.name === 'Income';
-
-        if (isIncomeA && !isIncomeB) return -1;
-        if (!isIncomeA && isIncomeB) return 1;
-
-        return getFullName(a).localeCompare(getFullName(b));
-      })
-      .map((cat) => ({
-        ...cat,
-        displayName: getFullName(cat),
-      }));
-  }, [categories]);
+  const sortedCategories = useSortedCategories();
 
   const [startDate, setStartDate] = useState(new Date().getFullYear() + '-01-01');
   const [endDate, setEndDate] = useState(new Date().toISOString().split('T')[0]);
@@ -171,17 +134,17 @@ export default function ReportsPage() {
         const comparisonSummary = generateYearComparison(
           filteredCurrent,
           filteredCompare,
-          categories
+          sortedCategories
         );
         setComparisonData(comparisonSummary);
       } else if (reportType === 'taxLine') {
-        const taxSummary = generateTaxLineReport(filteredCurrent, categories);
+        const taxSummary = generateTaxLineReport(filteredCurrent, sortedCategories);
         setTaxReportData(taxSummary);
       } else if (reportType === 'quarterly') {
         const quarterlySummary = generateQuarterlyReport(filteredCurrent, taxRate);
         setQuarterlyData(quarterlySummary);
       } else {
-        const summary = generateCategoryReport(filteredCurrent, categories);
+        const summary = generateCategoryReport(filteredCurrent, sortedCategories);
         setReportData(summary);
       }
       setTotalTransactions(totalCount);
@@ -251,7 +214,12 @@ export default function ReportsPage() {
     }
 
     try {
-      const exportRows = generateCpaExport(filteredTransactions, categories, accounts, payees);
+      const exportRows = generateCpaExport(
+        filteredTransactions,
+        sortedCategories,
+        accounts,
+        payees
+      );
 
       if (exportRows.length === 0) {
         setError('No data to export.');

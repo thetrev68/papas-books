@@ -185,7 +185,7 @@ function safeRegexMatch(pattern: string, text: string): boolean {
 
 ## Medium Priority
 
-### 6. Extract Duplicated Category Sorting Logic
+### 6. Extract Duplicated Category Sorting Logic ✅ COMPLETED
 
 **Files:**
 
@@ -228,6 +228,15 @@ export function useSortedCategories(): CategoryWithDisplayName[] {
   return useMemo(() => getSortedCategories(categories), [categories]);
 }
 ```
+
+**Status:** Implemented in `src/lib/categoryUtils.ts` with comprehensive test coverage:
+
+- Created `getSortedCategories()` function that sorts categories with Income first, then alphabetically by full hierarchical name
+- Created `useSortedCategories()` hook for use in React components
+- Exported `CategoryWithDisplayName` interface that extends `Category` with a `displayName` property
+- Updated all three files to use the new shared utility, eliminating ~35 lines of duplicated code from each file
+- Added 12 comprehensive unit tests covering edge cases (circular references, missing parents, deep hierarchies, etc.)
+- All 611 tests pass, TypeScript compilation is clean
 
 ### 7. Split Large Components
 

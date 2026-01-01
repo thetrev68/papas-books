@@ -14,13 +14,13 @@ import {
   type Table,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
-import type { Transaction, Category } from '../../types/database';
+import type { Transaction } from '../../types/database';
 import PayeeSelectCell from './PayeeSelectCell';
-import { useCategories } from '../../hooks/useCategories';
 import { useAccounts } from '../../hooks/useAccounts';
 import { usePayees } from '../../hooks/usePayees';
 import { useTaxYearLocks } from '../../hooks/useTaxYearLocks';
 import { useToast } from '../GlobalToastProvider';
+import { useSortedCategories } from '../../lib/categoryUtils';
 
 /**
  * Header checkbox component for "select all" functionality.
@@ -85,7 +85,6 @@ function WorkbenchTable({
   const [expanded, setExpanded] = useState<ExpandedState>({});
   const [rowSelection, setRowSelection] = useState<RowSelectionState>({});
 
-  const { categories } = useCategories();
   const { accounts } = useAccounts();
   const { payees } = usePayees();
   const { isDateLocked } = useTaxYearLocks();
@@ -93,44 +92,7 @@ function WorkbenchTable({
   const columnHelper = createColumnHelper<Transaction>();
 
   // Helper to process categories - memoized with stable reference
-  const sortedCategories = useMemo(() => {
-    const categoryMap = new Map(categories.map((c) => [c.id, c]));
-
-    const getRoot = (cat: Category): Category => {
-      let current = cat;
-      const seen = new Set<string>();
-      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
-        if (seen.has(current.id)) break;
-        seen.add(current.id);
-        current = categoryMap.get(current.parent_category_id)!;
-      }
-      return current;
-    };
-
-    const getFullName = (cat: Category) => {
-      if (!cat.parent_category_id) return cat.name;
-      const parent = categoryMap.get(cat.parent_category_id);
-      return parent ? `${parent.name}: ${cat.name}` : cat.name;
-    };
-
-    return [...categories]
-      .sort((a, b) => {
-        const rootA = getRoot(a);
-        const rootB = getRoot(b);
-        // Assume "Income" is the name of the root category for income
-        const isIncomeA = rootA.name === 'Income';
-        const isIncomeB = rootB.name === 'Income';
-
-        if (isIncomeA && !isIncomeB) return -1;
-        if (!isIncomeA && isIncomeB) return 1;
-
-        return getFullName(a).localeCompare(getFullName(b));
-      })
-      .map((cat) => ({
-        ...cat,
-        displayName: getFullName(cat),
-      }));
-  }, [categories]);
+  const sortedCategories = useSortedCategories();
 
   function getAccountName(accountId: string): string {
     const account = accounts.find((a) => a.id === accountId);

@@ -1,8 +1,8 @@
-import { useState, useMemo } from 'react';
-import type { Transaction, Category } from '../../types/database';
+import { useState } from 'react';
+import type { Transaction } from '../../types/database';
 import { calculateSplitRemainder, validateSplitTransaction } from '../../lib/splitCalculator';
 import { validateSplitLines } from '../../lib/validation/splits';
-import { useCategories } from '../../hooks/useCategories';
+import { useSortedCategories } from '../../lib/categoryUtils';
 import Modal from '../ui/Modal';
 
 interface SplitModalProps {
@@ -15,46 +15,9 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
   const [lines, setLines] = useState(transaction.lines || []);
   const [newLine, setNewLine] = useState({ categoryId: '', amount: 0, memo: '' });
   const [validationError, setValidationError] = useState<string | null>(null);
-  const { categories } = useCategories();
 
   // Helper to process categories with parent:child format
-  const sortedCategories = useMemo(() => {
-    const categoryMap = new Map(categories.map((c) => [c.id, c]));
-
-    const getRoot = (cat: Category): Category => {
-      let current = cat;
-      const seen = new Set<string>();
-      while (current.parent_category_id && categoryMap.has(current.parent_category_id)) {
-        if (seen.has(current.id)) break;
-        seen.add(current.id);
-        current = categoryMap.get(current.parent_category_id)!;
-      }
-      return current;
-    };
-
-    const getFullName = (cat: Category) => {
-      if (!cat.parent_category_id) return cat.name;
-      const parent = categoryMap.get(cat.parent_category_id);
-      return parent ? `${parent.name}: ${cat.name}` : cat.name;
-    };
-
-    return [...categories]
-      .sort((a, b) => {
-        const rootA = getRoot(a);
-        const rootB = getRoot(b);
-        const isIncomeA = rootA.name === 'Income';
-        const isIncomeB = rootB.name === 'Income';
-
-        if (isIncomeA && !isIncomeB) return -1;
-        if (!isIncomeA && isIncomeB) return 1;
-
-        return getFullName(a).localeCompare(getFullName(b));
-      })
-      .map((cat) => ({
-        ...cat,
-        displayName: getFullName(cat),
-      }));
-  }, [categories]);
+  const sortedCategories = useSortedCategories();
 
   const remainder = calculateSplitRemainder({ ...transaction, lines });
   const validation = validateSplitTransaction({ ...transaction, lines });
