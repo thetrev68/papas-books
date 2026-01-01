@@ -74,6 +74,24 @@ describe('matchesRule', () => {
     expect(matchesRule('any description', dummyAmount, dummyDate, rule)).toBe(false);
   });
 
+  it('should protect against ReDoS attacks with nested quantifiers', () => {
+    // This pattern would cause catastrophic backtracking if not protected
+    const rule = {
+      keyword: '(a+)+',
+      match_type: 'regex',
+      case_sensitive: false,
+      id: 'redos-test',
+    } as Rule;
+
+    // Should return false quickly instead of hanging
+    const startTime = Date.now();
+    const result = matchesRule('aaaaaaaaaaaaaaaaaaaaaa', dummyAmount, dummyDate, rule);
+    const duration = Date.now() - startTime;
+
+    expect(result).toBe(false);
+    expect(duration).toBeLessThan(500); // Should complete quickly
+  });
+
   describe('Advanced Conditions', () => {
     const basicRule = {
       keyword: 'target',
@@ -123,6 +141,21 @@ describe('matchesRule', () => {
 
       expect(matchesRule('TARGET STORE', 1000, dummyDate, rule)).toBe(true);
       expect(matchesRule('TARGET ONLINE', 1000, dummyDate, rule)).toBe(false);
+    });
+
+    it('should protect against ReDoS in advanced conditions regex', () => {
+      const rule = {
+        ...basicRule,
+        conditions: { descriptionRegex: '(a+)+' }, // Dangerous pattern
+      } as Rule;
+
+      // Should return false quickly for the dangerous condition regex
+      const startTime = Date.now();
+      const result = matchesRule('TARGET aaaaaaaaaaaa', 1000, dummyDate, rule);
+      const duration = Date.now() - startTime;
+
+      expect(result).toBe(false);
+      expect(duration).toBeLessThan(500);
     });
   });
 });

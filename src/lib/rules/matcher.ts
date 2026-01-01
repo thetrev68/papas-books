@@ -1,5 +1,6 @@
 import { Transaction } from '../../types/database';
 import { RuleMatch, Rule as AppRule } from '../../types/rules';
+import { safeRegexTest } from './safeRegex';
 
 /**
  * Normalizes text for matching.
@@ -36,16 +37,11 @@ function basicMatch(description: string, rule: AppRule): boolean {
     case 'startsWith':
       return normalizedDescription.startsWith(normalizedKeyword);
 
-    case 'regex':
-      try {
-        const flags = rule.case_sensitive ? '' : 'i';
-        const regex = new RegExp(rule.keyword, flags);
-        return regex.test(description); // Use original description for regex
-      } catch (error) {
-        // Invalid regex - treat as no match
-        console.error(`Invalid regex in rule ${rule.id}:`, error);
-        return false;
-      }
+    case 'regex': {
+      // Use safe regex execution to prevent ReDoS attacks
+      const flags = rule.case_sensitive ? '' : 'i';
+      return safeRegexTest(rule.keyword, description, flags);
+    }
 
     default:
       return false;
@@ -77,13 +73,8 @@ export function matchesRule(
     if (amountMax !== undefined && absAmount > amountMax) return false;
 
     if (descriptionRegex) {
-      try {
-        const regex = new RegExp(descriptionRegex, 'i');
-        if (!regex.test(description)) return false;
-      } catch {
-        console.warn('Invalid regex in rule', rule.id);
-        return false;
-      }
+      // Use safe regex execution for advanced conditions
+      if (!safeRegexTest(descriptionRegex, description, 'i')) return false;
     }
 
     if (dateRange) {

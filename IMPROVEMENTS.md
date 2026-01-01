@@ -144,7 +144,7 @@ $$ LANGUAGE plpgsql SECURITY DEFINER;
 - All operations execute within a single database transaction ensuring atomicity
 - Maintains backward compatibility with existing import workflow
 
-### 5. ReDoS Protection in Rules Engine
+### 5. ReDoS Protection in Rules Engine ✅ COMPLETED
 
 **File:** `src/lib/rules/matcher.ts` (lines 40-48)
 
@@ -169,6 +169,19 @@ function safeRegexMatch(pattern: string, text: string): boolean {
   }
 }
 ```
+
+**Status:** Implemented comprehensive ReDoS protection without external dependencies:
+
+- Created `src/lib/rules/safeRegex.ts` with pattern validation and safe execution
+- Pattern complexity validation rejects nested quantifiers (e.g., `(a+)+`, `(a*)*`)
+- Maximum pattern length enforcement (500 characters)
+- Performance monitoring logs slow patterns (>50ms execution time)
+- Updated `matcher.ts` to use `safeRegexTest()` for both basic and advanced condition regex
+- Updated `src/lib/validation/rules.ts` to validate patterns before saving
+- Client-side validation in `RuleFormModal` prevents dangerous patterns from being saved
+- Comprehensive test coverage with 21 tests in `safeRegex.test.ts`
+- Added ReDoS protection tests to `matcher.test.ts` verifying quick rejection of dangerous patterns
+- All existing tests pass, maintaining backward compatibility
 
 ## Medium Priority
 

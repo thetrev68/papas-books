@@ -1,5 +1,6 @@
 import { z } from 'zod';
 import { MAX_PAYEE_LENGTH } from './import';
+import { validateRegexPattern } from '../rules/safeRegex';
 
 export const insertRuleSchema = z.object({
   booksetId: z.string().uuid(),
@@ -12,19 +13,21 @@ export const insertRuleSchema = z.object({
   isEnabled: z.boolean(),
 });
 
-// Additional validation: Test regex patterns
+/**
+ * Validates regex patterns with ReDoS protection.
+ *
+ * Uses safe regex validation that checks for:
+ * - Pattern syntax errors
+ * - Nested quantifiers that could cause catastrophic backtracking
+ * - Overly long patterns
+ *
+ * @param pattern - The regex pattern to validate
+ * @returns Object with valid flag and optional error message
+ */
 export function validateRegex(pattern: string): { valid: boolean; error?: string } {
-  try {
-    new RegExp(pattern);
-    return { valid: true };
-  } catch (error) {
-    // For actual SyntaxErrors coming from RegExp, return the specific message
-    // (e.g. 'Unterminated character class'). For other errors (including
-    // non-Error objects or errors due to mocking/non-constructible RegExp),
-    // return a generic message to avoid leaking unexpected messages.
-    if (error instanceof Error && error.name === 'SyntaxError') {
-      return { valid: false, error: error.message };
-    }
-    return { valid: false, error: 'Invalid regex pattern' };
-  }
+  const result = validateRegexPattern(pattern);
+  return {
+    valid: result.isValid,
+    error: result.error,
+  };
 }
