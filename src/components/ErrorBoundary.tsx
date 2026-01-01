@@ -1,5 +1,6 @@
 // src/components/ErrorBoundary.tsx
 import { Component, ReactNode, ErrorInfo } from 'react';
+import { captureException } from '../lib/sentry';
 
 interface Props {
   children: ReactNode;
@@ -22,7 +23,10 @@ export class ErrorBoundary extends Component<Props, State> {
 
   componentDidCatch(error: Error, errorInfo: ErrorInfo) {
     console.error('Uncaught error:', error, errorInfo);
-    // TODO: Send to error tracking service (Sentry, LogRocket, etc.)
+    // Send to Sentry error tracking
+    captureException(error, {
+      componentStack: errorInfo.componentStack,
+    });
   }
 
   render() {

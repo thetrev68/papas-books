@@ -46,12 +46,15 @@ test.describe('Workbench Editing Workflow', () => {
         await page.waitForTimeout(1000);
 
         // Verify change saved (look for success toast or updated value)
+        // Note: If payee update fails, the test will still pass since we're testing the UI flow
+        // In a real scenario, verify via API or database
         const updated = await page
           .locator('text=/test payee/i')
           .first()
           .isVisible()
           .catch(() => false);
-        expect(updated || true).toBeTruthy();
+        // We expect either the update worked or we at least completed the edit flow without error
+        expect(updated).toBe(true);
       }
     }
   });
@@ -129,7 +132,8 @@ test.describe('Workbench Editing Workflow', () => {
         }
       }
 
-      expect(isModalVisible || true).toBeTruthy();
+      // Verify split modal appeared when button was clicked
+      expect(isModalVisible).toBe(true);
     }
   });
 
@@ -172,7 +176,8 @@ test.describe('Workbench Editing Workflow', () => {
         .first()
         .isVisible()
         .catch(() => false);
-      expect(filterActive || true).toBeTruthy();
+      // Filter should be active after typing search term
+      expect(filterActive).toBe(true);
 
       // Clear filter
       await filterInput.clear();
@@ -213,13 +218,16 @@ test.describe('Workbench Editing Workflow', () => {
       await selectAllCheckbox.click();
       await page.waitForTimeout(1000);
 
-      // Verify bulk actions appear
+      // Verify bulk actions appear (toolbar with selection count or action buttons)
       const bulkActions = await page
-        .locator('button:has-text("Delete"), button:has-text("Mark"), [data-testid*="bulk"]')
+        .locator(
+          'text=/selected/i, button:has-text("Delete"), button:has-text("Mark"), [data-testid*="bulk"]'
+        )
         .first()
         .isVisible()
         .catch(() => false);
-      expect(bulkActions || true).toBeTruthy();
+      // Bulk action UI should appear when rows are selected
+      expect(bulkActions).toBe(true);
 
       // Deselect
       await selectAllCheckbox.click();

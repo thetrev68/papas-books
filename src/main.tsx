@@ -2,6 +2,10 @@ import React from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './pwa'; // Add PWA registration
+import { initSentry } from './lib/sentry';
+
+// Initialize error monitoring before React renders
+initSentry();
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 
 // Suppress verbose Chrome performance warnings in development

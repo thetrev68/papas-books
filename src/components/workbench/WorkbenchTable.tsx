@@ -1,4 +1,4 @@
-import { useState, useRef, useMemo, Fragment } from 'react';
+import { useState, useRef, useMemo, Fragment, useEffect } from 'react';
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -11,6 +11,7 @@ import {
   type ColumnFiltersState,
   type ExpandedState,
   type RowSelectionState,
+  type Table,
 } from '@tanstack/react-table';
 import { useVirtualizer } from '@tanstack/react-virtual';
 import type { Transaction, Category } from '../../types/database';
@@ -20,6 +21,34 @@ import { useAccounts } from '../../hooks/useAccounts';
 import { usePayees } from '../../hooks/usePayees';
 import { useTaxYearLocks } from '../../hooks/useTaxYearLocks';
 import { useToast } from '../GlobalToastProvider';
+
+/**
+ * Header checkbox component for "select all" functionality.
+ * Extracted to avoid calling useRef inside useMemo callback (React Hook rule).
+ */
+function SelectAllCheckbox({ table }: { table: Table<Transaction> }) {
+  const ref = useRef<HTMLInputElement>(null);
+
+  // Handle indeterminate state
+  useEffect(() => {
+    if (ref.current) {
+      ref.current.indeterminate = table.getIsSomeRowsSelected();
+    }
+  }, [table.getIsSomeRowsSelected()]);
+
+  return (
+    <div className="flex items-center justify-center">
+      <input
+        ref={ref}
+        type="checkbox"
+        checked={table.getIsAllRowsSelected()}
+        onChange={table.getToggleAllRowsSelectedHandler()}
+        className="w-5 h-5 text-brand-600 dark:text-brand-500 rounded border-neutral-300 dark:border-gray-600 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer bg-white dark:bg-gray-700"
+        title="Select all"
+      />
+    </div>
+  );
+}
 
 interface WorkbenchTableProps {
   transactions: Transaction[];
@@ -118,25 +147,7 @@ function WorkbenchTable({
     () => [
       columnHelper.display({
         id: 'select',
-        header: ({ table }) => {
-          const ref = useRef<HTMLInputElement>(null);
-          // Handle indeterminate state
-          if (ref.current) {
-            ref.current.indeterminate = table.getIsSomeRowsSelected();
-          }
-          return (
-            <div className="flex items-center justify-center">
-              <input
-                ref={ref}
-                type="checkbox"
-                checked={table.getIsAllRowsSelected()}
-                onChange={table.getToggleAllRowsSelectedHandler()}
-                className="w-5 h-5 text-brand-600 dark:text-brand-500 rounded border-neutral-300 dark:border-gray-600 focus:ring-brand-500 dark:focus:ring-brand-700 cursor-pointer bg-white dark:bg-gray-700"
-                title="Select all"
-              />
-            </div>
-          );
-        },
+        header: ({ table }) => <SelectAllCheckbox table={table} />,
         cell: ({ row }) => {
           const locked = isDateLocked(row.original.date) || row.original.reconciled;
           return (
