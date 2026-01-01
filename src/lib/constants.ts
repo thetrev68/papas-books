@@ -6,7 +6,7 @@
  */
 
 // Authentication timeouts and retries
-export const AUTH_TIMEOUT_MS = 8000;
+export const AUTH_TIMEOUT_MS = 5000;
 export const AUTH_RETRY_DELAY_MS = 500;
 
 // Toast notification durations (milliseconds)

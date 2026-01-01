@@ -46,23 +46,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
   // Track the latest fetch request to handle race conditions
   const fetchRequestId = useRef(0);
+  const abortControllerRef = useRef<AbortController | null>(null);
+  const hasInitialized = useRef(false);
 
   // Helper to fetch user profile and booksets
   const fetchUserData = async (
     userId: string,
+    signal: AbortSignal,
     retries = 2,
     delay = AUTH_RETRY_DELAY_MS
   ): Promise<{ user: User; booksets: Bookset[]; activeBookset: Bookset | null }> => {
     const withTimeout = async <T,>(
       promise: PromiseLike<T>,
       ms = AUTH_TIMEOUT_MS,
-      name = 'Request'
+      name = 'Request',
+      signal: AbortSignal
     ): Promise<T> => {
-      const timeoutPromise = new Promise<T>((_, reject) =>
-        setTimeout(() => reject(new Error(`${name} timed out after ${ms}ms`)), ms)
-      );
+      const timeoutPromise = new Promise<T>((_, reject) => {
+        const timeoutId = setTimeout(
+          () => reject(new Error(`${name} timed out after ${ms}ms`)),
+          ms
+        );
+        // Clear timeout if request is aborted
+        signal.addEventListener('abort', () => clearTimeout(timeoutId));
+      });
       return Promise.race([promise as Promise<T>, timeoutPromise]);
     };
+
+    // Check if aborted before starting
+    if (signal.aborted) {
+      throw new Error('Request aborted');
+    }
 
     log('Fetching user data for', userId);
 
@@ -72,9 +86,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
     try {
       const [userResult, booksetsResult] = await Promise.all([
-        withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch'),
-        withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch'),
+        withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch', signal),
+        withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch', signal),
       ]);
+
+      // Check if aborted after fetch
+      if (signal.aborted) {
+        throw new Error('Request aborted');
+      }
 
       const { data: userData, error: userError } = userResult;
       const { data: booksetsData, error: booksetsError } = booksetsResult;
@@ -100,11 +119,16 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       return { user: userData, booksets, activeBookset: active };
     } catch (err) {
+      // Don't retry if request was aborted
+      if (signal.aborted || (err instanceof Error && err.message === 'Request aborted')) {
+        throw new Error('Request aborted');
+      }
+
       if (retries > 0) {
         const msg = err instanceof Error ? err.message : 'Unknown error';
         log(`User data fetch failed (${msg}), retrying (${retries} left)...`);
         await new Promise((resolve) => setTimeout(resolve, delay));
-        return fetchUserData(userId, retries - 1, delay);
+        return fetchUserData(userId, signal, retries - 1, delay);
       }
       throw err;
     }
@@ -133,12 +157,32 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         return;
       }
 
+      // Skip SIGNED_IN event only during initial page load
+      // On page load: SIGNED_IN fires first, then INITIAL_SESSION (we wait for INITIAL_SESSION)
+      // On actual sign-in: only SIGNED_IN fires (we need to handle it)
+      // We can detect initial load by checking if we haven't initialized yet AND it's SIGNED_IN
+      if (event === 'SIGNED_IN' && !hasInitialized.current) {
+        log('Skipping SIGNED_IN event during initial load (will wait for INITIAL_SESSION)');
+        return;
+      }
+
+      // Mark that we've seen our first meaningful auth event
+      if (event === 'INITIAL_SESSION' || event === 'SIGNED_IN') {
+        hasInitialized.current = true;
+      }
+
       // No session - user is logged out
       if (!session?.user) {
         log('No session, setting unauthenticated state');
 
         // Clear user context in Sentry
         clearSentryUser();
+
+        // Abort any pending fetches
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
 
         // Increment ID to invalidate any pending fetches
         fetchRequestId.current += 1;
@@ -160,6 +204,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (expiresAt && expiresAt < now) {
         log('Session expired, setting unauthenticated state');
+        // Abort any pending fetches
+        if (abortControllerRef.current) {
+          abortControllerRef.current.abort();
+          abortControllerRef.current = null;
+        }
         fetchRequestId.current += 1; // Invalidate fetches
         setAuthState({
           status: 'unauthenticated',
@@ -181,12 +230,22 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: null,
       }));
 
+      // Abort any previous fetch and create new AbortController
+      if (abortControllerRef.current) {
+        log('Aborting previous user data fetch');
+        abortControllerRef.current.abort();
+      }
+      abortControllerRef.current = new AbortController();
+
       // Generate a new request ID for this fetch attempt
       const requestId = ++fetchRequestId.current;
 
       // Fetch user data
       try {
-        const { user, booksets, activeBookset } = await fetchUserData(session.user.id);
+        const { user, booksets, activeBookset } = await fetchUserData(
+          session.user.id,
+          abortControllerRef.current.signal
+        );
 
         // If this request is stale (a newer one started), ignore the result
         if (requestId !== fetchRequestId.current) {
@@ -215,7 +274,14 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         }
 
         const error = err instanceof Error ? err : new Error('Unknown error');
+        const isAborted = error.message === 'Request aborted';
         const isTimeout = error.message.includes('timed out');
+
+        // Don't show error state if request was aborted (normal behavior)
+        if (isAborted) {
+          log('User data fetch aborted (newer request started)');
+          return;
+        }
 
         log('Error fetching user data:', error.message);
 
