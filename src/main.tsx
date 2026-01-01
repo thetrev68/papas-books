@@ -48,7 +48,12 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
     <QueryClientProvider client={queryClient}>
       <ErrorBoundary>
         <ThemeProvider>
-          <BrowserRouter>
+          <BrowserRouter
+            future={{
+              v7_startTransition: true,
+              v7_relativeSplatPath: true,
+            }}
+          >
             <GlobalToastProvider>
               <AuthProvider>
                 <Suspense fallback={<LoadingSpinner />}>
