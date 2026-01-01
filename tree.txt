@@ -1,0 +1,248 @@
+papas-books/
+├── e2e/
+│   ├── .auth/
+│   │   ├── login-failure.html (4 lines)
+│   │   ├── login-failure.png
+│   │   └── state.json
+│   ├── fixtures/
+│   │   └── sample-transactions.csv
+│   ├── utils/
+│   │   ├── auth.ts (30 lines)
+│   │   └── cleanup.ts (166 lines)
+│   ├── accessibility.spec.ts (108 lines)
+│   ├── auth.setup.ts (122 lines)
+│   ├── import-workflow.spec.ts (241 lines)
+│   ├── reconciliation-workflow.spec.ts (170 lines)
+│   ├── rule-workflow.spec.ts (161 lines)
+│   └── workbench-workflow.spec.ts (193 lines)
+├── scripts/
+│   ├── add-dark-mode.sh
+│   ├── check-transaction-ownership.ts (68 lines)
+│   ├── cleanup-null-transactions.ts (56 lines)
+│   ├── code-quality-check.bat
+│   ├── code-quality-check.js (125 lines)
+│   ├── codeql-scan.ps1
+│   ├── codeql-scan.sh
+│   ├── count-transactions.ts (49 lines)
+│   ├── fix-changelog.js (69 lines)
+│   ├── generate-large-csv.ts (97 lines)
+│   ├── list-booksets.ts (90 lines)
+│   ├── security-tests.ts (495 lines)
+│   ├── seed-large-dataset.ts (191 lines)
+│   ├── test-change-history.ts (165 lines)
+│   ├── test-release.js (42 lines)
+│   └── test-rls-policies.ts (137 lines)
+├── src/
+│   ├── components/
+│   │   ├── audit/
+│   │   │   ├── AuditHistoryModal.tsx (156 lines)
+│   │   │   └── TransactionHistoryModal.tsx (22 lines)
+│   │   ├── auth/
+│   │   │   └── PasswordStrengthIndicator.tsx (39 lines)
+│   │   ├── common/
+│   │   │   └── VersionConflictModal.tsx (175 lines)
+│   │   ├── import/
+│   │   │   └── MappingForm.tsx (207 lines)
+│   │   ├── reconcile/
+│   │   │   ├── ReconcileSetup.tsx (103 lines)
+│   │   │   └── ReconcileWorkspace.tsx (210 lines)
+│   │   ├── reports/
+│   │   │   ├── CategoryReportView.tsx (108 lines)
+│   │   │   ├── QuarterlyReportView.tsx (146 lines)
+│   │   │   ├── TaxLineReportView.tsx (124 lines)
+│   │   │   └── YearComparisonReportView.tsx (172 lines)
+│   │   ├── settings/
+│   │   │   ├── AccessTab.tsx (189 lines)
+│   │   │   ├── AccountFormModal.tsx (262 lines)
+│   │   │   ├── AccountsTab.tsx (164 lines)
+│   │   │   ├── CategoriesTab.tsx (178 lines)
+│   │   │   ├── CategoryFormModal.tsx (248 lines)
+│   │   │   ├── PayeeFormModal.tsx (161 lines)
+│   │   │   ├── PayeesTab.tsx (260 lines)
+│   │   │   ├── RuleFormModal.tsx (452 lines)
+│   │   │   ├── RulesTab.tsx (195 lines)
+│   │   │   └── TaxYearLocksTab.tsx (165 lines)
+│   │   ├── ui/
+│   │   │   ├── ConfirmDialog.tsx (47 lines)
+│   │   │   ├── Modal.test.tsx (160 lines)
+│   │   │   └── Modal.tsx (95 lines)
+│   │   ├── workbench/
+│   │   │   ├── CreateTransactionModal.tsx (261 lines)
+│   │   │   ├── PayeeSelectCell.tsx (120 lines)
+│   │   │   ├── RuleBatchResultModal.tsx (51 lines)
+│   │   │   ├── SplitModal.tsx (226 lines)
+│   │   │   ├── WorkbenchColumns.tsx (326 lines)
+│   │   │   ├── WorkbenchMobileCard.tsx (110 lines)
+│   │   │   ├── WorkbenchTable.test.tsx (40 lines)
+│   │   │   ├── WorkbenchTable.tsx (271 lines)
+│   │   │   └── WorkbenchToolbar.tsx (103 lines)
+│   │   ├── AppLayout.tsx (284 lines)
+│   │   ├── ErrorBoundary.tsx (55 lines)
+│   │   ├── GlobalToastProvider.test.tsx (290 lines)
+│   │   ├── GlobalToastProvider.tsx (108 lines)
+│   │   ├── LoadingSpinner.tsx (10 lines)
+│   │   ├── ProtectedRoute.tsx (40 lines)
+│   │   ├── PWAInstallPrompt.tsx (98 lines)
+│   │   ├── RootRedirect.tsx (12 lines)
+│   │   └── ThemeToggle.tsx (24 lines)
+│   ├── context/
+│   │   ├── AuthContext.tsx (280 lines)
+│   │   └── ThemeContext.tsx (53 lines)
+│   ├── hooks/
+│   │   ├── useAccounts.test.ts (426 lines)
+│   │   ├── useAccounts.ts (138 lines)
+│   │   ├── useApplyRules.test.ts (359 lines)
+│   │   ├── useApplyRules.ts (58 lines)
+│   │   ├── useCategories.test.ts (426 lines)
+│   │   ├── useCategories.ts (138 lines)
+│   │   ├── useImportSession.ts (307 lines)
+│   │   ├── useOptimisticLocking.ts (125 lines)
+│   │   ├── usePayees.ts (40 lines)
+│   │   ├── useRules.ts (134 lines)
+│   │   ├── useTaxYearLocks.test.ts (53 lines)
+│   │   ├── useTaxYearLocks.ts (64 lines)
+│   │   ├── useTransactionMutations.test.ts (302 lines)
+│   │   ├── useTransactionMutations.ts (115 lines)
+│   │   ├── useWorkbenchData.test.ts (367 lines)
+│   │   └── useWorkbenchData.ts (45 lines)
+│   ├── lib/
+│   │   ├── audit/
+│   │   │   ├── format.test.ts (254 lines)
+│   │   │   └── format.ts (78 lines)
+│   │   ├── data/
+│   │   ├── import/
+│   │   │   ├── bank-profiles.ts (54 lines)
+│   │   │   ├── fingerprint.test.ts (165 lines)
+│   │   │   ├── fingerprint.ts (62 lines)
+│   │   │   ├── fuzzy-matcher.test.ts (314 lines)
+│   │   │   ├── fuzzy-matcher.ts (73 lines)
+│   │   │   ├── mapper.test.ts (293 lines)
+│   │   │   ├── mapper.ts (193 lines)
+│   │   │   ├── parser.test.ts (134 lines)
+│   │   │   ├── parser.ts (137 lines)
+│   │   │   ├── reconciler.test.ts (194 lines)
+│   │   │   └── reconciler.ts (59 lines)
+│   │   ├── rules/
+│   │   │   ├── applicator.test.ts (894 lines)
+│   │   │   ├── applicator.ts (212 lines)
+│   │   │   ├── matcher.test.ts (202 lines)
+│   │   │   ├── matcher.ts (133 lines)
+│   │   │   ├── safeRegex.test.ts (137 lines)
+│   │   │   └── safeRegex.ts (106 lines)
+│   │   ├── supabase/
+│   │   │   ├── access.ts (76 lines)
+│   │   │   ├── accounts.test.ts (457 lines)
+│   │   │   ├── accounts.ts (119 lines)
+│   │   │   ├── categories.test.ts (437 lines)
+│   │   │   ├── categories.ts (99 lines)
+│   │   │   ├── config.test.ts (7 lines)
+│   │   │   ├── config.ts (27 lines)
+│   │   │   ├── import.ts (170 lines)
+│   │   │   ├── payees.ts (76 lines)
+│   │   │   ├── reconcile.ts (48 lines)
+│   │   │   ├── reports.ts (49 lines)
+│   │   │   ├── rules.test.ts (563 lines)
+│   │   │   ├── rules.ts (153 lines)
+│   │   │   ├── taxYearLocks.test.ts (215 lines)
+│   │   │   ├── taxYearLocks.ts (70 lines)
+│   │   │   ├── transactions.test.ts (527 lines)
+│   │   │   └── transactions.ts (201 lines)
+│   │   ├── validation/
+│   │   │   ├── accounts.test.ts (48 lines)
+│   │   │   ├── accounts.ts (14 lines)
+│   │   │   ├── amex-sample.CSV
+│   │   │   ├── boa-cc-sample.csv
+│   │   │   ├── categories.test.ts (38 lines)
+│   │   │   ├── categories.ts (18 lines)
+│   │   │   ├── chase-sample.CSV
+│   │   │   ├── import-schema.test.ts (80 lines)
+│   │   │   ├── import-schema.ts (62 lines)
+│   │   │   ├── import.test.ts (42 lines)
+│   │   │   ├── import.ts (77 lines)
+│   │   │   ├── password.test.ts (95 lines)
+│   │   │   ├── password.ts (28 lines)
+│   │   │   ├── rules.test.ts (101 lines)
+│   │   │   ├── rules.ts (32 lines)
+│   │   │   ├── splits.test.ts (135 lines)
+│   │   │   └── splits.ts (39 lines)
+│   │   ├── categoryUtils.test.ts (154 lines)
+│   │   ├── categoryUtils.ts (50 lines)
+│   │   ├── constants.ts (24 lines)
+│   │   ├── csvUtils.test.ts (44 lines)
+│   │   ├── csvUtils.ts (26 lines)
+│   │   ├── errors.test.ts (110 lines)
+│   │   ├── errors.ts (42 lines)
+│   │   ├── queryClient.ts (39 lines)
+│   │   ├── reconciler.test.ts (68 lines)
+│   │   ├── reconciler.ts (33 lines)
+│   │   ├── reports.test.ts (1281 lines)
+│   │   ├── reports.ts (530 lines)
+│   │   ├── sentry.ts (99 lines)
+│   │   ├── splitCalculator.test.ts (262 lines)
+│   │   ├── splitCalculator.ts (48 lines)
+│   │   ├── transactionOperations.test.ts (50 lines)
+│   │   ├── transactionOperations.ts (48 lines)
+│   │   ├── workbenchDataManager.test.ts (152 lines)
+│   │   └── workbenchDataManager.ts (56 lines)
+│   ├── pages/
+│   │   ├── ConfirmEmailPage.tsx (24 lines)
+│   │   ├── DashboardPage.tsx (448 lines)
+│   │   ├── ForgotPasswordPage.tsx (58 lines)
+│   │   ├── ImportPage.tsx (427 lines)
+│   │   ├── LoginPage.tsx (106 lines)
+│   │   ├── NotFoundPage.tsx (22 lines)
+│   │   ├── ReconcilePage.tsx (65 lines)
+│   │   ├── ReportsPage.tsx (524 lines)
+│   │   ├── SettingsPage.tsx (57 lines)
+│   │   ├── SignupPage.tsx (128 lines)
+│   │   └── WorkbenchPage.tsx (266 lines)
+│   ├── test-utils/
+│   │   ├── fixtures.ts (222 lines)
+│   │   ├── index.ts (4 lines)
+│   │   ├── mockSupabase.ts (95 lines)
+│   │   └── queryWrapper.tsx (42 lines)
+│   ├── types/
+│   │   ├── access.ts (14 lines)
+│   │   ├── audit.ts (9 lines)
+│   │   ├── database.ts (155 lines)
+│   │   ├── import.ts (16 lines)
+│   │   ├── reconcile.ts (33 lines)
+│   │   └── rules.ts (49 lines)
+│   ├── favicon.ico
+│   ├── index.css (140 lines)
+│   ├── main.tsx (82 lines)
+│   ├── pwa.ts (53 lines)
+│   ├── vite-env.d.ts (12 lines)
+│   ├── vitest.d.ts (2 lines)
+│   └── vitest.setup.ts (3 lines)
+├── supabase/
+│   ├── migrations/
+│   │   ├── 001_payee_refactor.sql
+│   │   ├── 002_security_hardening_rpc_functions.sql
+│   │   ├── 003_tax_year_locking.sql
+│   │   └── 004_bulk_update_category.sql
+│   ├── fix_ambiguous_grant_access.sql
+│   ├── fix_function_search_paths.sql
+│   ├── fix_track_change_history.sql
+│   ├── migration_rls_performance_optimization.sql
+│   ├── production_schema.sql
+│   ├── repair_users.sql
+│   ├── schema.sql
+│   └── seed_categories.sql
+├── .env.local
+├── index.html (39 lines)
+├── tsconfig.node.json
+├── vite.config.ts (120 lines)
+└── vitest.config.ts (41 lines)
+
+==================================================
+DIRECTORY TREE STATISTICS
+==================================================
+Total directories: 30
+Total files: 205
+Files with line counts: 180
+Total lines of code: 26,845
+
+Configuration:
+  Excluded directories: .archive, .cache, .claude, .codeql, .codeql-db, .env.example, .eslintcache, .git, .github, .gitignore, .husky, .idea, .kilocode, .markdownlint.json, .markdownlintignore, .npmrc, .prettierignore, .prettierrc.json, .pytest_cache, .ruff_cache, .serena, .versionrc.json, .vite, .vite-cache, .vscode, CHANGELOG.md, CLAUDE.md, IMPROVEMENTS.md, PapasBooks.md, README.md, __pycache__, agents.md, backlog.md, build, codeql-results.sarif, coverage, design-concept.html, dev-dist, dist, docs, e2e/.auth, eslint.config.js, jules-scratch, knip.json, legacy, logs, node_modules, package-lock.json, package.json, papas-books.code-workspace, playwright-report, playwright.config.ts, postcss.config.js, public, tailwind.config.js, test-results, tmp, tree.txt, tree_scanner.py, tsconfig.json, venv, vite.config.js
+  Line counting for: .c, .cpp, .css, .dart, .h, .html, .java, .js, .ts, .tsx
