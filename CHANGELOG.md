@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.8.1](https://github.com/thetrev68/papas-books/compare/v1.8.0...v1.8.1) (2026-01-01)
+
+### Maintenance
+
+- documentation cleanup ([03c5ffb](https://github.com/thetrev68/papas-books/commit/03c5ffbc25a4ecbbd1dd884c6cea2175c66b5723))
+
 ## [1.8.0](https://github.com/thetrev68/papas-books/compare/v1.7.0...v1.8.0) (2025-12-31)
 
 ### Features
