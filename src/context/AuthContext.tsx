@@ -64,14 +64,17 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     try {
       log('Fetching user data for', userId);
 
-      // 1. Fetch user profile
+      // Run queries in parallel for better performance
       const userQuery = supabase.from('users').select('*').eq('id', userId).single();
+      const booksetsQuery = supabase.from('booksets').select('*');
 
-      const { data: userData, error: userError } = await withTimeout(
-        userQuery,
-        AUTH_TIMEOUT_MS,
-        'User profile fetch'
-      );
+      const [userResult, booksetsResult] = await Promise.all([
+        withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch'),
+        withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch'),
+      ]);
+
+      const { data: userData, error: userError } = userResult;
+      const { data: booksetsData, error: booksetsError } = booksetsResult;
 
       if (userError || !userData) {
         if (retries > 0) {
@@ -83,15 +86,6 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       }
 
       log('User profile fetched:', userData.email);
-
-      // 2. Fetch accessible booksets
-      const booksetsQuery = supabase.from('booksets').select('*');
-
-      const { data: booksetsData, error: booksetsError } = await withTimeout(
-        booksetsQuery,
-        AUTH_TIMEOUT_MS,
-        'Booksets fetch'
-      );
 
       if (booksetsError) {
         throw booksetsError;
