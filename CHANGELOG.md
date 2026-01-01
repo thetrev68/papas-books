@@ -2,6 +2,24 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.0](https://github.com/thetrev68/papas-books/compare/v1.8.1...v1.9.0) (2026-01-01)
+
+### Features
+
+- add focus management and keyboard navigation to Modal component ([7b2f44e](https://github.com/thetrev68/papas-books/commit/7b2f44ed5db45d8051997d56bec56e0574c14ceb)), closes [#1](https://github.com/thetrev68/papas-books/issues/1)
+- implement atomic import batch creation ([9949866](https://github.com/thetrev68/papas-books/commit/994986676e8df525dcb0fe3165dce22ac668652a)), closes [#4](https://github.com/thetrev68/papas-books/issues/4)
+- implement ReDoS protection for rules engine ([2626361](https://github.com/thetrev68/papas-books/commit/2626361e823d3b1411179b7ad2e30f6a7c8dd211)), closes [#5](https://github.com/thetrev68/papas-books/issues/5)
+- implement transaction pagination with UI enhancements ([3fff525](https://github.com/thetrev68/papas-books/commit/3fff5252732ddb39c375a3e7255356fc1d0ecb19))
+
+### Bug Fixes
+
+- pre-launch security and code quality improvements ([aaa03a4](https://github.com/thetrev68/papas-books/commit/aaa03a47aa19b5b60eb9ad8081220d36035be721))
+- prevent moving transactions between booksets via RLS policy ([f142372](https://github.com/thetrev68/papas-books/commit/f142372f580e04104fdf71a36a87cab3dd186786)), closes [#3](https://github.com/thetrev68/papas-books/issues/3)
+
+### Documentation
+
+- mark RLS policy fix as completed in IMPROVEMENTS.md ([1025349](https://github.com/thetrev68/papas-books/commit/10253498c3cef7b75f54bb3d1016d9787c9814ea)), closes [#3](https://github.com/thetrev68/papas-books/issues/3)
+
 ## [1.8.1](https://github.com/thetrev68/papas-books/compare/v1.8.0...v1.8.1) (2026-01-01)
 
 ### Maintenance
