@@ -6,7 +6,7 @@
 
 A multi-user bookkeeping system built for speed, accuracy, and seamless collaboration between users and tax professionals.
 
-## 🚀 Overview
+## Overview
 
 Papa's Books is a modern web application designed to simplify financial tracking for individuals and businesses. It features a unique "Bookset" architecture that allows users (like CPAs) to manage multiple independent sets of books from a single account.
 
@@ -27,7 +27,7 @@ Papa's Books is a modern web application designed to simplify financial tracking
 - **Deployment**: Vercel
 - **Testing**: Vitest (96% coverage), Playwright (E2E)
 
-## 🏗 Architecture
+## Architecture
 
 ### Bookset Model
 
@@ -42,7 +42,7 @@ Unlike traditional apps where data is tied directly to a user, Papa's Books ties
 - **RLS (Row Level Security)**: PostgreSQL policies enforce that users can only read or write data they have explicit permission for.
 - **Database Triggers**: Audit fields (`created_by`, `updated_at`) are managed automatically via PL/pgSQL triggers to ensure data integrity.
 
-## 🚦 Getting Started
+## Getting Started
 
 ### Prerequisites
 
@@ -82,7 +82,7 @@ Unlike traditional apps where data is tied directly to a user, Papa's Books ties
    npm run dev
    ```
 
-## 🧪 Testing
+## Testing
 
 ### Test Coverage
 
@@ -124,16 +124,48 @@ npm run lint && npm run test -- --run && npm run test:e2e
 
 For more details, see [Testing Strategy Documentation](docs/testing-strategy.md).
 
-## 🗺 Roadmap
+## Code Quality
 
-- **Phase 1**: Foundation & Auth (Complete ✅)
-- **Phase 2**: Accounts, Categories & Access Management
-- **Phase 3**: CSV Import & Data Normalization
-- **Phase 4**: Rule Engine
-- **Phase 5**: Workbench & Transaction Management
-- **Phase 6**: Reconciliation & Reporting
-- **Phase 7**: Visual Polish & Design System
+Papa's Books maintains high code quality standards through automated tooling:
+
+### Linting & Formatting
+
+- **ESLint**: TypeScript-aware linting with React hooks rules
+- **Prettier**: Consistent code formatting across the project
+- **markdownlint**: Ensures clean, consistent documentation
+
+```bash
+npm run lint              # Run ESLint
+npm run lint:fix          # Auto-fix ESLint issues
+npm run format            # Format code with Prettier
+npm run lint:md           # Lint markdown files
+npm run lint:md:fix       # Auto-fix markdown issues
+```
+
+### Type Safety
+
+- **TypeScript**: Full type coverage with strict mode enabled
+- **Type Definitions**: Database schema types match Supabase tables exactly
+- Zero type errors enforced in CI/CD pipeline
+
+### Dependency Management
+
+- **Knip**: Detects unused files, dependencies, and exports
+
+```bash
+npm run knip              # Find unused code and dependencies
+```
+
+### CI/CD Quality Gates
+
+All pull requests must pass:
+
+- ESLint with zero warnings
+- TypeScript compilation with no errors
+- 97%+ test coverage threshold
+- Markdown linting
+- E2E test suite
 
 ---
 
-🤖 _Built with AI-assisted development (Gemini 2.0 Flash)._
+🤖 _Built with AI-assisted development (Claude Sonnet 4.5, Gemini 3.0 Pro Preview, and others)._

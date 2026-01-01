@@ -26,9 +26,12 @@ npm run lint:md:fix      # Auto-fix markdown issues
 ### Testing
 
 ```bash
-npm run test             # Run tests (Vitest)
-npm run test:ui          # Run tests with interactive UI
-npm run test:coverage    # Run tests with coverage report
+npm run test             # Run unit tests (Vitest)
+npm run test:ui          # Run unit tests with interactive UI
+npm run test:coverage    # Run unit tests with coverage report
+npm run test:e2e         # Run E2E tests (Playwright)
+npm run test:e2e:ui      # Run E2E tests in interactive mode
+npm run test:e2e:report  # View E2E test HTML report
 ```
 
 ### Other Tools
@@ -96,10 +99,13 @@ The database uses PostgreSQL with:
 
 **AuthContext** (`src/context/AuthContext.tsx`):
 
-- Manages authentication state via Supabase Auth
+- Manages authentication state via Supabase Auth with `onAuthStateChange` listener
+- Provides multi-state status: `initializing`, `authenticated`, `unauthenticated`, `error`
 - Provides `activeBookset` and `myBooksets` for bookset switching
-- Exposes `canEdit` and `canAdmin` permission flags
-- Handles automatic user profile creation via database trigger
+- Exposes `canEdit` (based on active bookset) and `canAdmin` (based on user.is_admin) permission flags
+- Includes retry mechanism with timeouts for user data fetching
+- Handles token refresh without re-fetching user data (performance optimization)
+- Automatic user profile creation handled via database trigger
 
 ### CSV Import Pipeline
 
@@ -110,21 +116,28 @@ The import flow is a multi-stage pipeline:
 1. **Parser** (`parser.ts`): Uses PapaParse to validate CSV and extract rows
 2. **Mapper** (`mapper.ts`): Maps CSV columns to transaction fields using account-specific `csv_mapping` configuration
 3. **Fingerprint** (`fingerprint.ts`): Generates SHA-256 hash for duplicate detection
-4. **Fuzzy Matcher** (`fuzzy-matcher.ts`): Suggests payee names based on historical patterns
-5. **Reconciler** (`reconciler.ts`): Compares fingerprints against existing transactions to prevent duplicates
+4. **Reconciler** (`reconciler.ts`):
+   - Compares fingerprints against existing transactions to detect exact duplicates
+   - Validates import dates are not in locked tax years
+5. **Fuzzy Matcher** (`fuzzy-matcher.ts`): Detects near-duplicates based on date proximity and amount similarity
 
 **Bank Profiles** (`bank-profiles.ts`): Pre-configured mappings for common banks to simplify CSV setup.
 
+**Import Session** (`src/hooks/useImportSession.ts`): Orchestrates the entire import workflow with wizard-style steps (upload → mapping → review → importing → complete).
+
 ### Rules Engine
 
-**Location**: `src/hooks/useApplyRules.ts`, `src/lib/supabase/rules.ts`
+**Location**: `src/hooks/useApplyRules.ts`, `src/lib/rules/`, `src/lib/supabase/rules.ts`
 
 Rules are evaluated in **priority order** (higher priority = evaluated first):
 
-- Each rule has a `keyword`, `match_type` (contains/exact/startsWith/regex), and target category
-- Rules can optionally suggest a payee name
+- Each rule has a `keyword`, `match_type` (contains/exact/startsWith/regex), and target category/payee
+- Rules can set both `category_id` and `payee_id`
 - The first matching rule wins (short-circuit evaluation)
 - Rules track usage statistics (`use_count`, `last_used_at`)
+- **Matcher** (`matcher.ts`): Evaluates rule match types against transaction descriptions
+- **Applicator** (`applicator.ts`): Applies rules in batches with options for overriding reviewed transactions
+- **Hook** (`useApplyRules.ts`): React hook that fetches transactions, applies rules, and invalidates cache
 
 ### Transaction Split Support
 
@@ -148,13 +161,65 @@ The Workbench is the primary UI for reviewing and categorizing transactions:
 
 ### Reconciliation
 
-**Location**: `src/pages/ReconcilePage.tsx`, `src/lib/reconciler.ts`
+**Location**: `src/pages/ReconcilePage.tsx`, `src/components/reconcile/`, `src/lib/reconciler.ts`
 
 Reconciliation compares book balance against bank statement:
 
-- Filters transactions by account and date range
-- Calculates balance from `opening_balance` + sum of reconciled transactions
-- Updates `last_reconciled_date` and `last_reconciled_balance` on account record
+- **Setup Step**: Select account, date range, and enter statement ending balance
+- **Workspace Step**: Toggle transactions as reconciled/unreconciled
+- **Calculation** (`reconciler.ts`): Calculates `openingBalance + deposits + withdrawals` and compares to target
+- **Completion**: Updates account's `last_reconciled_date` and `last_reconciled_balance`
+- **Validation**: Must balance exactly (difference = 0) before completing
+
+### Reports
+
+**Location**: `src/pages/ReportsPage.tsx`, `src/lib/reports.ts`
+
+Multiple report types for financial analysis:
+
+- **Category Report**: Summarizes transactions by category with totals and counts
+- **Tax Line Report**: Groups transactions by tax line items (e.g., Schedule C lines)
+- **Quarterly Report**: Calculates income, expenses, and estimated taxes by quarter
+- **Year Comparison**: Side-by-side comparison of category spending across years
+- **CPA Export**: Detailed CSV export with all transaction details for tax professionals
+- **Export Formats**: CSV downloads with proper formatting via `csvUtils.ts`
+
+All reports support:
+
+- Date range filtering
+- Account filtering
+- Split transaction handling (allocates split lines to their respective categories)
+- Hierarchical category display (Parent: Child format)
+
+### Tax Features
+
+**Location**: `src/pages/SettingsPage.tsx` (Tax tab), `src/lib/supabase/taxYearLocks.ts`
+
+Tax features support year-end preparation and compliance:
+
+- **Tax Year Locks**: Lock past years to prevent accidental changes after filing
+  - Locked years prevent transaction edits/deletions via database triggers
+  - Import validation rejects transactions in locked years
+  - Lock/unlock via settings with database RPC functions
+- **Tax Line Items**: Categories can map to tax form line items (e.g., Schedule C Line 8)
+  - `tax_line_item` field on categories table
+  - Used for generating tax-ready reports (see Reports section above)
+
+### Settings & Multi-User Access
+
+**Location**: `src/pages/SettingsPage.tsx`, `src/components/settings/`, `src/lib/supabase/accessGrants.ts`
+
+Settings page provides tabs for managing bookset configuration:
+
+- **Accounts Tab**: Manage bank/credit card accounts and CSV import mappings
+- **Categories Tab**: Create/edit hierarchical categories with tax line item assignments
+- **Payees Tab**: Manage normalized payee names with default categories
+- **Tax Tab**: Lock/unlock tax years to prevent accidental changes
+- **Access Tab**: Grant/revoke user access with role-based permissions
+  - **Owner**: Full control (can delete bookset, manage access)
+  - **Editor**: Can add/edit transactions and settings (most CPA use cases)
+  - **Viewer**: Read-only access
+  - Email-based invitations managed via `access_grants` table
 
 ## Environment Setup
 
@@ -171,10 +236,21 @@ Reconciliation compares book balance against bank statement:
 
 ## Testing Patterns
 
-- Tests use Vitest with jsdom environment (see `vitest.config.ts`)
-- Test files are colocated with source files using `.test.ts` suffix
-- Mock Supabase environment variables are set in `vitest.config.ts`
-- Use `@testing-library/react` for component tests
+### Unit Tests
+
+- **Test Framework**: Vitest with jsdom environment (see `vitest.config.ts`)
+- **Test Files**: 34 test files colocated with source files using `.test.ts` or `.test.tsx` suffix
+- **Coverage**: 97%+ code coverage (lines, functions, statements)
+- **Mocking**: Mock Supabase environment variables set in `vitest.config.ts`
+- **Component Testing**: Use `@testing-library/react` for component tests
+- **Windows Note**: Coverage tools have compatibility issues on Windows; run in WSL for accurate metrics
+
+### E2E Tests
+
+- **Test Framework**: Playwright with TypeScript
+- **Test Files**: 5 E2E tests in `e2e/` directory (`.spec.ts` files)
+- **Coverage**: Critical user workflows (import, workbench, reconciliation, rules, accessibility)
+- **Runs in**: CI/CD pipeline on every PR
 
 ## Common Patterns
 
