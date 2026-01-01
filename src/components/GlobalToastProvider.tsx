@@ -1,4 +1,9 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
+import {
+  TOAST_DURATION_ERROR_MS,
+  TOAST_DURATION_SUCCESS_MS,
+  TOAST_DURATION_INFO_MS,
+} from '../lib/constants';
 
 interface ConfirmOptions {
   onConfirm: () => void;
@@ -26,17 +31,17 @@ export function GlobalToastProvider({ children }: { children: React.ReactNode })
 
   const showError = useCallback((message: string) => {
     setToast({ message, type: 'error' });
-    setTimeout(() => setToast(null), 5000);
+    setTimeout(() => setToast(null), TOAST_DURATION_ERROR_MS);
   }, []);
 
   const showSuccess = useCallback((message: string) => {
     setToast({ message, type: 'success' });
-    setTimeout(() => setToast(null), 3000);
+    setTimeout(() => setToast(null), TOAST_DURATION_SUCCESS_MS);
   }, []);
 
   const showInfo = useCallback((message: string) => {
     setToast({ message, type: 'info' });
-    setTimeout(() => setToast(null), 4000);
+    setTimeout(() => setToast(null), TOAST_DURATION_INFO_MS);
   }, []);
 
   const showConfirm = useCallback((message: string, options: ConfirmOptions) => {

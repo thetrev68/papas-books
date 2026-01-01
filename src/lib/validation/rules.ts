@@ -1,6 +1,7 @@
 import { z } from 'zod';
 import { MAX_PAYEE_LENGTH } from './import';
 import { validateRegexPattern } from '../rules/safeRegex';
+import { MIN_PRIORITY, MAX_PRIORITY } from '../constants';
 
 export const insertRuleSchema = z.object({
   booksetId: z.string().uuid(),
@@ -9,7 +10,7 @@ export const insertRuleSchema = z.object({
   caseSensitive: z.boolean(),
   targetCategoryId: z.string().uuid('Category is required'),
   suggestedPayee: z.string().max(MAX_PAYEE_LENGTH).optional(),
-  priority: z.number().int().min(1).max(100),
+  priority: z.number().int().min(MIN_PRIORITY).max(MAX_PRIORITY),
   isEnabled: z.boolean(),
 });
 

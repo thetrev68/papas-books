@@ -450,7 +450,9 @@ const value = useMemo(() => ({
   - Maintains existing functionality - all 611 tests pass
 - TypeScript compilation is clean, ESLint passes with no errors
 
-### 15. Magic Numbers to Constants
+### 15. Magic Numbers to Constants ✅ COMPLETED
+
+**File:** `src/lib/constants.ts`
 
 Create `src/lib/constants.ts`:
 
@@ -462,6 +464,26 @@ export const TOAST_DURATION_SUCCESS_MS = 3000;
 export const TOAST_DURATION_WARNING_MS = 4000;
 export const SUPABASE_BATCH_SIZE = 100;
 ```
+
+**Status:** Implemented comprehensive constants file with all identified magic numbers:
+
+- Created `src/lib/constants.ts` with centralized constants for:
+  - Authentication timeouts and retry delays
+  - Toast notification durations (error, success, info, warning)
+  - Supabase batch size for query optimization
+  - Currency conversion (cents per dollar)
+  - Validation limits (max pattern length, description length, name length, priority bounds)
+- Updated all files to import and use constants instead of magic numbers:
+  - `src/context/AuthContext.tsx` - Uses AUTH_TIMEOUT_MS and AUTH_RETRY_DELAY_MS
+  - `src/components/GlobalToastProvider.tsx` - Uses toast duration constants
+  - `src/hooks/useApplyRules.ts` - Uses SUPABASE_BATCH_SIZE
+  - `src/lib/validation/import.ts` - Uses MAX_DESCRIPTION_LENGTH
+  - `src/lib/validation/accounts.ts` - Uses MAX_NAME_LENGTH
+  - `src/lib/validation/categories.ts` - Uses MAX_NAME_LENGTH
+  - `src/lib/validation/rules.ts` - Uses MIN_PRIORITY and MAX_PRIORITY
+  - `src/lib/rules/safeRegex.ts` - Uses MAX_PATTERN_LENGTH
+- All 333 tests pass, ensuring no regressions
+- TypeScript compilation is clean, ESLint passes with no errors
 
 ## Low Priority
 

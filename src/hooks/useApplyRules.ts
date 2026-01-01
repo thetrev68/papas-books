@@ -5,6 +5,7 @@ import { applyRulesToBatch } from '../lib/rules/applicator';
 import { supabase } from '../lib/supabase/config';
 import { Transaction } from '../types/database';
 import { Rule, RuleBatchResult } from '../types/rules';
+import { SUPABASE_BATCH_SIZE } from '../lib/constants';
 
 /**
  * Hook for applying rules to transactions.
@@ -24,12 +25,10 @@ export function useApplyRules() {
   const mutation = useMutation({
     mutationFn: async (transactionIds: string[]) => {
       // Fetch transactions in batches to avoid URL length limits
-      // Supabase has a max URL length, so we batch IDs (safe limit: ~100 per batch)
-      const BATCH_SIZE = 100;
       const allTransactions: Transaction[] = [];
 
-      for (let i = 0; i < transactionIds.length; i += BATCH_SIZE) {
-        const batchIds = transactionIds.slice(i, i + BATCH_SIZE);
+      for (let i = 0; i < transactionIds.length; i += SUPABASE_BATCH_SIZE) {
+        const batchIds = transactionIds.slice(i, i + SUPABASE_BATCH_SIZE);
         const { data, error } = await supabase.from('transactions').select('*').in('id', batchIds);
 
         if (error) throw error;

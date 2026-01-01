@@ -7,7 +7,7 @@
  * - Error handling (invalid patterns return false instead of throwing)
  */
 
-const MAX_PATTERN_LENGTH = 500; // Maximum regex pattern length
+import { MAX_PATTERN_LENGTH } from '../constants';
 
 /**
  * Validates regex pattern complexity to prevent obviously dangerous patterns.

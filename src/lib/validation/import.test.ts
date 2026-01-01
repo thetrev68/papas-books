@@ -1,4 +1,5 @@
-import { sanitizeText, MAX_DESCRIPTION_LENGTH } from './import';
+import { sanitizeText } from './import';
+import { MAX_DESCRIPTION_LENGTH } from '../constants';
 
 describe('sanitizeText', () => {
   it('should remove HTML tags', () => {

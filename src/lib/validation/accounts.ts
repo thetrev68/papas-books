@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { MAX_NAME_LENGTH } from '../constants';
 
 export const insertAccountSchema = z.object({
   booksetId: z.string().uuid(),
-  name: z.string().min(1, 'Account name is required').max(100),
+  name: z.string().min(1, 'Account name is required').max(MAX_NAME_LENGTH),
   type: z.enum(['Asset', 'Liability']),
   openingBalance: z.number().int(),
   openingBalanceDate: z.string().refine((val) => !isNaN(Date.parse(val)), 'Invalid date format'),

@@ -1,8 +1,9 @@
 import { z } from 'zod';
+import { MAX_NAME_LENGTH } from '../constants';
 
 export const insertCategorySchema = z.object({
   booksetId: z.string().uuid(),
-  name: z.string().min(1, 'Category name is required').max(100),
+  name: z.string().min(1, 'Category name is required').max(MAX_NAME_LENGTH),
   isTaxDeductible: z.boolean(),
   taxLineItem: z.string().max(200).optional(),
   parentCategoryId: z.string().uuid().nullable().optional(),

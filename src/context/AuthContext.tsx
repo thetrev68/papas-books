@@ -2,6 +2,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
 import { User, Bookset } from '../types/database';
+import { AUTH_TIMEOUT_MS, AUTH_RETRY_DELAY_MS } from '../lib/constants';
 
 type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error';
 
@@ -46,11 +47,11 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const fetchUserData = async (
     userId: string,
     retries = 2,
-    delay = 500
+    delay = AUTH_RETRY_DELAY_MS
   ): Promise<{ user: User; booksets: Bookset[]; activeBookset: Bookset | null }> => {
     const withTimeout = async <T,>(
       promise: PromiseLike<T>,
-      ms = 8000,
+      ms = AUTH_TIMEOUT_MS,
       name = 'Request'
     ): Promise<T> => {
       const timeoutPromise = new Promise<T>((_, reject) =>
@@ -67,7 +68,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data: userData, error: userError } = await withTimeout(
         userQuery,
-        8000,
+        AUTH_TIMEOUT_MS,
         'User profile fetch'
       );
 
@@ -87,7 +88,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       const { data: booksetsData, error: booksetsError } = await withTimeout(
         booksetsQuery,
-        8000,
+        AUTH_TIMEOUT_MS,
         'Booksets fetch'
       );
 
