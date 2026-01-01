@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { Suspense, lazy } from 'react';
 import ReactDOM from 'react-dom/client';
 import './index.css';
 import './pwa'; // Add PWA registration
@@ -26,19 +26,22 @@ import { ThemeProvider } from './context/ThemeContext';
 import { GlobalToastProvider } from './components/GlobalToastProvider';
 import ProtectedRoute from './components/ProtectedRoute';
 import RootRedirect from './components/RootRedirect';
-import LoginPage from './pages/LoginPage';
-import SignupPage from './pages/SignupPage';
-import ForgotPasswordPage from './pages/ForgotPasswordPage';
-import DashboardPage from './pages/DashboardPage';
-import SettingsPage from './pages/SettingsPage';
-import ImportPage from './pages/ImportPage';
-import WorkbenchPage from './pages/WorkbenchPage';
-import ReconcilePage from './pages/ReconcilePage';
-import ReportsPage from './pages/ReportsPage';
-import ConfirmEmailPage from './pages/ConfirmEmailPage';
-import NotFoundPage from './pages/NotFoundPage';
 import { ErrorBoundary } from './components/ErrorBoundary';
 import { queryClient } from './lib/queryClient';
+import { LoadingSpinner } from './components/LoadingSpinner';
+
+// Lazy load page components for code splitting
+const LoginPage = lazy(() => import('./pages/LoginPage'));
+const SignupPage = lazy(() => import('./pages/SignupPage'));
+const ForgotPasswordPage = lazy(() => import('./pages/ForgotPasswordPage'));
+const ConfirmEmailPage = lazy(() => import('./pages/ConfirmEmailPage'));
+const DashboardPage = lazy(() => import('./pages/DashboardPage'));
+const SettingsPage = lazy(() => import('./pages/SettingsPage'));
+const ImportPage = lazy(() => import('./pages/ImportPage'));
+const WorkbenchPage = lazy(() => import('./pages/WorkbenchPage'));
+const ReconcilePage = lazy(() => import('./pages/ReconcilePage'));
+const ReportsPage = lazy(() => import('./pages/ReportsPage'));
+const NotFoundPage = lazy(() => import('./pages/NotFoundPage'));
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
   <React.StrictMode>
@@ -53,25 +56,27 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
           >
             <GlobalToastProvider>
               <AuthProvider>
-                <Routes>
-                  <Route path="/login" element={<LoginPage />} />
-                  <Route path="/signup" element={<SignupPage />} />
-                  <Route path="/forgot-password" element={<ForgotPasswordPage />} />
-                  <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
+                <Suspense fallback={<LoadingSpinner />}>
+                  <Routes>
+                    <Route path="/login" element={<LoginPage />} />
+                    <Route path="/signup" element={<SignupPage />} />
+                    <Route path="/forgot-password" element={<ForgotPasswordPage />} />
+                    <Route path="/auth/confirm" element={<ConfirmEmailPage />} />
 
-                  <Route path="/app" element={<ProtectedRoute />}>
-                    <Route path="dashboard" element={<DashboardPage />} />
-                    <Route path="settings" element={<SettingsPage />} />
-                    <Route path="import" element={<ImportPage />} />
-                    <Route path="workbench" element={<WorkbenchPage />} />
-                    <Route path="reconcile" element={<ReconcilePage />} />
-                    <Route path="reports" element={<ReportsPage />} />
-                    <Route path="" element={<Navigate to="dashboard" replace />} />
-                  </Route>
+                    <Route path="/app" element={<ProtectedRoute />}>
+                      <Route path="dashboard" element={<DashboardPage />} />
+                      <Route path="settings" element={<SettingsPage />} />
+                      <Route path="import" element={<ImportPage />} />
+                      <Route path="workbench" element={<WorkbenchPage />} />
+                      <Route path="reconcile" element={<ReconcilePage />} />
+                      <Route path="reports" element={<ReportsPage />} />
+                      <Route path="" element={<Navigate to="dashboard" replace />} />
+                    </Route>
 
-                  <Route path="/" element={<RootRedirect />} />
-                  <Route path="*" element={<NotFoundPage />} />
-                </Routes>
+                    <Route path="/" element={<RootRedirect />} />
+                    <Route path="*" element={<NotFoundPage />} />
+                  </Routes>
+                </Suspense>
               </AuthProvider>
             </GlobalToastProvider>
           </BrowserRouter>

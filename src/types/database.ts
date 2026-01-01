@@ -1,3 +1,13 @@
+import type { CsvMapping } from './import';
+import type { ChangeHistoryEntry } from './audit';
+import type { RuleConditions } from './rules';
+
+export interface UserPreferences {
+  defaultView?: 'dashboard' | 'workbench' | 'import';
+  autoRunRules: boolean;
+  autoMarkReviewed: boolean;
+}
+
 export interface User {
   id: string;
   email: string;
@@ -5,11 +15,7 @@ export interface User {
   is_admin: boolean;
   active_bookset_id: string;
   own_bookset_id: string;
-  preferences: {
-    defaultView?: 'dashboard' | 'workbench' | 'import';
-    autoRunRules: boolean;
-    autoMarkReviewed: boolean;
-  };
+  preferences: UserPreferences;
   last_active: string;
   last_modified_by?: string;
   created_at: string;
@@ -32,7 +38,7 @@ export interface Account {
   type: 'Asset' | 'Liability';
   opening_balance: number;
   opening_balance_date: string;
-  csv_mapping?: Record<string, unknown>;
+  csv_mapping?: CsvMapping;
   last_reconciled_date: string | null;
   last_reconciled_balance: number;
   created_at: string;
@@ -40,7 +46,7 @@ export interface Account {
   is_archived: boolean;
   created_by: string;
   last_modified_by: string;
-  change_history?: unknown; // JSONB
+  change_history?: ChangeHistoryEntry[];
 }
 
 export interface Category {
@@ -97,7 +103,7 @@ export interface Transaction {
   // Audit trail (set by triggers)
   created_by: string; // uuid, foreign key to users.id
   last_modified_by: string; // uuid, foreign key to users.id
-  change_history?: unknown; // JSONB
+  change_history?: ChangeHistoryEntry[];
 }
 
 export interface ImportBatch {
@@ -115,7 +121,7 @@ export interface ImportBatch {
   error_count: number;
 
   // Audit Snapshot
-  csv_mapping_snapshot: unknown; // JSONB - Copy of CsvMapping used for this import
+  csv_mapping_snapshot: CsvMapping; // JSONB - Copy of CsvMapping used for this import
 
   // Undo support (future feature)
   is_undone: boolean;
@@ -161,8 +167,8 @@ export interface Rule {
   // Audit trail
   created_by: string;
   last_modified_by: string;
-  change_history?: unknown; // JSONB
-  conditions?: unknown; // JSONB
+  change_history?: ChangeHistoryEntry[];
+  conditions?: RuleConditions;
 }
 
 export interface TaxYearLock {

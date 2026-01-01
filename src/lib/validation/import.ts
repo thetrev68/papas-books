@@ -1,6 +1,7 @@
 import { z } from 'zod';
-import { MAX_DESCRIPTION_LENGTH } from '../constants';
+import { MAX_DESCRIPTION_LENGTH as CONST_MAX_DESCRIPTION_LENGTH } from '../constants';
 
+export const MAX_DESCRIPTION_LENGTH = CONST_MAX_DESCRIPTION_LENGTH;
 export const MAX_PAYEE_LENGTH = 200;
 export const MAX_MEMO_LENGTH = 1000;
 
