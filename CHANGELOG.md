@@ -2,6 +2,13 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.9.1](https://github.com/thetrev68/papas-books/compare/v1.9.0...v1.9.1) (2026-01-01)
+
+### Code Improvements
+
+- extract duplicated category sorting logic into shared utility ([cf6cb2a](https://github.com/thetrev68/papas-books/commit/cf6cb2a8de27d8c3b7290178f5b5bd452c0b37f6))
+- extract large components into focused subcomponents ([d0b8f8f](https://github.com/thetrev68/papas-books/commit/d0b8f8f615e379d9eee4f3d584f602b399e07ac1))
+
 ## [1.9.0](https://github.com/thetrev68/papas-books/compare/v1.8.1...v1.9.0) (2026-01-01)
 
 ### Features
