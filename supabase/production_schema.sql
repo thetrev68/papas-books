@@ -1006,7 +1006,113 @@ BEGIN
 END;
 $$;
 
--- 8.2 RPC: undo_import_batch
+-- 8.2 RPC: commit_import_batch (atomic batch creation + transaction insertion)
+CREATE OR REPLACE FUNCTION commit_import_batch(
+  p_bookset_id uuid,
+  p_account_id uuid,
+  p_file_name text,
+  p_total_rows int,
+  p_imported_count int,
+  p_duplicate_count int,
+  p_error_count int,
+  p_csv_mapping_snapshot jsonb,
+  p_transactions jsonb
+)
+RETURNS jsonb
+LANGUAGE plpgsql
+SECURITY DEFINER
+SET search_path = public, pg_temp
+AS $$
+DECLARE
+  v_batch_id uuid;
+  v_count int;
+  v_transaction_ids uuid[];
+BEGIN
+  -- Authorization: User must have write access to the bookset
+  IF NOT user_can_write_bookset(p_bookset_id) THEN
+    RAISE EXCEPTION 'Not authorized to import transactions for this bookset';
+  END IF;
+
+  -- Step 1: Create import batch
+  INSERT INTO import_batches (
+    bookset_id,
+    account_id,
+    file_name,
+    imported_at,
+    total_rows,
+    imported_count,
+    duplicate_count,
+    error_count,
+    csv_mapping_snapshot,
+    is_undone
+  )
+  VALUES (
+    p_bookset_id,
+    p_account_id,
+    p_file_name,
+    now(),
+    p_total_rows,
+    p_imported_count,
+    p_duplicate_count,
+    p_error_count,
+    p_csv_mapping_snapshot,
+    false
+  )
+  RETURNING id INTO v_batch_id;
+
+  -- Step 2: Insert transactions with batch ID
+  -- The JSONB array should contain transaction objects with all required fields
+  INSERT INTO transactions (
+    bookset_id,
+    account_id,
+    date,
+    amount,
+    original_description,
+    payee_id,
+    fingerprint,
+    source_batch_id,
+    import_date,
+    is_reviewed,
+    is_split,
+    reconciled,
+    lines
+  )
+  SELECT
+    p_bookset_id,
+    p_account_id,
+    (t->>'date')::date,
+    (t->>'amount')::bigint,
+    t->>'description',
+    (t->>'payee_id')::uuid,
+    t->>'fingerprint',
+    v_batch_id,
+    now(),
+    COALESCE((t->>'is_reviewed')::boolean, false),
+    COALESCE((t->>'is_split')::boolean, false),
+    COALESCE((t->>'reconciled')::boolean, false),
+    COALESCE(t->'lines', jsonb_build_array(
+      jsonb_build_object(
+        'category_id', null,
+        'amount', (t->>'amount')::bigint,
+        'memo', null
+      )
+    ))
+  FROM jsonb_array_elements(p_transactions) AS t
+  RETURNING id INTO v_transaction_ids;
+
+  -- Get count of inserted transactions
+  GET DIAGNOSTICS v_count = ROW_COUNT;
+
+  -- Step 3: Return batch ID and transaction count
+  RETURN jsonb_build_object(
+    'batchId', v_batch_id,
+    'count', v_count,
+    'transactionIds', to_jsonb(v_transaction_ids)
+  );
+END;
+$$;
+
+-- 8.3 RPC: undo_import_batch
 CREATE OR REPLACE FUNCTION undo_import_batch(_batch_id uuid)
 RETURNS void
 LANGUAGE plpgsql
@@ -1056,7 +1162,7 @@ BEGIN
 END;
 $$;
 
--- 8.3 Bulk category update
+-- 8.4 Bulk category update
 CREATE OR REPLACE FUNCTION bulk_update_category(
   _transaction_ids uuid[],
   _category_id uuid

@@ -100,7 +100,7 @@ CREATE POLICY "Editors can update unreconciled transactions"
 
 **Status:** Implemented in both `schema.sql` and `production_schema.sql`. The WITH CHECK clause now includes a subquery that verifies the bookset_id cannot be changed during an update, preventing malicious users from moving transactions between booksets they have access to.
 
-### 4. Import Batch Atomicity
+### 4. Import Batch Atomicity ✅ COMPLETED
 
 **File:** `src/lib/supabase/import.ts` (lines 95-156)
 
@@ -133,6 +133,16 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 ```
+
+**Status:** Implemented in both `schema.sql` and `production_schema.sql` at lines 1009-1113. The RPC function `commit_import_batch` now handles both batch creation and transaction insertion atomically within a single database transaction. If transaction insertion fails, the entire operation is rolled back, preventing orphaned batch records.
+
+**Implementation Details:**
+
+- Created database RPC function with proper authorization checks using `user_can_write_bookset()`
+- Updated TypeScript `commitImportBatch()` function in `src/lib/supabase/import.ts` to use the RPC instead of separate operations
+- Function accepts JSONB array of transactions and returns batch ID with transaction IDs
+- All operations execute within a single database transaction ensuring atomicity
+- Maintains backward compatibility with existing import workflow
 
 ### 5. ReDoS Protection in Rules Engine
 

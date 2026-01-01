@@ -80,13 +80,10 @@ export async function fetchExistingTransactions(
 }
 
 /**
- * Creates an import batch and inserts transactions.
+ * Creates an import batch and inserts transactions atomically using RPC.
  *
- * Steps:
- * 1. Insert import_batches record
- * 2. Get batch ID
- * 3. Add batch ID to all transactions
- * 4. Bulk insert transactions
+ * This uses a database RPC function to ensure atomicity - if transaction
+ * insertion fails, the batch record is not created (no orphaned batches).
  *
  * @param batch - Import batch metadata
  * @param transactions - Array of transactions to insert
@@ -100,54 +97,40 @@ export async function commitImportBatch(
   >[]
 ): Promise<{ batchId: string; transactionIds: string[] }> {
   try {
-    // Step 1: Create import batch
-    const { data: batchData, error: batchError } = await supabase
-      .from('import_batches')
-      .insert({
-        bookset_id: batch.bookset_id,
-        account_id: batch.account_id,
-        file_name: batch.file_name,
-        imported_at: new Date().toISOString(),
-        total_rows: batch.total_rows,
-        imported_count: batch.imported_count,
-        duplicate_count: batch.duplicate_count,
-        error_count: batch.error_count,
-        csv_mapping_snapshot: batch.csv_mapping_snapshot,
-        is_undone: false,
-      })
-      .select()
-      .single();
-
-    if (batchError) {
-      handleSupabaseError(batchError);
-    }
-
-    const batchId = batchData.id;
-
-    // Step 2: Add batch ID to transactions
-    const transactionsWithBatch = transactions.map((txn) => ({
-      ...txn,
-      source_batch_id: batchId,
-      import_date: new Date().toISOString(),
+    // Prepare transactions as JSONB array for the RPC function
+    const transactionsJson = transactions.map((txn) => ({
+      date: txn.date,
+      amount: txn.amount,
+      description: txn.original_description,
+      payee_id: txn.payee_id || null,
+      fingerprint: txn.fingerprint,
       is_reviewed: false,
       is_split: false,
       reconciled: false,
-      lines: [{ category_id: null, amount: txn.amount, memo: null }], // Default single-line
+      lines: [{ category_id: null, amount: txn.amount, memo: null }],
     }));
 
-    // Step 3: Bulk insert transactions
-    const { data: txnData, error: txnError } = await supabase
-      .from('transactions')
-      .insert(transactionsWithBatch)
-      .select('id');
+    // Call the atomic RPC function
+    const { data, error } = await supabase.rpc('commit_import_batch', {
+      p_bookset_id: batch.bookset_id,
+      p_account_id: batch.account_id,
+      p_file_name: batch.file_name,
+      p_total_rows: batch.total_rows,
+      p_imported_count: batch.imported_count,
+      p_duplicate_count: batch.duplicate_count,
+      p_error_count: batch.error_count,
+      p_csv_mapping_snapshot: batch.csv_mapping_snapshot,
+      p_transactions: transactionsJson,
+    });
 
-    if (txnError) {
-      handleSupabaseError(txnError);
+    if (error) {
+      handleSupabaseError(error);
     }
 
+    // The RPC function returns { batchId, count, transactionIds }
     return {
-      batchId,
-      transactionIds: txnData?.map((t) => t.id) || [],
+      batchId: data.batchId,
+      transactionIds: data.transactionIds || [],
     };
   } catch (error) {
     if (error instanceof DatabaseError) throw error;
