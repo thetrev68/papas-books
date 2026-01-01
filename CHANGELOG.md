@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.0](https://github.com/thetrev68/papas-books/compare/v1.9.1...v1.10.0) (2026-01-01)
+
+### Features
+
+- add 404 page and move DevTools to devDependencies ([ef29f63](https://github.com/thetrev68/papas-books/commit/ef29f634e05b8f06e067c6d5db656a160f76b4d6))
+- implement consistent error handling in tax year lock functions ([af44724](https://github.com/thetrev68/papas-books/commit/af44724f024f1bc595bcc791d441a1c9e0799d8b)), closes [#11](https://github.com/thetrev68/papas-books/issues/11)
+- implement database constraints, CI security audit, and Dependabot ([c5b7b86](https://github.com/thetrev68/papas-books/commit/c5b7b866b36369a5f67f976a8f67d9dd80684ce5)), closes [#20](https://github.com/thetrev68/papas-books/issues/20) [#21](https://github.com/thetrev68/papas-books/issues/21) [#22](https://github.com/thetrev68/papas-books/issues/22)
+- implement form accessibility improvements and component tests ([006d2e8](https://github.com/thetrev68/papas-books/commit/006d2e8404bbc2ff9697faefe137fc4148a86a3f)), closes [#16](https://github.com/thetrev68/papas-books/issues/16) [#17](https://github.com/thetrev68/papas-books/issues/17)
+- implement JSONB type safety and route-level code splitting ([a045aea](https://github.com/thetrev68/papas-books/commit/a045aea39b9363905d791353bfed7bdf209e1fd5)), closes [#18](https://github.com/thetrev68/papas-books/issues/18) [#19](https://github.com/thetrev68/papas-books/issues/19)
+- implement Vite chunk splitting for optimized bundle delivery ([bcf631c](https://github.com/thetrev68/papas-books/commit/bcf631c763a57073887694d6023746326cdf4217))
+
+### Bug Fixes
+
+- include Settings link in mobile bottom navigation ([2d6ec8a](https://github.com/thetrev68/papas-books/commit/2d6ec8aef5b0eab1adbf3566acf843bb29461421))
+
+### Performance
+
+- memoize AuthContext value to prevent unnecessary re-renders ([7fce1aa](https://github.com/thetrev68/papas-books/commit/7fce1aa17b7b881cf5d32123fcb06ab350985ab8)), closes [#14](https://github.com/thetrev68/papas-books/issues/14)
+
+### Code Improvements
+
+- extract magic numbers to centralized constants file ([eaca8b4](https://github.com/thetrev68/papas-books/commit/eaca8b498aa559c4d5c6240aace7aebbfcc400cc))
+- replace Math.random() with useId hook in PayeeSelectCell ([ca005d9](https://github.com/thetrev68/papas-books/commit/ca005d97490cbb57709c76cb442e5a6ff467102e))
+
 ## [1.9.1](https://github.com/thetrev68/papas-books/compare/v1.9.0...v1.9.1) (2026-01-01)
 
 ### Code Improvements
