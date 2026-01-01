@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.2](https://github.com/thetrev68/papas-books/compare/v1.10.1...v1.10.2) (2026-01-01)
+
+### Maintenance
+
+- add tree scanning code counter ([39c35f6](https://github.com/thetrev68/papas-books/commit/39c35f613f239fbe8e8d4bf11e3e09d6b41526ee))
+
 ## [1.10.1](https://github.com/thetrev68/papas-books/compare/v1.10.0...v1.10.1) (2026-01-01)
 
 ### Code Improvements
