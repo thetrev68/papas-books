@@ -499,7 +499,11 @@ CREATE POLICY "Editors can insert transactions"
 CREATE POLICY "Editors can update unreconciled transactions"
   ON public.transactions FOR UPDATE
   USING (user_can_write_bookset(bookset_id) AND reconciled = false)
-  WITH CHECK (user_can_write_bookset(bookset_id) AND reconciled = false);
+  WITH CHECK (
+    user_can_write_bookset(bookset_id)
+    AND reconciled = false
+    AND bookset_id = (SELECT t.bookset_id FROM transactions t WHERE t.id = transactions.id)
+  );
 
 CREATE POLICY "Editors can delete unreconciled transactions"
   ON public.transactions FOR DELETE
