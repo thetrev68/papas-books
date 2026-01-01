@@ -1,4 +1,4 @@
-import { useState, useRef, Fragment } from 'react';
+import { useState, useRef, Fragment, useEffect } from 'react';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -58,6 +58,14 @@ function WorkbenchTable({
   const { accounts } = useAccounts();
   const { payees } = usePayees();
   const { isDateLocked } = useTaxYearLocks();
+  const [isMobile, setIsMobile] = useState(false);
+
+  useEffect(() => {
+    const checkMobile = () => setIsMobile(window.innerWidth < 768);
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    return () => window.removeEventListener('resize', checkMobile);
+  }, []);
 
   // Helper to process categories - memoized with stable reference
   const sortedCategories = useSortedCategories();
@@ -123,13 +131,9 @@ function WorkbenchTable({
   const virtualizer = useVirtualizer({
     count: table.getRowModel().rows.length,
     getScrollElement: () => parentRef.current,
-    estimateSize: () => 80, // Taller rows
+    estimateSize: () => 60, // Reduced estimate
     overscan: 5,
-    // Measure actual row heights dynamically
-    measureElement:
-      typeof window !== 'undefined' && navigator.userAgent.indexOf('Firefox') === -1
-        ? (element) => element?.getBoundingClientRect().height
-        : undefined,
+    measureElement: (element) => element?.getBoundingClientRect().height,
   });
 
   const items = virtualizer.getVirtualItems();
@@ -158,127 +162,131 @@ function WorkbenchTable({
       />
 
       {/* Desktop Table */}
-      <div
-        ref={parentRef}
-        className="hidden md:block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 overflow-hidden h-[calc(100vh-300px)] overflow-y-auto"
-      >
-        <table className="w-full text-left border-collapse">
-          <thead className="bg-neutral-100 dark:bg-gray-900 border-b-2 border-neutral-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map((header) => (
-                  <th
-                    key={header.id}
-                    className="px-2 py-3 text-xs font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-800 transition-colors"
-                    onClick={header.column.getToggleSortingHandler()}
-                  >
-                    <div className="flex items-center gap-1">
-                      {flexRender(header.column.columnDef.header, header.getContext())}
-                      {{
-                        asc: ' 🔼',
-                        desc: ' 🔽',
-                      }[header.column.getIsSorted() as string] ?? null}
-                    </div>
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-sm">
-            {paddingTop > 0 && (
-              <tr>
-                <td colSpan={columns.length} style={{ height: `${paddingTop}px` }} />
-              </tr>
-            )}
-            {items.map((virtualRow) => {
-              const row = table.getRowModel().rows[virtualRow.index];
-              const locked = isDateLocked(row.original.date);
-              return (
-                <Fragment key={row.id}>
-                  <tr
-                    className={`hover:bg-brand-50 dark:hover:bg-gray-700 transition-colors group ${
-                      locked ? 'bg-red-50 dark:bg-red-950 opacity-60' : ''
-                    }`}
-                    data-index={virtualRow.index}
-                    ref={(node) => virtualizer.measureElement(node)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td key={cell.id} className="px-2 py-2 align-middle">
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                  {row.getIsExpanded() && (
+      {!isMobile && (
+        <div
+          ref={parentRef}
+          className="hidden md:block bg-white dark:bg-gray-800 rounded-2xl shadow-sm border border-neutral-200 dark:border-gray-700 overflow-hidden h-[calc(100vh-300px)] overflow-y-auto"
+        >
+          <table className="w-full text-left border-collapse">
+            <thead className="bg-neutral-100 dark:bg-gray-900 border-b-2 border-neutral-200 dark:border-gray-700 sticky top-0 z-10 shadow-sm">
+              {table.getHeaderGroups().map((headerGroup) => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map((header) => (
+                    <th
+                      key={header.id}
+                      className="px-2 py-3 text-xs font-bold text-neutral-500 dark:text-gray-400 uppercase tracking-wider cursor-pointer hover:bg-neutral-200 dark:hover:bg-gray-800 transition-colors"
+                      onClick={header.column.getToggleSortingHandler()}
+                    >
+                      <div className="flex items-center gap-1">
+                        {flexRender(header.column.columnDef.header, header.getContext())}
+                        {{
+                          asc: ' 🔼',
+                          desc: ' 🔽',
+                        }[header.column.getIsSorted() as string] ?? null}
+                      </div>
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody className="divide-y divide-neutral-200 dark:divide-gray-700 text-sm">
+              {paddingTop > 0 && (
+                <tr>
+                  <td colSpan={columns.length} style={{ height: `${paddingTop}px` }} />
+                </tr>
+              )}
+              {items.map((virtualRow) => {
+                const row = table.getRowModel().rows[virtualRow.index];
+                const locked = isDateLocked(row.original.date);
+                return (
+                  <Fragment key={row.id}>
                     <tr
-                      className="bg-neutral-50 dark:bg-gray-900 shadow-inner"
+                      className={`hover:bg-brand-50 dark:hover:bg-gray-700 transition-colors group ${
+                        locked ? 'bg-red-50 dark:bg-red-950 opacity-60' : ''
+                      }`}
+                      data-index={virtualRow.index}
                       ref={(node) => virtualizer.measureElement(node)}
                     >
-                      <td colSpan={columns.length} className="p-4">
-                        <div className="ml-12 pl-4 border-l-4 border-brand-300 dark:border-brand-600">
-                          <h4 className="text-sm font-bold text-neutral-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
-                            Split Details
-                          </h4>
-                          <div className="space-y-2">
-                            {row.original.lines.map((line, idx) => (
-                              <div
-                                key={idx}
-                                className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-lg border border-neutral-200 dark:border-gray-700"
-                              >
-                                <span
-                                  className="text-brand-700 dark:text-brand-400 w-1/3 truncate"
-                                  title={getCategoryName(line.category_id)}
-                                >
-                                  {getCategoryName(line.category_id)}
-                                </span>
-                                <span
-                                  className={`font-mono w-32 text-right ${line.amount >= 0 ? 'text-success-700 dark:text-green-500' : 'text-neutral-900 dark:text-gray-100'}`}
-                                >
-                                  {line.amount >= 0 ? '+' : ''}
-                                  {(Math.abs(line.amount) / 100).toLocaleString('en-US', {
-                                    minimumFractionDigits: 2,
-                                    maximumFractionDigits: 2,
-                                  })}
-                                </span>
-                                <span className="text-neutral-600 dark:text-gray-400 text-sm italic flex-1">
-                                  {line.memo || 'No memo'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        </div>
-                      </td>
+                      {row.getVisibleCells().map((cell) => (
+                        <td key={cell.id} className="px-2 py-2 align-middle">
+                          {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                        </td>
+                      ))}
                     </tr>
-                  )}
-                </Fragment>
-              );
-            })}
-            {paddingBottom > 0 && (
-              <tr>
-                <td colSpan={columns.length} style={{ height: `${paddingBottom}px` }} />
-              </tr>
-            )}
-          </tbody>
-        </table>
-      </div>
+                    {row.getIsExpanded() && (
+                      <tr
+                        className="bg-neutral-50 dark:bg-gray-900 shadow-inner"
+                        ref={(node) => virtualizer.measureElement(node)}
+                      >
+                        <td colSpan={columns.length} className="p-4">
+                          <div className="ml-12 pl-4 border-l-4 border-brand-300 dark:border-brand-600">
+                            <h4 className="text-sm font-bold text-neutral-500 dark:text-gray-400 mb-2 uppercase tracking-wide">
+                              Split Details
+                            </h4>
+                            <div className="space-y-2">
+                              {row.original.lines.map((line, idx) => (
+                                <div
+                                  key={idx}
+                                  className="flex items-center gap-4 bg-white dark:bg-gray-800 p-2 rounded-lg border border-neutral-200 dark:border-gray-700"
+                                >
+                                  <span
+                                    className="text-brand-700 dark:text-brand-400 w-1/3 truncate"
+                                    title={getCategoryName(line.category_id)}
+                                  >
+                                    {getCategoryName(line.category_id)}
+                                  </span>
+                                  <span
+                                    className={`font-mono w-32 text-right ${line.amount >= 0 ? 'text-success-700 dark:text-green-500' : 'text-neutral-900 dark:text-gray-100'}`}
+                                  >
+                                    {line.amount >= 0 ? '+' : ''}
+                                    {(Math.abs(line.amount) / 100).toLocaleString('en-US', {
+                                      minimumFractionDigits: 2,
+                                      maximumFractionDigits: 2,
+                                    })}
+                                  </span>
+                                  <span className="text-neutral-600 dark:text-gray-400 text-sm italic flex-1">
+                                    {line.memo || 'No memo'}
+                                  </span>
+                                </div>
+                              ))}
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
+              })}
+              {paddingBottom > 0 && (
+                <tr>
+                  <td colSpan={columns.length} style={{ height: `${paddingBottom}px` }} />
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
+      )}
 
       {/* Mobile Card View */}
-      <div className="md:hidden space-y-4">
-        {table.getRowModel().rows.map((row) => (
-          <WorkbenchMobileCard
-            key={row.id}
-            transaction={row.original}
-            sortedCategories={sortedCategories}
-            payees={payees}
-            editingPayee={editingPayee}
-            onUpdatePayee={onUpdatePayee}
-            onUpdateCategory={onUpdateCategory}
-            onReview={onReview}
-            onEdit={onEdit}
-            onCreatePayee={onCreatePayee}
-            setEditingPayee={setEditingPayee}
-          />
-        ))}
-      </div>
+      {isMobile && (
+        <div className="md:hidden space-y-4">
+          {table.getRowModel().rows.map((row) => (
+            <WorkbenchMobileCard
+              key={row.id}
+              transaction={row.original}
+              sortedCategories={sortedCategories}
+              payees={payees}
+              editingPayee={editingPayee}
+              onUpdatePayee={onUpdatePayee}
+              onUpdateCategory={onUpdateCategory}
+              onReview={onReview}
+              onEdit={onEdit}
+              onCreatePayee={onCreatePayee}
+              setEditingPayee={setEditingPayee}
+            />
+          ))}
+        </div>
+      )}
     </div>
   );
 }
