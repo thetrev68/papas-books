@@ -5,7 +5,7 @@ These are organized by priority and can be addressed incrementally after launch.
 
 ## High Priority
 
-### 1. Modal Focus Trap & Keyboard Dismiss
+### 1. Modal Focus Trap & Keyboard Dismiss ✅ COMPLETED
 
 **File:** `src/components/ui/Modal.tsx`
 
@@ -27,6 +27,13 @@ import FocusTrap from 'focus-trap-react';
   </div>
 </FocusTrap>;
 ```
+
+**Status:** Implemented manual focus management without external dependencies:
+
+- Added focus trap using Tab key event handler
+- Implemented focus restoration on close
+- Added Escape key handler to dismiss modal
+- Modal now focuses on mount and restores focus to previously focused element on unmount
 
 ### 2. Transaction Pagination
 

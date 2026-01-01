@@ -6,6 +6,7 @@ export default defineConfig({
   test: {
     globals: true,
     environment: 'jsdom',
+    setupFiles: ['./src/vitest.setup.ts'],
     exclude: ['e2e/**', 'node_modules/**'],
     env: {
       VITE_SUPABASE_URL: 'https://example.supabase.co',
