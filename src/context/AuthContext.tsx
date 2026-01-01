@@ -1,4 +1,4 @@
-import { createContext, useContext, useEffect, useMemo, useState } from 'react';
+import { createContext, useContext, useEffect, useMemo, useState, useRef } from 'react';
 import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
 import { User, Bookset } from '../types/database';
@@ -44,6 +44,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     error: null,
   });
 
+  // Track the latest fetch request to handle race conditions
+  const fetchRequestId = useRef(0);
+
   // Helper to fetch user profile and booksets
   const fetchUserData = async (
     userId: string,
@@ -61,50 +64,45 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       return Promise.race([promise as Promise<T>, timeoutPromise]);
     };
 
-    try {
-      log('Fetching user data for', userId);
+    log('Fetching user data for', userId);
 
-      // Run queries in parallel for better performance
-      const userQuery = supabase.from('users').select('*').eq('id', userId).single();
-      const booksetsQuery = supabase.from('booksets').select('*');
+    // Run queries in parallel for better performance
+    const userQuery = supabase.from('users').select('*').eq('id', userId).single();
+    const booksetsQuery = supabase.from('booksets').select('*');
 
-      const [userResult, booksetsResult] = await Promise.all([
-        withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch'),
-        withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch'),
-      ]);
+    const [userResult, booksetsResult] = await Promise.all([
+      withTimeout(userQuery, AUTH_TIMEOUT_MS, 'User profile fetch'),
+      withTimeout(booksetsQuery, AUTH_TIMEOUT_MS, 'Booksets fetch'),
+    ]);
 
-      const { data: userData, error: userError } = userResult;
-      const { data: booksetsData, error: booksetsError } = booksetsResult;
+    const { data: userData, error: userError } = userResult;
+    const { data: booksetsData, error: booksetsError } = booksetsResult;
 
-      if (userError || !userData) {
-        if (retries > 0) {
-          log(`User fetch failed, retrying (${retries} left)...`);
-          await new Promise((resolve) => setTimeout(resolve, delay));
-          return fetchUserData(userId, retries - 1, delay);
-        }
-        throw userError || new Error('User profile not found');
+    if (userError || !userData) {
+      if (retries > 0) {
+        log(`User fetch failed, retrying (${retries} left)...`);
+        await new Promise((resolve) => setTimeout(resolve, delay));
+        return fetchUserData(userId, retries - 1, delay);
       }
-
-      log('User profile fetched:', userData.email);
-
-      if (booksetsError) {
-        throw booksetsError;
-      }
-
-      const booksets: Bookset[] = booksetsData || [];
-      log('Booksets fetched:', booksets.length);
-
-      // 3. Set active bookset
-      const activeId = userData.active_bookset_id;
-      const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
-
-      log('Active bookset:', active?.name || 'none');
-
-      return { user: userData, booksets, activeBookset: active };
-    } catch (err) {
-      log('Error fetching user data:', err);
-      throw err;
+      throw userError || new Error('User profile not found');
     }
+
+    log('User profile fetched:', userData.email);
+
+    if (booksetsError) {
+      throw booksetsError;
+    }
+
+    const booksets: Bookset[] = booksetsData || [];
+    log('Booksets fetched:', booksets.length);
+
+    // 3. Set active bookset
+    const activeId = userData.active_bookset_id;
+    const active = booksets.find((b) => b.id === activeId) || booksets[0] || null;
+
+    log('Active bookset:', active?.name || 'none');
+
+    return { user: userData, booksets, activeBookset: active };
   };
 
   // Single effect - only source of truth is onAuthStateChange
@@ -137,6 +135,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         // Clear user context in Sentry
         clearSentryUser();
 
+        // Increment ID to invalidate any pending fetches
+        fetchRequestId.current += 1;
+
         setAuthState({
           status: 'unauthenticated',
           supabaseUser: null,
@@ -154,6 +155,7 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
 
       if (expiresAt && expiresAt < now) {
         log('Session expired, setting unauthenticated state');
+        fetchRequestId.current += 1; // Invalidate fetches
         setAuthState({
           status: 'unauthenticated',
           supabaseUser: null,
@@ -174,9 +176,18 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         error: null,
       }));
 
+      // Generate a new request ID for this fetch attempt
+      const requestId = ++fetchRequestId.current;
+
       // Fetch user data
       try {
         const { user, booksets, activeBookset } = await fetchUserData(session.user.id);
+
+        // If this request is stale (a newer one started), ignore the result
+        if (requestId !== fetchRequestId.current) {
+          log(`Ignoring stale fetch result (ID: ${requestId})`);
+          return;
+        }
 
         log('User data fetched successfully, setting authenticated state');
 
@@ -192,6 +203,12 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
           error: null,
         });
       } catch (err) {
+        // If this request is stale, ignore the error (don't log timeout)
+        if (requestId !== fetchRequestId.current) {
+          log(`Ignoring stale fetch error (ID: ${requestId})`);
+          return;
+        }
+
         const error = err instanceof Error ? err : new Error('Unknown error');
         const isTimeout = error.message.includes('timed out');
 
