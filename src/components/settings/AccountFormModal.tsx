@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useId } from 'react';
 import { useAuth } from '../../context/AuthContext';
 import { useCreateAccount, useUpdateAccount } from '../../hooks/useAccounts';
 import { useOptimisticLocking } from '../../hooks/useOptimisticLocking';
@@ -31,6 +31,16 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+
+  // Generate stable IDs for accessibility
+  const nameId = useId();
+  const typeId = useId();
+  const openingBalanceId = useId();
+  const openingDateId = useId();
+  const nameErrorId = useId();
+  const openingBalanceErrorId = useId();
+  const openingDateErrorId = useId();
+  const formErrorId = useId();
 
   useEffect(() => {
     if (account) {
@@ -132,25 +142,37 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
       <Modal title={account ? 'Edit Account' : 'Create Account'} onClose={onClose}>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            <label
+              htmlFor={nameId}
+              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+            >
               Name
             </label>
             <input
+              id={nameId}
               type="text"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              aria-describedby={errors.name ? nameErrorId : undefined}
+              aria-invalid={!!errors.name}
               className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
             {errors.name && (
-              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">{errors.name}</div>
+              <div id={nameErrorId} className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+                {errors.name}
+              </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            <label
+              htmlFor={typeId}
+              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+            >
               Type
             </label>
             <select
+              id={typeId}
               value={formData.type}
               onChange={(e) =>
                 setFormData({ ...formData, type: e.target.value as 'Asset' | 'Liability' })
@@ -163,44 +185,68 @@ export default function AccountFormModal({ account, onClose }: AccountFormModalP
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            <label
+              htmlFor={openingBalanceId}
+              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+            >
               Opening Balance ($)
             </label>
             <input
+              id={openingBalanceId}
               type="number"
               step="0.01"
               value={formData.openingBalance}
               onChange={(e) =>
                 setFormData({ ...formData, openingBalance: parseFloat(e.target.value) || 0 })
               }
+              aria-describedby={errors.openingBalance ? openingBalanceErrorId : undefined}
+              aria-invalid={!!errors.openingBalance}
               className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
             {errors.openingBalance && (
-              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+              <div
+                id={openingBalanceErrorId}
+                className="text-danger-700 dark:text-red-400 mt-1 text-sm"
+              >
                 {errors.openingBalance}
               </div>
             )}
           </div>
 
           <div>
-            <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+            <label
+              htmlFor={openingDateId}
+              className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+            >
               Opening Date
             </label>
             <input
+              id={openingDateId}
               type="date"
               value={formData.openingBalanceDate}
               onChange={(e) => setFormData({ ...formData, openingBalanceDate: e.target.value })}
+              aria-describedby={errors.openingBalanceDate ? openingDateErrorId : undefined}
+              aria-invalid={!!errors.openingBalanceDate}
               className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
             />
             {errors.openingBalanceDate && (
-              <div className="text-danger-700 dark:text-red-400 mt-1 text-sm">
+              <div
+                id={openingDateErrorId}
+                className="text-danger-700 dark:text-red-400 mt-1 text-sm"
+              >
                 {errors.openingBalanceDate}
               </div>
             )}
           </div>
 
           {errors.form && (
-            <div className="text-danger-700 dark:text-red-400 text-sm">{errors.form}</div>
+            <div
+              id={formErrorId}
+              role="alert"
+              className="text-danger-700 dark:text-red-400 text-sm"
+            >
+              {errors.form}
+            </div>
           )}
 
           <div className="flex flex-wrap gap-3 justify-end">

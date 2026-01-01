@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import { Account } from '../../types/database';
 import { ReconciliationInput } from '../../types/reconcile';
 
@@ -11,6 +11,11 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
   const [accountId, setAccountId] = useState(accounts[0]?.id || '');
   const [statementDate, setStatementDate] = useState(new Date().toISOString().split('T')[0]);
   const [statementBalance, setStatementBalance] = useState(''); // Text input for easier typing, convert later
+
+  // Generate stable IDs for accessibility
+  const accountSelectId = useId();
+  const statementDateId = useId();
+  const statementBalanceId = useId();
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -36,10 +41,14 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
       </p>
       <form onSubmit={handleSubmit} className="space-y-4">
         <div>
-          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+          <label
+            htmlFor={accountSelectId}
+            className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+          >
             Select Account
           </label>
           <select
+            id={accountSelectId}
             value={accountId}
             onChange={(e) => setAccountId(e.target.value)}
             required
@@ -57,10 +66,14 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+          <label
+            htmlFor={statementDateId}
+            className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+          >
             Statement Date
           </label>
           <input
+            id={statementDateId}
             type="date"
             value={statementDate}
             onChange={(e) => setStatementDate(e.target.value)}
@@ -70,10 +83,14 @@ export default function ReconcileSetup({ accounts, onNext }: ReconcileSetupProps
         </div>
 
         <div>
-          <label className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1">
+          <label
+            htmlFor={statementBalanceId}
+            className="block text-sm font-bold text-neutral-500 dark:text-gray-400 mb-1"
+          >
             Statement Ending Balance
           </label>
           <input
+            id={statementBalanceId}
             type="number"
             step="0.01"
             value={statementBalance}

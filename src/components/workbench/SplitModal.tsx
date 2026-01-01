@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useId } from 'react';
 import type { Transaction } from '../../types/database';
 import { calculateSplitRemainder, validateSplitTransaction } from '../../lib/splitCalculator';
 import { validateSplitLines } from '../../lib/validation/splits';
@@ -15,6 +15,13 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
   const [lines, setLines] = useState(transaction.lines || []);
   const [newLine, setNewLine] = useState({ categoryId: '', amount: 0, memo: '' });
   const [validationError, setValidationError] = useState<string | null>(null);
+
+  // Generate stable IDs for accessibility
+  const newCategoryId = useId();
+  const newAmountId = useId();
+  const newMemoId = useId();
+  const remainderId = useId();
+  const validationErrorId = useId();
 
   // Helper to process categories with parent:child format
   const sortedCategories = useSortedCategories();
@@ -141,8 +148,10 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
 
         <div className="grid grid-cols-1 md:grid-cols-4 gap-3">
           <select
+            id={newCategoryId}
             value={newLine.categoryId}
             onChange={(e) => setNewLine({ ...newLine, categoryId: e.target.value })}
+            aria-label="New line category"
             className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           >
             <option value="">Select Category</option>
@@ -153,18 +162,22 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
             ))}
           </select>
           <input
+            id={newAmountId}
             type="number"
             step="0.01"
             placeholder="Amount"
             value={newLine.amount || ''}
             onChange={(e) => setNewLine({ ...newLine, amount: parseFloat(e.target.value) || 0 })}
+            aria-label="New line amount"
             className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
           <input
+            id={newMemoId}
             type="text"
             placeholder="Memo"
             value={newLine.memo}
             onChange={(e) => setNewLine({ ...newLine, memo: e.target.value })}
+            aria-label="New line memo"
             className="w-full p-3 text-lg border-2 border-neutral-300 dark:border-gray-600 rounded-xl bg-neutral-50 dark:bg-gray-700 dark:text-gray-100 focus:border-brand-500 focus:ring-4 focus:ring-brand-100 outline-none"
           />
           <button
@@ -178,6 +191,9 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
         </div>
 
         <div
+          id={remainderId}
+          role="status"
+          aria-live="polite"
           className={`p-4 rounded-xl border text-lg ${
             isValid
               ? 'bg-success-100 dark:bg-green-900/30 text-success-700 dark:text-green-300 border-success-700 dark:border-green-700'
@@ -195,7 +211,11 @@ function SplitModal({ transaction, onSave, onClose }: SplitModalProps) {
         </div>
 
         {validationError && (
-          <div className="p-4 rounded-xl border bg-danger-50 dark:bg-red-900/20 border-danger-200 dark:border-red-800 text-danger-700 dark:text-red-300 text-sm">
+          <div
+            id={validationErrorId}
+            role="alert"
+            className="p-4 rounded-xl border bg-danger-50 dark:bg-red-900/20 border-danger-200 dark:border-red-800 text-danger-700 dark:text-red-300 text-sm"
+          >
             Error: {validationError}
           </div>
         )}
