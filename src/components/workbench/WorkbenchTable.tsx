@@ -1,4 +1,4 @@
-import { useState, useRef, Fragment, useEffect } from 'react';
+import { useState, useRef, Fragment, useEffect, useCallback } from 'react';
 import {
   getCoreRowModel,
   getFilteredRowModel,
@@ -70,15 +70,21 @@ function WorkbenchTable({
   // Helper to process categories - memoized with stable reference
   const sortedCategories = useSortedCategories();
 
-  function getAccountName(accountId: string): string {
-    const account = accounts.find((a) => a.id === accountId);
-    return account ? account.name : `Account ${accountId}`;
-  }
+  const getAccountName = useCallback(
+    (accountId: string): string => {
+      const account = accounts.find((a) => a.id === accountId);
+      return account ? account.name : `Account ${accountId}`;
+    },
+    [accounts]
+  );
 
-  function getCategoryName(categoryId: string): string {
-    const cat = sortedCategories.find((c) => c.id === categoryId);
-    return cat ? cat.displayName : 'Uncategorized';
-  }
+  const getCategoryName = useCallback(
+    (categoryId: string): string => {
+      const cat = sortedCategories.find((c) => c.id === categoryId);
+      return cat ? cat.displayName : 'Uncategorized';
+    },
+    [sortedCategories]
+  );
 
   // Use extracted column definitions
   const columns = useWorkbenchColumns({
