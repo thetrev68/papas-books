@@ -79,7 +79,7 @@ export async function fetchTransactions(
 2. **Dashboard**: Added "Load More" button to Recent Activity section with dynamic limit (starts at 5, increments by 10)
 3. **Reports**: Already implemented with full pagination support via `fetchReportTransactions` (page-based with 1000 records per page)
 
-### 3. RLS Policy - Prevent Moving Transactions Between Booksets
+### 3. RLS Policy - Prevent Moving Transactions Between Booksets ✅ COMPLETED
 
 **File:** `supabase/schema.sql` (lines 499-502)
 
@@ -97,6 +97,8 @@ CREATE POLICY "Editors can update unreconciled transactions"
     AND bookset_id = (SELECT t.bookset_id FROM transactions t WHERE t.id = transactions.id)
   );
 ```
+
+**Status:** Implemented in both `schema.sql` and `production_schema.sql`. The WITH CHECK clause now includes a subquery that verifies the bookset_id cannot be changed during an update, preventing malicious users from moving transactions between booksets they have access to.
 
 ### 4. Import Batch Atomicity
 
