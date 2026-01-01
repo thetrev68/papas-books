@@ -3,6 +3,7 @@ import { User as SupabaseUser } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase/config';
 import { User, Bookset } from '../types/database';
 import { AUTH_TIMEOUT_MS, AUTH_RETRY_DELAY_MS } from '../lib/constants';
+import { setUser as setSentryUser, clearUser as clearSentryUser } from '../lib/sentry';
 
 type AuthStatus = 'initializing' | 'authenticated' | 'unauthenticated' | 'error';
 
@@ -138,6 +139,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       // No session - user is logged out
       if (!session?.user) {
         log('No session, setting unauthenticated state');
+
+        // Clear user context in Sentry
+        clearSentryUser();
+
         setAuthState({
           status: 'unauthenticated',
           supabaseUser: null,
@@ -180,6 +185,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
         const { user, booksets, activeBookset } = await fetchUserData(session.user.id);
 
         log('User data fetched successfully, setting authenticated state');
+
+        // Set user context in Sentry for error tracking
+        setSentryUser(user.id, user.email);
+
         setAuthState({
           status: 'authenticated',
           supabaseUser: session.user,

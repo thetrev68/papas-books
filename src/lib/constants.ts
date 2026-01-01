@@ -13,13 +13,9 @@ export const AUTH_RETRY_DELAY_MS = 500;
 export const TOAST_DURATION_ERROR_MS = 5000;
 export const TOAST_DURATION_SUCCESS_MS = 3000;
 export const TOAST_DURATION_INFO_MS = 4000;
-export const TOAST_DURATION_WARNING_MS = 4000;
 
 // Supabase query batch sizes
 export const SUPABASE_BATCH_SIZE = 100;
-
-// Currency conversion
-export const CENTS_PER_DOLLAR = 100;
 
 // Validation limits
 export const MAX_PATTERN_LENGTH = 500;

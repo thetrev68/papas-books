@@ -97,6 +97,9 @@ export function clearUser(): void {
 /**
  * Add breadcrumb for debugging.
  * Breadcrumbs help trace what happened before an error.
+ *
+ * NOTE: Exported for future use (optional utility for debugging complex flows).
+ * Not currently used but provides value for production debugging when needed.
  */
 export function addBreadcrumb(
   message: string,
@@ -113,5 +116,11 @@ export function addBreadcrumb(
   });
 }
 
-// Re-export Sentry's ErrorBoundary for use with React
+/**
+ * Re-export Sentry's ErrorBoundary for use with React.
+ *
+ * NOTE: Exported for future use. Currently using custom ErrorBoundary
+ * (src/components/ErrorBoundary.tsx) which integrates with Sentry via
+ * captureException() and provides consistent UI with app design.
+ */
 export { ErrorBoundary as SentryErrorBoundary } from '@sentry/react';
