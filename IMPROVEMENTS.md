@@ -238,7 +238,7 @@ export function useSortedCategories(): CategoryWithDisplayName[] {
 - Added 12 comprehensive unit tests covering edge cases (circular references, missing parents, deep hierarchies, etc.)
 - All 611 tests pass, TypeScript compilation is clean
 
-### 7. Split Large Components
+### 7. Split Large Components ✅ COMPLETED
 
 **Files:**
 
@@ -259,6 +259,25 @@ ReportsPage:
 - `TaxLineReportView.tsx`
 - `QuarterlyReportView.tsx`
 - `YearComparisonReportView.tsx`
+
+**Status:** Completed component extraction for both WorkbenchTable and ReportsPage:
+
+**WorkbenchTable** (reduced from 729 lines to 286 lines):
+
+- Created `src/components/workbench/WorkbenchColumns.tsx` - Extracted column definitions hook with SelectAllCheckbox component
+- Created `src/components/workbench/WorkbenchToolbar.tsx` - Bulk action toolbar for selected transactions
+- Created `src/components/workbench/WorkbenchMobileCard.tsx` - Mobile card view for individual transactions
+- Updated `WorkbenchTable.tsx` to use extracted components, removing ~440 lines of code
+
+**ReportsPage** (reduced from 1024 lines to 570 lines):
+
+- Created `src/components/reports/CategoryReportView.tsx` - Category report table with export buttons
+- Created `src/components/reports/TaxLineReportView.tsx` - Tax line report table with CPA export
+- Created `src/components/reports/QuarterlyReportView.tsx` - Quarterly estimated tax report
+- Created `src/components/reports/YearComparisonReportView.tsx` - Year-over-year comparison report
+- Updated `ReportsPage.tsx` to use extracted components, removing ~450 lines of code
+
+All 611 tests pass. Components are now more maintainable and easier to understand.
 
 ### 8. Random ID Generation Fix
 
