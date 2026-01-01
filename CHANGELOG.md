@@ -2,6 +2,12 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.10.1](https://github.com/thetrev68/papas-books/compare/v1.10.0...v1.10.1) (2026-01-01)
+
+### Code Improvements
+
+- wire Sentry user tracking and remove dead code ([28e48f3](https://github.com/thetrev68/papas-books/commit/28e48f308a6031b906227fe9f3fb312d9ad1adfd))
+
 ## [1.10.0](https://github.com/thetrev68/papas-books/compare/v1.9.1...v1.10.0) (2026-01-01)
 
 ### Features
