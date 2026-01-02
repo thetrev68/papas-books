@@ -20,6 +20,7 @@ import { useSortedCategories } from '../../lib/categoryUtils';
 import { useWorkbenchColumns } from './WorkbenchColumns';
 import WorkbenchToolbar from './WorkbenchToolbar';
 import WorkbenchMobileCard from './WorkbenchMobileCard';
+import { exportTransactionsToCsv, downloadCsv } from '../../lib/tableExports';
 
 interface WorkbenchTableProps {
   transactions: Transaction[];
@@ -147,6 +148,20 @@ function WorkbenchTable({
   const paddingBottom =
     items.length > 0 ? virtualizer.getTotalSize() - items[items.length - 1].end : 0;
 
+  // Export handler
+  const handleExport = useCallback(() => {
+    // Get filtered and sorted transactions from the table
+    const filteredRows = table.getFilteredRowModel().rows;
+    const transactionsToExport = filteredRows.map((row) => row.original);
+
+    // Generate CSV
+    const csv = exportTransactionsToCsv(transactionsToExport, accounts, sortedCategories, payees);
+
+    // Download
+    const today = new Date().toISOString().split('T')[0];
+    downloadCsv(csv, `transactions-export-${today}.csv`);
+  }, [table, accounts, sortedCategories, payees]);
+
   return (
     <div>
       {/* Search Filter */}
@@ -165,6 +180,8 @@ function WorkbenchTable({
         sortedCategories={sortedCategories}
         onBulkUpdateCategory={onBulkUpdateCategory}
         onClearSelection={() => setRowSelection({})}
+        onExport={handleExport}
+        hasData={transactions.length > 0}
       />
 
       {/* Desktop Table */}

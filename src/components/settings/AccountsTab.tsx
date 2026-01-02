@@ -4,6 +4,7 @@ import AccountFormModal from './AccountFormModal';
 import AuditHistoryModal from '../audit/AuditHistoryModal';
 import type { Account } from '../../types/database';
 import { useToast } from '../GlobalToastProvider';
+import { exportAccountsToCsv, downloadCsv } from '../../lib/tableExports';
 
 export default function AccountsTab() {
   const { accounts, isLoading, error } = useAccounts();
@@ -32,14 +33,43 @@ export default function AccountsTab() {
     });
   }
 
+  function handleExport() {
+    const csv = exportAccountsToCsv(accounts);
+    const today = new Date().toISOString().split('T')[0];
+    downloadCsv(csv, `accounts-export-${today}.csv`);
+  }
+
   return (
     <div>
-      <div className="mb-6">
+      <div className="mb-6 flex gap-3">
         <button
           onClick={handleCreate}
           className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
         >
           Create Account
+        </button>
+        <button
+          onClick={handleExport}
+          disabled={accounts.length === 0}
+          className="flex items-center gap-2 px-4 py-3 bg-neutral-600 dark:bg-gray-600 text-white font-bold rounded-xl shadow hover:bg-neutral-700 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Export accounts to CSV"
+          title={accounts.length > 0 ? 'Export accounts to CSV' : 'No accounts to export'}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Export CSV
         </button>
       </div>
 

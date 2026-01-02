@@ -2,6 +2,7 @@ import { useState, useMemo } from 'react';
 import { useTaxYearLocks } from '../../hooks/useTaxYearLocks';
 import { useQuery } from '@tanstack/react-query';
 import { supabase } from '../../lib/supabase/config';
+import { exportTaxYearLocksToCsv, downloadCsv } from '../../lib/tableExports';
 
 export default function TaxYearLocksTab() {
   const { locks, lockedYears, maxLockedYear, lockYear, unlockYear, isLocking, isUnlocking } =
@@ -49,11 +50,40 @@ export default function TaxYearLocksTab() {
     setShowUnlockConfirm(null);
   };
 
+  const handleExport = () => {
+    const csv = exportTaxYearLocksToCsv(locks, userMap, maxLockedYear);
+    const today = new Date().toISOString().split('T')[0];
+    downloadCsv(csv, `tax-year-locks-export-${today}.csv`);
+  };
+
   return (
     <div>
-      <h2 className="text-xl font-bold text-neutral-900 dark:text-gray-100 mb-4">
-        Tax Year Locking
-      </h2>
+      <div className="flex items-center justify-between mb-4">
+        <h2 className="text-xl font-bold text-neutral-900 dark:text-gray-100">Tax Year Locking</h2>
+        <button
+          onClick={handleExport}
+          disabled={locks.length === 0}
+          className="flex items-center gap-2 px-4 py-2 bg-neutral-600 dark:bg-gray-600 text-white font-bold rounded-xl shadow hover:bg-neutral-700 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Export tax year locks to CSV"
+          title={locks.length > 0 ? 'Export tax year locks to CSV' : 'No locks to export'}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Export CSV
+        </button>
+      </div>
 
       <p className="text-sm text-neutral-600 dark:text-gray-400 mb-4">
         Lock completed tax years to prevent accidental modifications. Locking a year also locks all

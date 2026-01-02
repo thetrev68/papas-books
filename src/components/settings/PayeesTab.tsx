@@ -15,6 +15,7 @@ import { fetchCategories } from '../../lib/supabase/categories';
 import type { Payee, Category } from '../../types/database';
 import PayeeFormModal from './PayeeFormModal';
 import { useToast } from '../GlobalToastProvider';
+import { exportPayeesToCsv, downloadCsv } from '../../lib/tableExports';
 
 export default function PayeesTab() {
   const { activeBookset } = useAuth();
@@ -121,6 +122,16 @@ export default function PayeesTab() {
     setShowModal(true);
   };
 
+  const handleExport = () => {
+    // Get filtered payees from the table
+    const filteredRows = table.getFilteredRowModel().rows;
+    const payeesToExport = filteredRows.map((row) => row.original);
+
+    const csv = exportPayeesToCsv(payeesToExport, categories || []);
+    const today = new Date().toISOString().split('T')[0];
+    downloadCsv(csv, `payees-export-${today}.csv`);
+  };
+
   const columnHelper = createColumnHelper<Payee>();
 
   const columns = [
@@ -211,12 +222,39 @@ export default function PayeesTab() {
     <div>
       <div className="mb-6 flex flex-wrap items-center justify-between gap-3">
         <h2 className="text-2xl font-bold text-neutral-900 dark:text-gray-100">Payees</h2>
-        <button
-          onClick={handleCreate}
-          className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
-        >
-          Add Payee
-        </button>
+        <div className="flex gap-3">
+          <button
+            onClick={handleCreate}
+            className="px-6 py-3 bg-brand-600 text-white font-bold rounded-xl shadow hover:bg-brand-700 transition-colors"
+          >
+            Add Payee
+          </button>
+          <button
+            onClick={handleExport}
+            disabled={!payees || payees.length === 0}
+            className="flex items-center gap-2 px-4 py-3 bg-neutral-600 dark:bg-gray-600 text-white font-bold rounded-xl shadow hover:bg-neutral-700 dark:hover:bg-gray-500 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+            aria-label="Export payees to CSV"
+            title={
+              payees && payees.length > 0 ? 'Export filtered payees to CSV' : 'No payees to export'
+            }
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-5 w-5"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Export CSV
+          </button>
+        </div>
       </div>
 
       <div className="mb-4">

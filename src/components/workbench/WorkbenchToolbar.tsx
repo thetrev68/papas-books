@@ -7,6 +7,8 @@ interface WorkbenchToolbarProps {
   sortedCategories: CategoryWithDisplayName[];
   onBulkUpdateCategory: (transactionIds: string[], categoryId: string) => void;
   onClearSelection: () => void;
+  onExport: () => void;
+  hasData: boolean;
 }
 
 /**
@@ -18,11 +20,11 @@ function WorkbenchToolbar({
   sortedCategories,
   onBulkUpdateCategory,
   onClearSelection,
+  onExport,
+  hasData,
 }: WorkbenchToolbarProps) {
   const { showConfirm } = useToast();
   const selectedCount = Object.keys(rowSelection).length;
-
-  if (selectedCount === 0) return null;
 
   const handleBulkCategoryUpdate = (categoryId: string) => {
     const selectedIds = Object.keys(rowSelection);
@@ -50,6 +52,37 @@ function WorkbenchToolbar({
     }
   };
 
+  // Show export button always, bulk actions only when rows selected
+  if (selectedCount === 0) {
+    return (
+      <div className="mb-4 flex justify-end">
+        <button
+          onClick={onExport}
+          disabled={!hasData}
+          className="flex items-center gap-2 px-4 py-2 bg-brand-600 dark:bg-brand-700 text-white rounded-lg hover:bg-brand-700 dark:hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
+          aria-label="Export transactions to CSV"
+          title={hasData ? 'Export filtered transactions to CSV' : 'No data to export'}
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            className="h-5 w-5"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+            />
+          </svg>
+          Export to CSV
+        </button>
+      </div>
+    );
+  }
+
   return (
     <div className="mb-4 bg-brand-50 dark:bg-brand-900/30 border-2 border-brand-300 dark:border-brand-700 rounded-xl p-4 shadow-sm">
       <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
@@ -68,6 +101,31 @@ function WorkbenchToolbar({
 
         {/* Bulk Actions */}
         <div className="flex flex-wrap items-center gap-3">
+          {/* Export Button */}
+          <button
+            onClick={onExport}
+            disabled={!hasData}
+            className="flex items-center gap-2 px-3 py-2 bg-brand-600 dark:bg-brand-700 text-white rounded-lg hover:bg-brand-700 dark:hover:bg-brand-600 disabled:opacity-50 disabled:cursor-not-allowed transition-colors text-sm"
+            aria-label="Export transactions to CSV"
+            title="Export filtered transactions to CSV"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              className="h-4 w-4"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"
+              />
+            </svg>
+            Export CSV
+          </button>
+
           {/* Category Selector */}
           <div className="flex items-center gap-2">
             <label
