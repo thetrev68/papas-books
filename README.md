@@ -105,7 +105,7 @@ npm run test:coverage     # Generate coverage report
 **⚠️ Windows Users:** Coverage tools (v8/istanbul) have compatibility issues on Windows. For accurate coverage metrics, run tests in WSL:
 
 ```bash
-wsl --exec bash -c "cd /mnt/c/Repos/papas-books && npm run test:coverage"
+\
 ```
 
 **E2E Tests** (Playwright):

@@ -15,22 +15,24 @@ import type { AccessGrant } from '../types/access';
 describe('tableExports', () => {
   describe('downloadCsv', () => {
     it('should create a blob and trigger download', () => {
-      // Mock DOM APIs
-      const createElementSpy = vi.spyOn(document, 'createElement');
-      const appendChildSpy = vi.spyOn(document.body, 'appendChild');
-      const removeChildSpy = vi.spyOn(document.body, 'removeChild');
-      const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
-      const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL');
+      // Create a real anchor element to use in the test
+      const mockLink = document.createElement('a');
+      mockLink.click = vi.fn();
 
-      const mockLink = {
-        href: '',
-        download: '',
-        click: vi.fn(),
-      };
-      createElementSpy.mockReturnValue(mockLink as unknown as HTMLElement);
+      // Spy on document.createElement to return our mock link
+      const createElementSpy = vi.spyOn(document, 'createElement').mockReturnValue(mockLink);
+      const appendChildSpy = vi
+        .spyOn(document.body, 'appendChild')
+        .mockImplementation(() => mockLink);
+      const removeChildSpy = vi
+        .spyOn(document.body, 'removeChild')
+        .mockImplementation(() => mockLink);
+      const createObjectURLSpy = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:mock-url');
+      const revokeObjectURLSpy = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => {});
 
       downloadCsv('test,csv,content', 'test.csv');
 
+      expect(createElementSpy).toHaveBeenCalledWith('a');
       expect(createObjectURLSpy).toHaveBeenCalled();
       expect(mockLink.href).toBe('blob:mock-url');
       expect(mockLink.download).toBe('test.csv');
