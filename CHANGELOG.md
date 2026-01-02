@@ -2,6 +2,30 @@
 
 All notable changes to this project will be documented in this file. See [standard-version](https://github.com/conventional-changelog/standard-version) for commit guidelines.
 
+## [1.11.0](https://github.com/thetrev68/papas-books/compare/v1.10.2...v1.11.0) (2026-01-02)
+
+### Features
+
+- add CSV export functionality to all tables ([2880fbd](https://github.com/thetrev68/papas-books/commit/2880fbd4beb7a6eb8b549866a3f872c0e5b2e61f))
+
+### Bug Fixes
+
+- **auth:** eliminate duplicate fetches and timeouts on page refresh ([db7808e](https://github.com/thetrev68/papas-books/commit/db7808e59cb0c1b8521d421581d667cdbd6f6487))
+- **auth:** prevent stale timeout errors with request ID tracking ([260f487](https://github.com/thetrev68/papas-books/commit/260f487a656971178626ada264668fda260f235f))
+- **auth:** retry on timeout and handle race conditions ([6ceb3cd](https://github.com/thetrev68/papas-books/commit/6ceb3cd6b89fe7dc0e52978d5b695569b55d0e6c))
+- remove incompatible future flags from BrowserRouter to resolve TS2322 ([5e9d7ab](https://github.com/thetrev68/papas-books/commit/5e9d7abadba82769986a9408bcae48f2f7d369b2))
+- resolve console warnings for security headers and react-router future flags ([088c3cb](https://github.com/thetrev68/papas-books/commit/088c3cbc0bd03a166ba82c268a39a65371bdc449))
+
+### Performance
+
+- **auth:** parallelize user and bookset data fetching to reduce load time ([8cdc53a](https://github.com/thetrev68/papas-books/commit/8cdc53a087d98caba8c00e0efcb4d029a5f433cc))
+- **workbench:** memoize table cell renderers to prevent re-renders ([ff0ec27](https://github.com/thetrev68/papas-books/commit/ff0ec27700d7ae2abf838a2a973c770b7491d054))
+- **workbench:** optimize table rendering and resolve forced reflows ([74bf6aa](https://github.com/thetrev68/papas-books/commit/74bf6aa0bec71d11c1a69522848b06fa6ebd31f1))
+
+### Documentation
+
+- add implementation plans and update seed categories ([b80c7e0](https://github.com/thetrev68/papas-books/commit/b80c7e04e2166b5c5ca558d1650f345452eedfb7))
+
 ## [1.10.2](https://github.com/thetrev68/papas-books/compare/v1.10.1...v1.10.2) (2026-01-01)
 
 ### Maintenance
