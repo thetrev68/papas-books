@@ -34,7 +34,10 @@ BEGIN
       ('Interest & Dividends', target_bookset_id, income_id, 2),
       ('Gifts Received', target_bookset_id, income_id, 3),
       ('Refunds & Reimbursements', target_bookset_id, income_id, 4),
-      ('Other Income', target_bookset_id, income_id, 5);
+      ('Royalties', target_bookset_id, income_id, 5),
+      ('Capital Gains', target_bookset_id, income_id, 6),
+      ('Social Security', target_bookset_id, income_id, 7),
+      ('Other Income', target_bookset_id, income_id, 8);
 
   -- 2. Housing
   INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible) 
@@ -46,7 +49,8 @@ BEGIN
       ('Home Insurance', target_bookset_id, housing_id, 3, false),
       ('Repairs & Maintenance', target_bookset_id, housing_id, 4, false),
       ('HOA Fees', target_bookset_id, housing_id, 5, false),
-      ('Home Improvement', target_bookset_id, housing_id, 6, false);
+      ('Home Improvement', target_bookset_id, housing_id, 6, false),
+      ('Lawn & Landscape', target_bookset_id, housing_id, 7, false);
 
   -- 3. Utilities
   INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible) 
@@ -68,7 +72,8 @@ BEGIN
       ('Groceries', target_bookset_id, food_id, 1),
       ('Dining Out', target_bookset_id, food_id, 2),
       ('Alcohol / Bars', target_bookset_id, food_id, 3),
-      ('Coffee Shops', target_bookset_id, food_id, 4);
+      ('Coffee Shops', target_bookset_id, food_id, 4),
+      ('Convenience Stores', target_bookset_id, food_id, 5);
 
   -- 5. Transportation
   INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible) 
@@ -94,7 +99,7 @@ BEGIN
       ('Dental', target_bookset_id, health_id, 4, true),
       ('Vision', target_bookset_id, health_id, 5, true),
       ('Fitness / Gym', target_bookset_id, health_id, 6, false),
-      ('Sports', target_bookset_id, health_id, 7, false);
+      ('Lab Tests', target_bookset_id, health_id, 7, false);
 
   -- 7. Personal
   INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible) 
@@ -105,15 +110,16 @@ BEGIN
       ('Personal Care', target_bookset_id, pers_id, 2),
       ('Hair & Beauty', target_bookset_id, pers_id, 3),
       ('Education', target_bookset_id, pers_id, 4),
-      ('Childcare', target_bookset_id, pers_id, 5),
-      ('Pet Care', target_bookset_id, pers_id, 6);
+      ('Cash & ATM Withdrawals', target_bookset_id, pers_id, 5),
+      ('Shopping', target_bookset_id, pers_id, 6),
+      ('Allowance & Gifts', target_bookset_id, pers_id, 7);
 
   -- 8. Entertainment
   INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible) 
   VALUES ('Entertainment', target_bookset_id, 80, false) RETURNING id INTO ent_id;
 
     INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES 
-      ('Subscriptions (Streaming)', target_bookset_id, ent_id, 1),
+      ('Subscriptions', target_bookset_id, ent_id, 1),
       ('Events & Outings', target_bookset_id, ent_id, 2),
       ('Hobbies', target_bookset_id, ent_id, 3),
       ('Travel / Vacation', target_bookset_id, ent_id, 4),
@@ -138,5 +144,18 @@ BEGIN
       ('Credit Card Payment', target_bookset_id, transfer_id, 1),
       ('Savings Transfer', target_bookset_id, transfer_id, 2),
       ('Investment Transfer', target_bookset_id, transfer_id, 3);
+
+  -- 11. Farm
+  INSERT INTO categories (name, bookset_id, sort_order, is_tax_deductible) 
+  VALUES ('Farm', target_bookset_id, 30, false) RETURNING id INTO farm_id;
+
+    INSERT INTO categories (name, bookset_id, parent_category_id, sort_order) VALUES 
+      ('Electricity', target_bookset_id, farm_id, 1),
+      ('Property Tax', target_bookset_id, farm_id, 2),
+      ('Insurance', target_bookset_id, farm_id, 3),
+      ('Internet', target_bookset_id, farm_id, 4),
+      ('Special Projects', target_bookset_id, farm_id, 5),
+      ('Waste Disposal', target_bookset_id, farm_id, 6),
+      ('Escrow Account', target_bookset_id, farm_id, 7);
 
 END $$;
